@@ -104,7 +104,7 @@ public class SocketHandler extends TextWebSocketHandler {
                 sendToClient(session, result.toString());
             }
             else if (trimCmd.equals("clearall")) {
-                result = new ClearAll(cmd).exec(userId);
+                result = new RemoveAll(cmd).exec(userId);
                 sendToClient(session, result.toString());
             }
             else {

@@ -11,7 +11,7 @@
   "monitorExample": "eg: monitor /api/v1/user param,time",
   "removeCmd": "remove api",
   "removeExample": "eg: remove /api/v1/user",
-  "clearAllCmd": "clear all apis of monitor",
+  "removeAllCmd": "remove all monitored apis",
   "tips": "Tips: You can use ↑/↓ arrow keys to browse command history.",
   "alreadyConnected": "connection already open, do not repeat the connection.",
   "connected": "arguslog connected",

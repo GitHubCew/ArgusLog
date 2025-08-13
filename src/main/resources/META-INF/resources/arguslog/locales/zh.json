@@ -11,7 +11,7 @@
   "monitorExample": "例如: monitor /api/v1/user param,time",
   "removeCmd": "移除接口",
   "removeExample": "例如: remove /api/v1/user",
-  "clearAllCmd": "清除所有监控接口",
+  "removeAllCmd": "清除所有监控接口",
   "tips": "提示: 可以使用 ↑/↓ 方向键浏览历史命令",
   "alreadyConnected": "连接已建立，请勿重复连接",
   "connected": "arguslog 已连接",

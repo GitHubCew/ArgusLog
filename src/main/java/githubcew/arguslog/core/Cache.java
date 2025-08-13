@@ -119,7 +119,11 @@ public class Cache {
     public static void clearUser (String user) {
         if(userMethods.containsKey(user)) {
             userMethods.remove(user);
-            methodUsers.forEach((k,v) -> v.remove(user));
+            methodUsers.forEach((k,v) -> {v.remove(user);
+            if (v.isEmpty()) {
+                methodUsers.remove(k);
+                }
+            });
         }
     }
 

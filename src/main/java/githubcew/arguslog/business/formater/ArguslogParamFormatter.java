@@ -1,5 +1,7 @@
 package githubcew.arguslog.business.formater;
 
+import javax.servlet.*;
+import javax.servlet.http.*;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Parameter;
@@ -11,6 +13,34 @@ import java.util.*;
  */
 public class ArguslogParamFormatter implements ParamFormatter{
 
+    // 预定义常见Servlet相关类型集合（静态初始化提高性能）
+    private static final Set<Class<?>> SERVLET_TYPES = new HashSet<>();
+
+    static {
+        // Servlet核心接口
+        SERVLET_TYPES.add(Servlet.class);
+        SERVLET_TYPES.add(ServletConfig.class);
+        SERVLET_TYPES.add(ServletContext.class);
+        SERVLET_TYPES.add(ServletRequest.class);
+        SERVLET_TYPES.add(ServletResponse.class);
+
+        // HTTP相关接口
+        SERVLET_TYPES.add(HttpServletRequest.class);
+        SERVLET_TYPES.add(HttpServletResponse.class);
+        SERVLET_TYPES.add(HttpSession.class);
+        SERVLET_TYPES.add(HttpUpgradeHandler.class);
+        SERVLET_TYPES.add(Part.class);
+
+        // 过滤器相关
+        SERVLET_TYPES.add(Filter.class);
+        SERVLET_TYPES.add(FilterConfig.class);
+        SERVLET_TYPES.add(FilterChain.class);
+
+        // 异步处理相关
+        SERVLET_TYPES.add(AsyncContext.class);
+        SERVLET_TYPES.add(AsyncListener.class);
+    }
+
     /**
      * 格式化
      * @param parameters 参数列表
@@ -21,6 +51,9 @@ public class ArguslogParamFormatter implements ParamFormatter{
     public Object format(Parameter[] parameters, Object[] parameterValues) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < parameters.length; i++) {
+            if (isFilter(parameters[i].getType())) {
+                continue;
+            }
             String formatValues = formatValue(parameterValues[i]);
             sb.append("\"").append(parameters[i].getName()).append("\"").append(":").append(formatValues).append(" ");
         }
@@ -164,5 +197,27 @@ public class ArguslogParamFormatter implements ParamFormatter{
             clazz = clazz.getSuperclass();
         }
         return fields;
+    }
+
+
+    /**
+     * 判断类是否属于Servlet相关类型（通常不可序列化）
+     * @param clz 要检查的类
+     * @return true如果是Servlet相关类型，false否则
+     */
+    private boolean isFilter(Class<?> clz) {
+
+        // 检查是否是Servlet相关类型
+        for (Class<?> servletType : SERVLET_TYPES) {
+            if (servletType.isAssignableFrom(clz)) {
+                return true;
+            }
+        }
+
+        // 额外检查常见实现类（如Spring的包装类）
+        String className = clz.getName();
+        return className.contains("javax.servlet") ||
+                className.contains("jakarta.servlet") ||
+                className.contains("org.springframework.web.context.request");
     }
 }

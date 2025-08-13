@@ -106,7 +106,7 @@ Input 'help' to view command usage.
 
 **remove** [path]：Remove monitoring for specified API
 
-**clearall**： Clear all monitored APIs
+**removeall**： remove all monitored APIs
 
 **Tip**: Use ↑/↓ arrow keys to navigate command history
 

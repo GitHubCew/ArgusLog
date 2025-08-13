@@ -7,13 +7,13 @@ import githubcew.arguslog.core.Constant;
  * 清除所有方法命令
  * @author chenenwei
  */
-public class ClearAll extends CommonCmd{
+public class RemoveAll extends CommonCmd{
 
     /**
      * 构造方法
      * @param args 参数
      */
-    public ClearAll(String args) {
+    public RemoveAll(String args) {
         super(args);
     }
 

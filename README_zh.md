@@ -101,7 +101,7 @@ $
 - lsm  查看已监测API接口
 - monitor [path] [param | result | time]监控指定API接口,监控内容可选：param:参数 result:结果 time:耗时
 - remove [path] 移除对指定API接口的监控
-- clearall 清空全部监控的API接口
+- removeall 清空全部监控的API接口
 
 提示：使用 ↑/↓ 箭头键浏览历史命令
 
