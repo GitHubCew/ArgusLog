@@ -130,7 +130,7 @@ arguslog connected
 2.Start monitoring:
 ```shell
 arguslog> monitor /activityWalkRouteActivity/info param,time
-success
+ok
 ```
 3.Trigger the API (e.g., via curl):
 ```shell
