@@ -100,6 +100,8 @@ Input 'help' to view command usage.
 
 **ls** [path]： List API interfaces (supports fuzzy search)
 
+**lsm** ： List Monitored API interfaces
+
 **monitor** [path] [param | result | time]： Monitor specific API (options: param, result, time)
 
 **remove** [path]：Remove monitoring for specified API
