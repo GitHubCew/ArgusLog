@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>${i18n.welcomeTitle}</title>
+    <style>
+        body {
+            background-color: #0C0C0C;
+            color: #CCCCCC;
+            font-family: 'Consolas', 'Monaco', monospace;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.5;
+        }
+
+        #terminal {
+            height: 80vh;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            margin-bottom: 10px;
+        }
+
+        #input-line {
+            display: flex;
+            align-items: center;
+        }
+
+        #prompt {
+            color: #4CAF50;
+            margin-right: 8px;
+        }
+
+        #command-input {
+            background: transparent;
+            border: none;
+            color: #FFFFFF;
+            font-family: inherit;
+            font-size: inherit;
+            flex-grow: 1;
+            outline: none;
+        }
+
+        .default-text {
+            color: #0f0;
+        }
+
+        .log-error {
+            color: #F44336;
+        }
+
+        .log-warn {
+            color: #FFC107;
+        }
+
+        .log-info {
+            color: #4FC3F7;
+        }
+
+        .log-success {
+            color: #4CAF50;
+        }
+
+        .log-system {
+            color: #9C27B0;
+        }
+
+        .log-debug {
+            color: #9E9E9E;
+        }
+
+        .timestamp {
+            color: #607D8B;
+            margin-right: 8px;
+            font-size: 0.9em;
+        }
+
+        .terminal-border {
+            border: 1px solid #333;
+            padding: 10px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+<div class="terminal-border">
+    <div id="terminal" class="default-text"></div>
+    <div id="input-line">
+        <span id="prompt">$</span>
+        <input type="text" id="command-input" autofocus>
+    </div>
+</div>
+
+<script>
+    // WebSocket URL配置
+    function getContextPath() {
+        const fullPath = window.location.pathname;
+        const terminalIndex = fullPath.indexOf('/arguslog/index.html');
+        return terminalIndex > 0 ? fullPath.substring(0, terminalIndex) : '';
+    }
+
+    function getWebSocketUrl() {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const host = window.location.host;
+        const contextPath = getContextPath();
+        console.log(`host: ${host}`);
+        console.log(`contextPath: ${contextPath}`);
+        const socketUrl = `${protocol}//${host}${contextPath}/arguslog-ws`;
+        console.log(`WebSocket URL: ${socketUrl}`);
+        return socketUrl;
+    }
+
+    window.APP_CONFIG = {
+        socketUrl: getWebSocketUrl(),
+        contextPath: getContextPath()
+    };
+
+    // DOM元素
+    const terminal = document.getElementById('terminal');
+    const commandInput = document.getElementById('command-input');
+    const promptElement = document.getElementById('prompt');
+
+    // 状态变量
+    let socket = null;
+    let userId = 'arguslog';
+    let commandHistory = [];
+    let historyIndex = -1;
+    let currentCommand = '';
+
+    // 解析消息类型并返回处理后的消息内容
+    function parseMessageType(message) {
+        if (typeof message !== 'string') return { type: 'info', content: message };
+
+        // 定义日志级别匹配模式
+        const patterns = [
+            { prefix: '[ERROR]', type: 'error' },
+            { prefix: '[WARN]', type: 'warn' },
+            { prefix: '[INFO]', type: 'info' },
+            { prefix: '[SUCCESS]', type: 'success' },
+            { prefix: '[SYSTEM]', type: 'system' },
+            { prefix: '[DEBUG]', type: 'debug' }
+        ];
+
+        // 检查是否匹配任何日志级别
+        for (const pattern of patterns) {
+            if (message.startsWith(pattern.prefix)) {
+                return {
+                    type: pattern.type,
+                    content: message.substring(pattern.prefix.length).trim()
+                };
+            }
+        }
+
+        // 默认返回
+        return { type: 'info', content: message };
+    }
+
+    // 修改后的终端输出函数
+    function appendToTerminal(text, type = 'info', time = true) {
+        // 如果传入的是对象（来自parseMessageType的结果）
+        let displayText = text;
+        let displayType = type;
+
+        if (typeof text === 'object' && text.content !== undefined) {
+            displayText = text.content;
+            displayType = text.type;
+        }
+
+        const line = document.createElement('div');
+
+        if (time) {
+            // 添加时间戳
+            const timestamp = document.createElement('span');
+            timestamp.className = 'timestamp';
+            timestamp.textContent = new Date().toLocaleTimeString();
+            line.appendChild(timestamp);
+        }
+
+        // 设置消息样式
+        const content = document.createElement('span');
+        content.className = `log-${displayType}`;
+        content.textContent = displayText;
+        line.appendChild(content);
+
+        terminal.appendChild(line);
+        terminal.scrollTop = terminal.scrollHeight;
+    }
+
+    // 清空终端
+    function clearTerminal() {
+        terminal.innerHTML = '';
+        appendToTerminal('${i18n.terminalCleared}', 'system');
+    }
+
+    // 更新提示符
+    function updatePrompt(connected = false) {
+        promptElement.textContent = connected ? `${userId}>` : '$';
+    }
+
+    // 连接WebSocket（增强错误处理）
+    function connectSocket() {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            appendToTerminal('${i18n.alreadyConnected}', 'warn');
+            return;
+        }
+
+        if (!window.APP_CONFIG?.socketUrl) {
+            appendToTerminal('Error: WebSocket URL not configured', 'error');
+            return;
+        }
+
+        appendToTerminal(`Connecting to ${window.APP_CONFIG.socketUrl}...`, 'info');
+
+        try {
+            socket = new WebSocket(window.APP_CONFIG.socketUrl);
+
+            socket.onopen = () => {
+                appendToTerminal('${i18n.connected}', 'success');
+                updatePrompt(true);
+            };
+
+            socket.onerror = (e) => {
+                appendToTerminal('WebSocket error: ' + (e.message || 'Unknown error'), 'error');
+            };
+
+            socket.onclose = (e) => {
+                appendToTerminal(`Disconnected (code ${e.code})`, 'system');
+                updatePrompt(false);
+            };
+
+            socket.onmessage = (e) => {
+                const parsed = parseMessageType(e.data);
+                appendToTerminal(parsed);
+            };
+        } catch (err) {
+            appendToTerminal('Connection failed: ' + err.message, 'error');
+        }
+    }
+
+    // 断开WebSocket
+    function disconnectSocket() {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.close();
+            appendToTerminal('${i18n.connectionClosed}', 'system');
+        } else {
+            appendToTerminal('${i18n.notConnected}', 'warn');
+        }
+    }
+
+    // 添加命令到历史记录
+    function addToHistory(command) {
+        if (command && (commandHistory.length === 0 || commandHistory[commandHistory.length - 1] !== command)) {
+            commandHistory.push(command);
+            if (commandHistory.length > 50) {
+                commandHistory.shift();
+            }
+        }
+        historyIndex = commandHistory.length;
+    }
+
+    // 历史记录导航
+    function navigateHistory(direction) {
+        if (commandHistory.length === 0) return;
+
+        if (direction === 'up' && historyIndex > 0) {
+            historyIndex--;
+        } else if (direction === 'down' && historyIndex < commandHistory.length - 1) {
+            historyIndex++;
+        } else if (direction === 'down' && historyIndex === commandHistory.length - 1) {
+            historyIndex++;
+            commandInput.value = currentCommand;
+            return;
+        }
+
+        commandInput.value = commandHistory[historyIndex] || '';
+        setTimeout(() => {
+            commandInput.selectionStart = commandInput.selectionEnd = commandInput.value.length;
+        }, 0);
+    }
+
+    // 显示帮助信息
+    function showHelp() {
+        appendToTerminal("${i18n.helpText}", 'system');
+        appendToTerminal("┌─────────────────────────────────────────────────────────────────────────────────────────────┐", 'default');
+        appendToTerminal("  connect                                     ${i18n.connectCmd}                              ", 'info');
+        appendToTerminal("  exit/quit                                   ${i18n.exitCmd}                                ", 'info');
+        appendToTerminal("  clear                                       ${i18n.clearCmd}                               ", 'info');
+        appendToTerminal("  help                                        ${i18n.helpCmd}                                ", 'info');
+        appendToTerminal("  ls [path]                                   ${i18n.lsCmd}                                  ", 'info');
+        appendToTerminal("  lsm                                         ${i18n.lsmCmd}                                 ", 'info');
+        appendToTerminal("  monitor [path] [param | result | time | ex] ${i18n.monitorCmd}                             ", 'info');
+        appendToTerminal("                                              ${i18n.monitorExample}                         ", 'info');
+        appendToTerminal("  remove [path]                               ${i18n.removeCmd}                              ", 'info');
+        appendToTerminal("                                              ${i18n.removeExample}                          ", 'info');
+        appendToTerminal("  clearall                                    ${i18n.clearAllCmd}                            ", 'info');
+        appendToTerminal("└─────────────────────────────────────────────────────────────────────────────────────────────┘", 'default');
+        appendToTerminal("${i18n.tips}", 'info');
+    }
+
+    // 命令输入框事件监听
+    commandInput.addEventListener('focus', () => {
+        historyIndex = commandHistory.length;
+        currentCommand = commandInput.value;
+    });
+
+    commandInput.addEventListener('blur', () => {
+        currentCommand = commandInput.value;
+    });
+
+    commandInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const input = commandInput.value.trim();
+            commandInput.value = '';
+
+            if (!input) return;
+
+            appendToTerminal(`${promptElement.textContent} ${input}`);
+            addToHistory(input);
+            currentCommand = '';
+
+            switch (input.toLowerCase()) {
+                case 'connect':
+                    connectSocket();
+                    break;
+                case 'exit':
+                case 'quit':
+                    disconnectSocket();
+                    break;
+                case 'clear':
+                    clearTerminal();
+                    break;
+                case 'help':
+                    showHelp();
+                    break;
+                default:
+                    if (socket && socket.readyState === WebSocket.OPEN) {
+                        socket.send(input);
+                    } else {
+                        appendToTerminal('${i18n.notConnectedError}', 'error');
+                    }
+            }
+        } else if (e.ctrlKey && e.key === 'd') {
+            appendToTerminal('${i18n.exitShortcut}', 'info');
+            disconnectSocket();
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (historyIndex === commandHistory.length) {
+                currentCommand = commandInput.value;
+            }
+            navigateHistory('up');
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            navigateHistory('down');
+        }
+    });
+
+    // 初始化终端显示
+    appendToTerminal("" +
+        "  ,---.                             ,--.                 \n" +
+        " /  O  \\ ,--.--. ,---.,--.,--. ,---.|  |    ,---. ,---.  \n" +
+        "|  .-.  ||  .--'| .-. |  ||  |(  .-'|  |   | .-. | .-. | \n" +
+        "|  | |  ||  |   ' '-' '  ''  '.-'  `)  '--.' '-' ' '-' ' \n" +
+        "`--' `--'`--'   .`-  / `----' `----'`-----' `---'.`-  /  \n" +
+        "                `---'                            `---'  " +
+        "",'info', false);
+    appendToTerminal("${i18n.helpCommand}", 'info', false);
+</script>
+</body>
+</html>
