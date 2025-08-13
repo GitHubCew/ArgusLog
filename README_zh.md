@@ -12,7 +12,11 @@ ArgusLog是一个基于SpringBoot + Websocket 开发的接口监测web端命令�
 
 # 使用步骤：
 
-1. git clone  
+1. 克隆项目 
+```shell
+git clone https://github.com/GitHubCew/ArgusLog.git
+```
+
 2. 使用maven clean install 命令安装到本地maven仓库
 ```shell
 maven clean install

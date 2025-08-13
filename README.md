@@ -12,7 +12,7 @@ ArgusLog is a web-based command-line monitoring tool developed with SpringBoot a
 # Usage
 1.Clone the repository:
 ```shell
-git clone https://github.com/GitHubCew/apiLog.git
+git clone https://github.com/GitHubCew/ArgusLog.git
 ```
 
 2.Install to local Maven repository:
