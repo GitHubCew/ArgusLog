@@ -34,6 +34,6 @@ public class Constant {
     public final static  String ERROR = "error";
     public final static  String EMPTY = "";
 
-    public final static  String OUT_INFO = "[INFO] ";
-    public final static  String OUT_ERROR = "[ERROR] ";
+    public final static  String OUT_INFO = "[@INFO@]";
+    public final static  String OUT_ERROR = "[@ERROR@]";
 }

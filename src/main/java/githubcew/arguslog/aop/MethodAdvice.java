@@ -31,29 +31,30 @@ public class MethodAdvice implements MethodInterceptor {
             returnVal = invocation.proceed();
             return returnVal;
         }
+        long start = 0;
+        long end = 0;
         try {
             // 参数格式化
             ParamFormatter formatter = ContextUtil.getBean(ParamFormatter.class);
             Object format = formatter.format(invocation.getMethod().getParameters(), invocation.getArguments());
             content.setParam(format);
 
-            // 计时
-            long start = System.currentTimeMillis();
+            start = System.currentTimeMillis();
 
             // 执行原方法
             returnVal = invocation.proceed();
             content.setResult(returnVal);
 
-            // 计算方法耗时
-            long spend = System.currentTimeMillis() - start;
-            content.setTime(spend);
-
+            end  = System.currentTimeMillis();
         }
         catch (Exception e) {
+            end = System.currentTimeMillis();
             content.setException(e);
             throw e;
         }
         finally {
+            // 计算耗时
+            content.setTime(end - start);
             // 输出content
             Outer outer = ContextUtil.getBean(Outer.class);
             outer.out(invocation.getMethod(), content);

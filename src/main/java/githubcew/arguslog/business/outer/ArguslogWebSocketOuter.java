@@ -47,8 +47,8 @@ public class ArguslogWebSocketOuter implements Outer{
                 if (!session.getSession().isOpen()) {
                     return;
                 }
-                StringBuilder sb = new StringBuilder(Constant.CONCAT_SEPARATOR);
-                StringBuilder err = new StringBuilder(Constant.CONCAT_SEPARATOR);
+                StringBuilder sb = new StringBuilder();
+                StringBuilder err = new StringBuilder();
                 boolean sendNormal = false;
                 boolean sendException = false;
                 if (monitorInfo.isParam()) {
@@ -72,18 +72,17 @@ public class ArguslogWebSocketOuter implements Outer{
                 if (monitorInfo.isException()) {
                     if (outContent.getException() != null) {
                         sendException = true;
-                        err.append("[ERROR] ");
                         appendException(err, outContent.getException());
                     }
                 }
 
                 // 发送正常消息
                 if (sendNormal) {
-                    socketHandler.sendToClient(session.getSession(), sb.toString().replaceAll(Constant.CONCAT_SEPARATOR, Constant.LINE_SEPARATOR));
+                    socketHandler.sendToClient(session.getSession(), Constant.OUT_INFO + sb.toString().replaceAll(Constant.CONCAT_SEPARATOR, Constant.LINE_SEPARATOR));
                 }
                 // 发送异常消息
                 if (sendException) {
-                    socketHandler.sendToClient(session.getSession(), err.toString().replaceAll(Constant.CONCAT_SEPARATOR, Constant.LINE_SEPARATOR));
+                    socketHandler.sendToClient(session.getSession(), Constant.OUT_ERROR + err.toString().replaceAll(Constant.CONCAT_SEPARATOR, Constant.LINE_SEPARATOR));
                 }
             } catch (Exception e) {
                 e.printStackTrace();

@@ -99,16 +99,17 @@
     function parseMessageType(message) {
         if (typeof message !== 'string') return { type: 'info', content: message };
         const patterns = [
-            { prefix: '[ERROR]', type: 'error' },
-            { prefix: '[WARN]', type: 'warn' },
-            { prefix: '[INFO]', type: 'info' },
-            { prefix: '[SUCCESS]', type: 'success' },
-            { prefix: '[SYSTEM]', type: 'system' },
-            { prefix: '[DEBUG]', type: 'debug' }
+            { prefix: '[@ERROR@]', type: 'error' },
+            { prefix: '[@WARN@]', type: 'warn' },
+            { prefix: '[@INFO@]', type: 'info' },
+            { prefix: '[@SUCCESS@]', type: 'success' },
+            { prefix: '[@SYSTEM@]', type: 'system' },
+            { prefix: '[@DEBUG@]', type: 'debug' }
         ];
         for (const p of patterns) {
             if (message.startsWith(p.prefix)) return { type: p.type, content: message.slice(p.prefix.length).trim() };
         }
+
         return { type:'info', content:message };
     }
 
@@ -118,6 +119,7 @@
         const line=document.createElement('div');
         if(time){ const ts=document.createElement('span'); ts.className='timestamp'; ts.textContent=new Date().toLocaleTimeString(); line.appendChild(ts);}
         const content=document.createElement('span'); content.className=`log-${displayType}`; content.textContent=displayText;
+        line.appendChild(document.createElement('br'));
         line.appendChild(content);
         terminal.appendChild(line);
         terminal.scrollTop=terminal.scrollHeight;
