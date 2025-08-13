@@ -18,7 +18,7 @@
 
     <groupId>io.github.githubcew</groupId>
     <artifactId>arguslog</artifactId>
-    <version>0.0.1</version>
+    <version>0.0.2</version>
     <packaging>jar</packaging>
 
     <properties>
@@ -97,7 +97,7 @@
             </plugin>
 
             <!--打包到maven中央仓库插件-->
-<!--            &lt;!&ndash; 强制GPG插件配置 &ndash;&gt;-->
+            <!-- 强制GPG插件配置 -->
 <!--            <plugin>-->
 <!--                <groupId>org.apache.maven.plugins</groupId>-->
 <!--                <artifactId>maven-gpg-plugin</artifactId>-->
@@ -138,7 +138,7 @@
         </plugins>
     </build>
 
-    <url>https://github.com/GitHubCew/apiLog</url>
+    <url>https://github.com/GitHubCew/ArgusLog/</url>
 
     <licenses>
         <license>
@@ -149,9 +149,9 @@
     </licenses>
 
     <scm>
-        <url>https://github.com/GitHubCew/apiLog</url>
-        <connection>scm:git:git://github.com/GitHubCew/apiLog.git</connection>
-        <developerConnection>scm:git:ssh://github.com/GitHubCew/apiLog.git</developerConnection>
+        <url>https://github.com/GitHubCew/ArgusLog/</url>
+        <connection>scm:git:git://github.com/GitHubCew/ArgusLog.git</connection>
+        <developerConnection>scm:git:ssh://github.com/GitHubCew/ArgusLog.git</developerConnection>
     </scm>
 
     <developers>

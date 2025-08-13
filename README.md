@@ -21,7 +21,7 @@ mvn clean install
 ```
 
 Alternatively, pull the latest dependency from Maven Central:
-[Maven Central Repository (Sonatype)](https://central.sonatype.com/artifact/io.github.githubcew/api-log/)
+[Maven Central Repository (Sonatype)](https://central.sonatype.com/artifact/io.github.githubcew/arguslog)
 
 3.Add dependency to your project:
 ```xml
@@ -124,12 +124,12 @@ To monitor input parameters and execution time for /activityWalkRouteActivity/in
 1.Connect to the terminal and establish WebSocket connection:
 ```shell
 $ connect
-alog connected
+arguslog connected
 ```
 
 2.Start monitoring:
 ```shell
-alog> monitor /activityWalkRouteActivity/info param,time
+arguslog> monitor /activityWalkRouteActivity/info param,time
 success
 ```
 3.Trigger the API (e.g., via curl):

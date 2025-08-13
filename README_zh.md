@@ -19,7 +19,7 @@ maven clean install
 ```
 或者从Maven中央仓库拉取最新依赖：
 
-[Maven中央仓库地址(Sonatype Central)](https://central.sonatype.com/artifact/io.github.githubcew/arguslog/)
+[Maven中央仓库地址(Sonatype Central)](https://central.sonatype.com/artifact/io.github.githubcew/arguslog)
 
 
 3. 在项目中引用依赖:
