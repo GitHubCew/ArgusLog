@@ -48,7 +48,7 @@ public class ArguslogWebSocketOuter implements Outer{
                     return;
                 }
                 StringBuilder sb = new StringBuilder(Constant.CONCAT_SEPARATOR);
-                StringBuilder err = new StringBuilder();
+                StringBuilder err = new StringBuilder(Constant.CONCAT_SEPARATOR);
                 boolean sendNormal = false;
                 boolean sendException = false;
                 if (monitorInfo.isParam()) {

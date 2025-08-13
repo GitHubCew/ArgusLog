@@ -107,7 +107,7 @@ public class CommonCmd implements Cmd{
                 return check;
             }
             Object result = execute(user, this.cmd, this.args);
-            return result.equals(Constant.OK) ? Constant.OK : result;
+            return result.equals(Constant.OK) ? Constant.OK : Constant.CONCAT_SEPARATOR + result;
         } catch (Exception e) {
             return error(e.getMessage());
         }
