@@ -20,5 +20,6 @@
   "connectionClosed": "connection closed",
   "notConnected": "connection not open or already closed.",
   "notConnectedError": "Do not connect, please input `connect` to connect.",
-  "exitShortcut": "exit（Ctrl+D）"
+  "exitShortcut": "exit（Ctrl+D）",
+  "authCmd": "User auth"
 }

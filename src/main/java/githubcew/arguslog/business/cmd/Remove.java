@@ -1,5 +1,6 @@
 package githubcew.arguslog.business.cmd;
 
+import githubcew.arguslog.business.auth.ArgusUser;
 import githubcew.arguslog.core.Cache;
 import githubcew.arguslog.core.Constant;
 
@@ -7,14 +8,14 @@ import githubcew.arguslog.core.Constant;
  * 移除命令
  * @author  chenenwei
  */
-public class Remove extends CommonCmd{
+public class Remove extends BaseCmd {
 
     /**
      * 构造函数
      * @param args 参数
      */
-    public Remove(String args) {
-        super(args);
+    public Remove(String cmd, String[] args) {
+        super(cmd, args);
     }
 
     /**
@@ -42,8 +43,8 @@ public class Remove extends CommonCmd{
      * @return 执行结果
      */
     @Override
-    public Object execute(String user, String cmd, String[] args) {
-        Cache.removeMethod(user, Cache.getMethod(args[0]));
+    public Object execute(ArgusUser user, String cmd, String[] args) {
+        Cache.removeMethod(user.getSessionId(), Cache.getMethod(args[0]));
         return Constant.OK;
     }
 }

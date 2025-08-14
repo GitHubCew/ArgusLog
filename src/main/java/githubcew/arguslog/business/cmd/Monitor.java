@@ -1,5 +1,6 @@
 package githubcew.arguslog.business.cmd;
 
+import githubcew.arguslog.business.auth.ArgusUser;
 import githubcew.arguslog.core.Cache;
 import githubcew.arguslog.core.Constant;
 import githubcew.arguslog.core.MonitorInfo;
@@ -12,14 +13,14 @@ import java.util.List;
  * 监控命令
  * @author  chenenwei
  */
-public class Monitor extends CommonCmd{
+public class Monitor extends BaseCmd {
 
     /**
      * 构造函数
      * @param args 参数
      */
-    public Monitor(String args) {
-        super(args);
+    public Monitor(String cmd, String[] args) {
+        super(cmd, args);
     }
 
     /**
@@ -55,10 +56,10 @@ public class Monitor extends CommonCmd{
      * @return 执行结果
      */
     @Override
-    public String execute(String user, String cmd, String[] args) {
+    public String execute(ArgusUser user, String cmd, String[] args) {
         Method method = Cache.getMethod(args[0].trim());
         if (args.length == 1) {
-            Cache.addMethod(user, new MonitorInfo(method, true, true, true, true));
+            Cache.addMethod(user.getSessionId(), new MonitorInfo(method, true, true, true, true));
         }
         else if (args.length == 2) {
             String trimCmd = args[1].trim();
@@ -78,7 +79,7 @@ public class Monitor extends CommonCmd{
             if (trimCmd.contains("ex")) {
                 ex = true;
             }
-            Cache.addMethod(user, new MonitorInfo(method, param, result, time, ex));
+            Cache.addMethod(user.getSessionId(), new MonitorInfo(method, param, result, time, ex));
         }
         return Constant.OK;
     }

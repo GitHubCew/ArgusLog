@@ -36,4 +36,6 @@ public class Constant {
 
     public final static  String OUT_INFO = "[@INFO@]";
     public final static  String OUT_ERROR = "[@ERROR@]";
+
+    public final static String TOKEN_SPLIT = "#token#";
 }

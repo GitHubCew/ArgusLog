@@ -2,9 +2,10 @@ package githubcew.arguslog.core.config;
 
 import githubcew.arguslog.aop.MethodAdvice;
 import githubcew.arguslog.aop.MethodPointcut;
+import githubcew.arguslog.business.auth.ArgusUser;
 import githubcew.arguslog.business.formater.ArguslogParamFormatter;
 import githubcew.arguslog.business.socket.SocketHandler;
-import githubcew.arguslog.business.outer.ArguslogWebSocketOuter;
+import githubcew.arguslog.business.outer.ArgusWebSocketOuter;
 import githubcew.arguslog.core.Constant;
 import org.springframework.aop.support.DefaultPointcutAdvisor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.*;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.type.AnnotationMetadata;
@@ -27,11 +29,16 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 @EnableWebSocket
 @Configuration
 @EnableAspectJAutoProxy
-public class ArguslogAutoConfiguration implements ImportBeanDefinitionRegistrar, WebSocketConfigurer {
+public class ArgusAutoConfiguration implements ImportBeanDefinitionRegistrar, WebSocketConfigurer {
 
-    @Qualifier("arguslogSocketHandler")
+    @Qualifier("argusSocketHandler")
     @Autowired
-    private SocketHandler socketHandler; // 直接注入
+    private SocketHandler socketHandler;
+
+    @Order
+    @ConditionalOnMissingBean(ArgusUser.class)
+    @Bean
+    public ArgusUser argusUser() {return new ArgusUser("argus", "argus");}
 
     /**
      * 切点
@@ -60,7 +67,7 @@ public class ArguslogAutoConfiguration implements ImportBeanDefinitionRegistrar,
 
     @Order(0)
     @Bean
-    public WebMvcConfigurer alogTerminalWebMvcConfigurer() {
+    public WebMvcConfigurer argusTerminalWebMvcConfigurer() {
         return new WebMvcConfigurer() {
             @Override
             public void addResourceHandlers(ResourceHandlerRegistry registry) {
@@ -102,16 +109,16 @@ public class ArguslogAutoConfiguration implements ImportBeanDefinitionRegistrar,
                 .rootBeanDefinition(ArguslogParamFormatter.class)
                 .setScope(BeanDefinition.SCOPE_SINGLETON);
 
-        if (!registry.containsBeanDefinition("arguslogParamFormatter")) {
-            registry.registerBeanDefinition("arguslogParamFormatter", defaultParamFormatterBuilder.getBeanDefinition());
+        if (!registry.containsBeanDefinition("argusParamFormatter")) {
+            registry.registerBeanDefinition("argusParamFormatter", defaultParamFormatterBuilder.getBeanDefinition());
         }
 
         BeanDefinitionBuilder defaultOuterBuilder = BeanDefinitionBuilder
-                .rootBeanDefinition(ArguslogWebSocketOuter.class)
+                .rootBeanDefinition(ArgusWebSocketOuter.class)
                 .setScope(BeanDefinition.SCOPE_SINGLETON);
 
-        if (!registry.containsBeanDefinition("arguslogWebSocketOuter")) {
-            registry.registerBeanDefinition("arguslogWebSocketOuter", defaultOuterBuilder.getBeanDefinition());
+        if (!registry.containsBeanDefinition("argusWebSocketOuter")) {
+            registry.registerBeanDefinition("argusWebSocketOuter", defaultOuterBuilder.getBeanDefinition());
         }
 
     }

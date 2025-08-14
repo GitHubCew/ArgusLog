@@ -1,5 +1,7 @@
 package githubcew.arguslog.business.cmd;
 
+import githubcew.arguslog.business.auth.ArgusUser;
+
 /**
  * 命令接口
  * @author  chenenwei
@@ -20,5 +22,5 @@ public interface Cmd {
      * @param args 命令参数
      * @return
      */
-    Object execute (String user, String command, String[] args);
+    Object execute (ArgusUser user, String command, String[] args);
 }

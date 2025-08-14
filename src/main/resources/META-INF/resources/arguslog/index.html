@@ -81,6 +81,9 @@
     let socket = null;
     let userId = 'arguslog';
 
+    // 从 localStorage 恢复 token
+    let token = localStorage.getItem('terminal_token') || null;
+
     function getContextPath() {
         const fullPath = window.location.pathname;
         const terminalIndex = fullPath.indexOf('/arguslog/index.html');
@@ -109,16 +112,58 @@
         for (const p of patterns) {
             if (message.startsWith(p.prefix)) return { type: p.type, content: message.slice(p.prefix.length).trim() };
         }
-
         return { type:'info', content:message };
+    }
+
+    // ---------- 解析 token ----------
+    function handleServerMessage(msg) {
+        // 屏蔽返回中的 token
+        if (typeof msg === 'string' && msg.includes('#token#')) {
+            const parts = msg.split('#token#');
+            if (parts.length >= 2) {
+                const maybeToken = parts[0].trim();
+                // 如果是 auth 命令返回的 token，则保存
+                if (maybeToken.length > 0 && maybeToken !== 'ok') {
+                    token = maybeToken;
+                    localStorage.setItem('terminal_token', token);
+                }
+                msg = parts[1].trim(); // 只显示后面的部分
+            }
+        }
+        appendToTerminalForCmd(parseMessageType(msg));
     }
 
     function appendToTerminal(text, type='info', time=true) {
         let displayText = text, displayType = type;
         if(typeof text==='object'){ displayText=text.content; displayType=text.type; }
         const line=document.createElement('div');
-        if(time){ const ts=document.createElement('span'); ts.className='timestamp'; ts.textContent=new Date().toLocaleTimeString(); line.appendChild(ts);}
-        const content=document.createElement('span'); content.className=`log-${displayType}`; content.textContent=displayText;
+        if(time){
+            const ts=document.createElement('span');
+            ts.className='timestamp';
+            ts.textContent=new Date().toLocaleTimeString();
+            line.appendChild(ts);
+        }
+        const content=document.createElement('span');
+        content.className=`log-${displayType}`;
+        content.textContent=displayText;
+        line.appendChild(content);
+        terminal.appendChild(line);
+        terminal.scrollTop=terminal.scrollHeight;
+    }
+
+    function appendToTerminalForCmd(text, type='info', time=true) {
+        let displayText = text, displayType = type;
+        if(typeof text==='object'){ displayText=text.content; displayType=text.type; }
+        const line=document.createElement('div');
+        if(time){
+            const ts=document.createElement('span');
+            ts.className='timestamp';
+            ts.textContent=new Date().toLocaleTimeString();
+            line.appendChild(ts);
+        }
+        const content=document.createElement('span');
+        content.className=`log-${displayType}`;
+        content.textContent=displayText;
         line.appendChild(document.createElement('br'));
         line.appendChild(content);
         terminal.appendChild(line);
@@ -145,8 +190,10 @@
             socket.onopen=()=>{ appendToTerminal('${i18n.connected}','success'); updatePrompt(true); };
             socket.onerror=(e)=>{ appendToTerminal('WebSocket error: '+(e.message||'Unknown error'),'error'); };
             socket.onclose=(e)=>{ appendToTerminal(`Disconnected (code ${e.code})`,'system'); updatePrompt(false); };
-            socket.onmessage=(e)=>{ appendToTerminal(parseMessageType(e.data)); };
-        }catch(err){ appendToTerminal('Connection failed: '+err.message,'error'); }
+            socket.onmessage=(e)=>{
+                handleServerMessage(e.data);
+            };
+        }catch(err){ appendToTerminalForCmd('Connection failed: '+err.message,'error'); }
     }
 
     function disconnectSocket(){
@@ -154,7 +201,6 @@
         else appendToTerminal('${i18n.notConnected}','warn');
     }
 
-    // ---------- 历史 ----------
     function addToHistory(cmd){
         if(cmd && (commandHistory.length===0 || commandHistory[commandHistory.length-1]!==cmd)){
             commandHistory.push(cmd); if(commandHistory.length>50) commandHistory.shift();
@@ -162,17 +208,14 @@
         historyIndex = commandHistory.length;
     }
 
-    // ---------- 光标渲染 ----------
     function renderCommand(){
         let before = commandBuffer.slice(0,cursorPos);
         let under = commandBuffer[cursorPos]||' ';
         let after = commandBuffer.slice(cursorPos+1);
-        // 只有行尾闪烁
         const isEnd = (cursorPos === commandBuffer.length);
         commandDisplay.innerHTML = before + '<span class="cursor'+(isEnd?' cursor-blink':'')+'">'+under+'</span>' + after;
     }
 
-    // ---------- 执行命令 ----------
     function executeCommand(cmd){
         if(!cmd) return;
         const line=document.createElement('div'); line.className='command-line';
@@ -191,30 +234,38 @@
             case 'clear': clearTerminal(); break;
             case 'help': showHelp(); break;
             default:
-                if(socket && socket.readyState===WebSocket.OPEN) socket.send(cmd);
-                else appendToTerminal('${i18n.notConnectedError}','error');
+                if(socket && socket.readyState===WebSocket.OPEN) {
+                    let sendCmd = cmd;
+                    if (token && !cmd.toLowerCase().startsWith('auth')) {
+                        sendCmd = token + '#token#' + cmd;
+                    }
+                    socket.send(sendCmd);
+
+                } else {
+                    appendToTerminal('${i18n.notConnectedError}','error');
+                }
         }
     }
 
     function showHelp(){
         appendToTerminal("${i18n.helpText}",'system');
-        appendToTerminal("┌─────────────────────────────────────────────────────────────────────────────────────────────┐",'default');
-        appendToTerminal("  connect                                     ${i18n.connectCmd}                              ",'info');
-        appendToTerminal("  exit/quit                                   ${i18n.exitCmd}                                ",'info');
-        appendToTerminal("  clear                                       ${i18n.clearCmd}                               ",'info');
-        appendToTerminal("  help                                        ${i18n.helpCmd}                                ",'info');
-        appendToTerminal("  ls [path]                                   ${i18n.lsCmd}                                  ",'info');
-        appendToTerminal("  lsm                                         ${i18n.lsmCmd}                                 ",'info');
-        appendToTerminal("  monitor [path] [param | result | time | ex] ${i18n.monitorCmd}                             ",'info');
-        appendToTerminal("                                              ${i18n.monitorExample}                         ",'info');
-        appendToTerminal("  remove [path]                               ${i18n.removeCmd}                              ",'info');
-        appendToTerminal("                                              ${i18n.removeExample}                          ",'info');
-        appendToTerminal("  removeall                                   ${i18n.removeAllCmd}                            ",'info');
-        appendToTerminal("└─────────────────────────────────────────────────────────────────────────────────────────────┘",'default');
+        appendToTerminal("┌─────────────────────────────────────────────────────────────────────────────────────────────┐",'default', false);
+        appendToTerminal("  connect                                     ${i18n.connectCmd}                              ",'info', false);
+        appendToTerminal("  exit/quit                                   ${i18n.exitCmd}                                ",'info', false);
+        appendToTerminal("  clear                                       ${i18n.clearCmd}                               ",'info', false);
+        appendToTerminal("  help                                        ${i18n.helpCmd}                                ",'info', false);
+        appendToTerminal("  auth [user] [pass] [time]                   ${i18n.authCmd}                                ",'info', false);
+        appendToTerminal("  ls [path]                                   ${i18n.lsCmd}                                  ",'info', false);
+        appendToTerminal("  lsm                                         ${i18n.lsmCmd}                                 ",'info', false);
+        appendToTerminal("  monitor [path] [param | result | time | ex] ${i18n.monitorCmd}                             ",'info', false);
+        appendToTerminal("                                              ${i18n.monitorExample}                         ",'info', false);
+        appendToTerminal("  remove [path]                               ${i18n.removeCmd}                              ",'info', false);
+        appendToTerminal("                                              ${i18n.removeExample}                          ",'info', false);
+        appendToTerminal("  removeall                                   ${i18n.removeAllCmd}                            ",'info', false);
+        appendToTerminal("└─────────────────────────────────────────────────────────────────────────────────────────────┘",'default', false);
         appendToTerminal("${i18n.tips}",'info');
     }
 
-    // ---------- 粘贴支持 ----------
     hiddenInput.addEventListener('paste', e => {
         e.preventDefault();
         const pasteText = (e.clipboardData || window.clipboardData).getData('text');
@@ -223,7 +274,6 @@
         renderCommand();
     });
 
-    // ---------- 输入事件 ----------
     hiddenInput.addEventListener('keydown', e=>{
         const val = commandBuffer;
         const moveWordLeft = ()=>{
@@ -263,7 +313,7 @@
             else{ commandBuffer=''; historyIndex=-1; }
             cursorPos=commandBuffer.length; renderCommand(); e.preventDefault();
         } else if(e.ctrlKey && e.key==='d'){ appendToTerminal('${i18n.exitShortcut}','info'); disconnectSocket(); }
-        else if(e.ctrlKey && e.key==='u'){ commandBuffer=''; cursorPos=0; renderCommand(); e.preventDefault(); } // Ctrl+U 清空
+        else if(e.ctrlKey && e.key==='u'){ commandBuffer=''; cursorPos=0; renderCommand(); e.preventDefault(); }
         else if(e.key==='Home'){ cursorPos=0; renderCommand(); e.preventDefault(); }
         else if(e.key==='End'){ cursorPos=commandBuffer.length; renderCommand(); e.preventDefault(); }
         else if(e.key==='Enter'){ executeCommand(commandBuffer.trim()); e.preventDefault(); }
@@ -274,7 +324,6 @@
     window.addEventListener('DOMContentLoaded',()=>{ requestAnimationFrame(focusHiddenInput); });
     setInterval(()=>{ if(document.hasFocus()) focusHiddenInput(); renderCommand(); },500);
 
-    // ---------- 欢迎信息 ----------
     appendToTerminal(
         "  ,---.                             ,--.                 \n"+
         " /  O  \\ ,--.--. ,---.,--.,--. ,---.|  |    ,---. ,---.  \n"+

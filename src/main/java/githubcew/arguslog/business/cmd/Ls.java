@@ -1,5 +1,6 @@
 package githubcew.arguslog.business.cmd;
 
+import githubcew.arguslog.business.auth.ArgusUser;
 import githubcew.arguslog.core.Cache;
 import githubcew.arguslog.core.Constant;
 
@@ -10,14 +11,14 @@ import java.util.stream.Collectors;
  * 列出接口命令
  * @author  chenenwei
  */
-public class Ls extends CommonCmd{
+public class Ls extends BaseCmd {
 
     /**
      * 构造函数
      * @param args 参数
      */
-    public Ls(String args) {
-        super(args);
+    public Ls(String cmd, String[] args) {
+        super(cmd, args);
     }
 
     /**
@@ -42,8 +43,8 @@ public class Ls extends CommonCmd{
      * @return 执行结果
      */
     @Override
-    public String execute(String user, String cmd, String[] args) {
-        List<String> sorted = Cache.methodCache.keySet().stream().sorted().collect(Collectors.toList());
+    public String execute(ArgusUser user, String cmd, String[] args) {
+        List<String> sorted = Cache.getUris().stream().sorted().collect(Collectors.toList());
         if (args.length == 0) {
             return String.join(Constant.LINE_SEPARATOR, sorted);
         }

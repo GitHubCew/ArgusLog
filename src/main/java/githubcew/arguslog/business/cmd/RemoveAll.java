@@ -1,5 +1,6 @@
 package githubcew.arguslog.business.cmd;
 
+import githubcew.arguslog.business.auth.ArgusUser;
 import githubcew.arguslog.core.Cache;
 import githubcew.arguslog.core.Constant;
 
@@ -7,14 +8,14 @@ import githubcew.arguslog.core.Constant;
  * 清除所有方法命令
  * @author chenenwei
  */
-public class RemoveAll extends CommonCmd{
+public class RemoveAll extends BaseCmd {
 
     /**
      * 构造方法
      * @param args 参数
      */
-    public RemoveAll(String args) {
-        super(args);
+    public RemoveAll(String cmd, String[] args) {
+        super(cmd, args);
     }
 
     /**
@@ -38,8 +39,8 @@ public class RemoveAll extends CommonCmd{
      * @return 执行结果
      */
     @Override
-    public Object execute(String user, String cmd, String[] args) {
-        Cache.clearUser(user);
+    public Object execute(ArgusUser user, String cmd, String[] args) {
+        Cache.clearUser(user.getSessionId());
         return Constant.OK;
     }
 }

@@ -1,5 +1,8 @@
 package githubcew.arguslog.core;
 
+import githubcew.arguslog.business.auth.ArgusUser;
+import githubcew.arguslog.business.socket.SessionContext;
+
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -14,23 +17,47 @@ public class Cache {
     /**
      * 方法缓存
      */
-    public volatile static Map<String, Method> methodCache;
+    private final static Map<String, Method> methodCache;
 
     /**
      * 方法-用户缓存
      */
-    public volatile static Map<Method, List<String>> methodUsers;
+    private final static Map<Method, List<String>> methodUsers;
 
     /**
      * 用户-方法缓存
      */
-    public volatile static Map<String, List<MonitorInfo>> userMethods;
+    private final static Map<String, List<MonitorInfo>> userMethods;
+
+    /**
+     * 用户凭证
+     */
+    private final static Map<String, ArgusUser> userCredentials;
 
     static {
         methodCache = new ConcurrentHashMap<>(256);
         userMethods = new ConcurrentHashMap<>(1);
         methodUsers = new ConcurrentHashMap<>(1);
+        userCredentials = new ConcurrentHashMap<>(1);
     }
+
+    /**
+     * 添加方法缓存
+     * @param uri  uri
+     * @param method 方法
+     */
+    public static void addMethodCache (String uri, Method method) {
+        methodCache.put(uri, method);
+    }
+
+    /**
+     * 获取方法uri
+     * @return 方法uri
+     */
+    public static List<String> getUris () {
+        return new ArrayList<>(methodCache.keySet());
+    }
+
 
     /**
      * 获取方法
@@ -249,5 +276,35 @@ public class Cache {
             }
         });
         return uris;
+    }
+
+    /**
+     * 是否有凭证
+     * @param credentials 凭证
+     * @return 是否有凭证
+     */
+    public static boolean hasCredentials(String credentials) {
+        return userCredentials.containsKey(credentials);
+    }
+
+    /**
+     * 添加凭证
+     * @param credentials 凭证
+     * @param argusUser 用户
+     */
+    public static void addCredentials(String credentials, ArgusUser argusUser) {
+       userCredentials.put(credentials, argusUser);
+    }
+
+    /**
+     * 移除过期的凭证
+     * @param currenTime 当前时间
+     */
+    public static void removeCredentials(Long currenTime) {
+        userCredentials.forEach((cred, user) -> {
+            if (currenTime - user.getExpireTime() > 0) {
+                userCredentials.remove(cred);
+            };
+        });
     }
 }

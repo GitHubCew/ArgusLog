@@ -1,6 +1,7 @@
 package githubcew.arguslog.business.socket;
 
-import githubcew.arguslog.business.cmd.*;
+import githubcew.arguslog.business.auth.ArgusAuthManager;
+import githubcew.arguslog.business.auth.ArgusUser;
 import githubcew.arguslog.core.Constant;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -17,10 +18,10 @@ import java.util.Objects;
  * WebSocket处理器
  * @author  chenenwei
  */
-@Component("arguslogSocketHandler")
+@Component("argusSocketHandler")
 public class SocketHandler extends TextWebSocketHandler {
 
-    @Qualifier("arguslogSessionManager")
+    @Qualifier("argusSessionManager")
     @Autowired
     private SessionManager sessionManager;
 
@@ -36,8 +37,8 @@ public class SocketHandler extends TextWebSocketHandler {
      */
     @Override
     public void afterConnectionEstablished(WebSocketSession session) {
-        SessionContext context = new SessionContext(session);
-        sessionManager.addSession(session.getId(), context);
+        ArgusUser argusUser = new ArgusUser(session);
+        sessionManager.addSession(session.getId(), argusUser);
     }
 
     /**
@@ -62,57 +63,60 @@ public class SocketHandler extends TextWebSocketHandler {
 
         String cmd = message.getPayload();
         try {
-           executeCommand(cmd, sessionManager.getSession(session.getId()));
+            Object result = ArgusAuthManager.authenticateAndExecute(session, cmd);
+            sendToClient(session, result.toString());
         } catch (Exception e) {
-            session.sendMessage(new TextMessage(Constant.OUT_ERROR + e.getMessage() + Constant.LINE_SEPARATOR));
+            session.sendMessage(new TextMessage(Constant.OUT_ERROR + e.getMessage()));
         }
     }
 
-    /**
-     * 执行命令
-     * @param cmd 命令
-     * @param context session上下文
-     * @throws IOException 异常
-     */
-    private void executeCommand(String cmd, SessionContext context) throws IOException {
-
-        WebSocketSession session = context.getSession();
-        String userId = context.getUserId();
-        if (Objects.isNull(cmd) || cmd.isEmpty()) {
-            sendToClient(session, Constant.OUT_ERROR + "请输入命令");
-        }
-        else {
-            String[] parts = cmd.split(Constant.SPACE_PATTERN);
-            String trimCmd = parts[0];
-            Object result = "";
-            if (trimCmd.equals("lsm")) {
-                LsMonitor lsm = new LsMonitor(cmd);
-                result = lsm.exec(userId);
-                sendToClient(session, format(result.toString()));
-            }
-            else if (trimCmd.equals("ls")) {
-                Ls ls = new Ls(cmd);
-                result = ls.exec(userId);
-                sendToClient(session, format(result.toString()));
-            }
-            else if (trimCmd.equals("monitor")) {
-                result = new Monitor(cmd).exec(userId);
-                sendToClient(session, result.toString());
-            }
-            else if (trimCmd.equals("remove")) {
-                result = new Remove(cmd).exec(userId);
-                sendToClient(session, result.toString());
-            }
-            else if (trimCmd.equals("removeall")) {
-                result = new RemoveAll(cmd).exec(userId);
-                sendToClient(session, result.toString());
-            }
-            else {
-                result = Constant.OUT_ERROR + "命令不支持";
-                sendToClient(session, result.toString());
-            }
-        }
-    }
+//    /**
+//     * 执行命令
+//     * @param cmd 命令
+//     * @param argusUser 用户
+//     * @throws IOException 异常
+//     */
+//    private void executeCommand(String cmd, ArgusUser argusUser) throws IOException {
+//
+//        WebSocketSession session = argusUser.getSession();
+//        String userId = argusUser.getSessionId();
+//        if (Objects.isNull(cmd) || cmd.isEmpty()) {
+//            sendToClient(session, Constant.OUT_ERROR + "请输入命令");
+//        }
+////        else {
+////            String[] parts = cmd.split(Constant.SPACE_PATTERN);
+////            String trimCmd = parts[0];
+////            Object result = "";
+////            switch (trimCmd) {
+////                case "lsm":
+////                    LsMonitor lsm = new LsMonitor(cmd);
+////                    result = lsm.exec(userId);
+////                    sendToClient(session, format(result.toString()));
+////                    break;
+////                case "ls":
+////                    Ls ls = new Ls(cmd);
+////                    result = ls.exec(userId);
+////                    sendToClient(session, format(result.toString()));
+////                    break;
+////                case "monitor":
+////                    result = new Monitor(cmd).exec(userId);
+////                    sendToClient(session, result.toString());
+////                    break;
+////                case "remove":
+////                    result = new Remove(cmd).exec(userId);
+////                    sendToClient(session, result.toString());
+////                    break;
+////                case "removeall":
+////                    result = new RemoveAll(cmd).exec(userId);
+////                    sendToClient(session, result.toString());
+////                    break;
+////                default:
+////                    result = Constant.OUT_ERROR + "命令不支持";
+////                    sendToClient(session, result.toString());
+////                    break;
+////            }
+////        }
+//    }
 
     /**
      * 发送消息到客户端
@@ -122,7 +126,7 @@ public class SocketHandler extends TextWebSocketHandler {
     public void sendToClient(WebSocketSession session, String message) {
         try {
             if (session.isOpen()) {
-                session.sendMessage(new TextMessage(message + Constant.LINE_SEPARATOR));
+                session.sendMessage(new TextMessage(format(message)));
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -137,4 +141,5 @@ public class SocketHandler extends TextWebSocketHandler {
     private String format (String out) {
         return out.replace(Constant.CONCAT_SEPARATOR, Constant.LINE_SEPARATOR);
     }
+    
 }

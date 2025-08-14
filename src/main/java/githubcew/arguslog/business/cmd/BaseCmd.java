@@ -1,5 +1,6 @@
 package githubcew.arguslog.business.cmd;
 
+import githubcew.arguslog.business.auth.ArgusUser;
 import githubcew.arguslog.core.Constant;
 
 import java.util.Arrays;
@@ -9,7 +10,7 @@ import java.util.Objects;
  * 通用命令实现类
  * @author  chenenwei
  */
-public class CommonCmd implements Cmd{
+public class BaseCmd implements Cmd{
 
     /**
      * 命令
@@ -20,6 +21,15 @@ public class CommonCmd implements Cmd{
      * 参数
      */
     protected String[] args;
+
+    /**
+     * 构造函数
+     * @param args 参数
+     */
+    public BaseCmd(String cmd, String[] args) {
+        this.cmd = cmd;
+        this.args = args;
+    }
 
     /**
      * 获取命令
@@ -54,25 +64,6 @@ public class CommonCmd implements Cmd{
     }
 
     /**
-     * 构造函数
-     * @param args 参数
-     */
-    public CommonCmd (String args) {
-
-        String[] parts = args.trim().split(Constant.SPACE_PATTERN);
-
-        // 命令
-        String command = parts.length > 0 ? parts[0] : "";
-
-        // 参数
-        String[] arguments = parts.length > 1
-                ? Arrays.copyOfRange(parts, 1, parts.length)
-                : new String[0];
-        this.cmd = command;
-        this.args = arguments;
-    }
-
-    /**
      * 检查参数是否合法
      * @param args 参数
      * @return 错误信息
@@ -90,7 +81,7 @@ public class CommonCmd implements Cmd{
      * @return 执行结果
      */
     @Override
-    public Object execute(String user, String cmd, String[] args) {
+    public Object execute(ArgusUser user, String cmd, String[] args) {
         return null;
     }
 
@@ -99,7 +90,7 @@ public class CommonCmd implements Cmd{
      * @param user 用户
      * @return 执行结果
      */
-    public Object exec(String user) {
+    public Object exec(ArgusUser user) {
 
         try {
             String check = check(this.args);

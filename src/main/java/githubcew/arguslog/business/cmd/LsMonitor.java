@@ -1,5 +1,6 @@
 package githubcew.arguslog.business.cmd;
 
+import githubcew.arguslog.business.auth.ArgusUser;
 import githubcew.arguslog.core.Cache;
 import githubcew.arguslog.core.Constant;
 
@@ -8,13 +9,13 @@ import java.util.stream.Collectors;
 /**
  * @author chenenwei
  */
-public class LsMonitor extends CommonCmd{
+public class LsMonitor extends BaseCmd {
     /**
      * 构造函数
      * @param args 参数
      */
-    public LsMonitor(String args) {
-        super(args);
+    public LsMonitor(String cmd, String[] args) {
+        super(cmd, args);
     }
 
     /**
@@ -39,7 +40,7 @@ public class LsMonitor extends CommonCmd{
      * @return 执行结果
      */
     @Override
-    public String execute(String user, String cmd, String[] args) {
-        return Cache.getUrisByUser(user).stream().sorted().collect(Collectors.joining(Constant.LINE_SEPARATOR));
+    public String execute(ArgusUser user, String cmd, String[] args) {
+        return Cache.getUrisByUser(user.getSessionId()).stream().sorted().collect(Collectors.joining(Constant.LINE_SEPARATOR));
     }
 }

@@ -1,6 +1,6 @@
 package githubcew.arguslog.business.outer;
 
-import githubcew.arguslog.business.socket.SessionContext;
+import githubcew.arguslog.business.auth.ArgusUser;
 import githubcew.arguslog.business.socket.SessionManager;
 import githubcew.arguslog.business.socket.SocketHandler;
 import githubcew.arguslog.core.Constant;
@@ -21,12 +21,12 @@ import java.util.Map;
  * websocket输出器
  * @author  chenenwei
  */
-public class ArguslogWebSocketOuter implements Outer{
+public class ArgusWebSocketOuter implements Outer{
 
     /**
      * 构造方法
      */
-    public ArguslogWebSocketOuter() {
+    public ArgusWebSocketOuter() {
 
     }
     ObjectMapper objectMapper = new ObjectMapper();
@@ -43,8 +43,8 @@ public class ArguslogWebSocketOuter implements Outer{
         SocketHandler socketHandler = ContextUtil.getBean(SocketHandler.class);
         monitorOfUser.forEach((userId, monitorInfo) -> {
             try {
-                SessionContext session = ContextUtil.getBean(SessionManager.class).getSession(userId);
-                if (!session.getSession().isOpen()) {
+                ArgusUser argusUser = ContextUtil.getBean(SessionManager.class).getSession(userId);
+                if (!argusUser.getSession().isOpen()) {
                     return;
                 }
                 StringBuilder sb = new StringBuilder();
@@ -78,11 +78,11 @@ public class ArguslogWebSocketOuter implements Outer{
 
                 // 发送正常消息
                 if (sendNormal) {
-                    socketHandler.sendToClient(session.getSession(), Constant.OUT_INFO + sb.toString().replaceAll(Constant.CONCAT_SEPARATOR, Constant.LINE_SEPARATOR));
+                    socketHandler.sendToClient(argusUser.getSession(), Constant.OUT_INFO + sb);
                 }
                 // 发送异常消息
                 if (sendException) {
-                    socketHandler.sendToClient(session.getSession(), Constant.OUT_ERROR + err.toString().replaceAll(Constant.CONCAT_SEPARATOR, Constant.LINE_SEPARATOR));
+                    socketHandler.sendToClient(argusUser.getSession(), Constant.OUT_ERROR + err);
                 }
             } catch (Exception e) {
                 e.printStackTrace();

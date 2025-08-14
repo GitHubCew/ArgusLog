@@ -20,5 +20,6 @@
   "connectionClosed": "连接已关闭",
   "notConnected": "连接未建立或已关闭",
   "notConnectedError": "未连接，请输入`connect`进行连接",
-  "exitShortcut": "退出（Ctrl+D）"
+  "exitShortcut": "退出（Ctrl+D）",
+  "authCmd": "用户认证"
 }

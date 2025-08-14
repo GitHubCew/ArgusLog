@@ -1,5 +1,6 @@
 package githubcew.arguslog.business.socket;
 
+import githubcew.arguslog.business.auth.ArgusUser;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -9,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Session管理器
  * @author  chenenwei
  */
-@Component("arguslogSessionManager")
+@Component("argusSessionManager")
 public class SessionManager {
 
     /**
@@ -21,15 +22,15 @@ public class SessionManager {
     /**
      * sessionMap
      */
-    private final Map<String, SessionContext> sessionMap = new ConcurrentHashMap<>();
+    private final Map<String, ArgusUser> sessionMap = new ConcurrentHashMap<>();
 
     /**
      * 添加session
      * @param sessionId session id
-     * @param context session context
+     * @param argusUser argusUser
      */
-    public void addSession(String sessionId, SessionContext context) {
-        sessionMap.put(sessionId, context);
+    public void addSession(String sessionId, ArgusUser argusUser) {
+        sessionMap.put(sessionId, argusUser);
     }
 
     /**
@@ -43,9 +44,9 @@ public class SessionManager {
     /**
      * 获取 session
      * @param sessionId session id
-     * @return session context
+     * @return argusUser
      */
-    public SessionContext getSession(String sessionId) {
+    public ArgusUser getSession(String sessionId) {
         return sessionMap.get(sessionId);
     }
 }

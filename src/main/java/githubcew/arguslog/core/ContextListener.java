@@ -13,11 +13,11 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * 接口扫描器
+ * spring上下文监听器
  * @author  chenenwei
  */
 @Component
-public class ApiScanner implements ApplicationListener<ContextRefreshedEvent> {
+public class ContextListener implements ApplicationListener<ContextRefreshedEvent> {
 
     @Autowired
     private RequestMappingHandlerMapping requestMappingHandlerMapping;
@@ -28,7 +28,11 @@ public class ApiScanner implements ApplicationListener<ContextRefreshedEvent> {
      */
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
+        // 扫描接口
         scan();
+
+        // 启动缓存线程
+        CacheThread.getInstance().startCleanupTask();
     }
 
     /**
@@ -46,7 +50,7 @@ public class ApiScanner implements ApplicationListener<ContextRefreshedEvent> {
                 if (!url.startsWith("/")) {
                     url = "/" + url;
                 }
-                Cache.methodCache.put(url, method);
+                Cache.addMethodCache(url, method);
             });
         });
     }
