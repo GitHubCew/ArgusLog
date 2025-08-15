@@ -29,6 +29,8 @@ public class MonitorInfo {
      */
     private boolean exception;
 
+    private boolean stackTrace;
+
     /**
      * 构造方法
      */
@@ -41,13 +43,16 @@ public class MonitorInfo {
      * @param param 参数
      * @param result 结果
      * @param time 时间
+     * @param exception 异常
+     * @param stackTrace 调用链
      */
-    public MonitorInfo (Method method, boolean param, boolean result, boolean time, boolean exception) {
+    public MonitorInfo (Method method, boolean param, boolean result, boolean time, boolean exception,boolean stackTrace) {
         this.method = method;
         this.param = param;
         this.result = result;
         this.time = time;
         this.exception = exception;
+        this.stackTrace = stackTrace;
     }
 
     /**
@@ -128,5 +133,16 @@ public class MonitorInfo {
      */
     public void setException(boolean exception) {
         this.exception = exception;
+    }
+
+    public boolean isStackTrace() {
+        return stackTrace;
+    }
+    /**
+     * 设置异常
+     * @param stackTrace 调用链
+     */
+    public void setStackTrace(boolean stackTrace) {
+        this.stackTrace = stackTrace;
     }
 }

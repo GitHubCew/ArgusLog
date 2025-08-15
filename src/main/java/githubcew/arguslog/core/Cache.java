@@ -62,7 +62,7 @@ public class Cache {
         // 处理userMethods
         if(!userMethods.containsKey(user)) {
             List<MonitorInfo> methods = new ArrayList<>();
-            MonitorInfo monitorInfo = new MonitorInfo(method, true, false, false, false);
+            MonitorInfo monitorInfo = new MonitorInfo(method, true, false, false, false,false);
             monitorInfo.setMethod(method);
             methods.add(monitorInfo);
             userMethods.put(user, methods);

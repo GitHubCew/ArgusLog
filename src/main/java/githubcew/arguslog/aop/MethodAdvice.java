@@ -1,10 +1,10 @@
 package githubcew.arguslog.aop;
 
 import githubcew.arguslog.business.formater.ParamFormatter;
+import githubcew.arguslog.business.outer.Outer;
+import githubcew.arguslog.core.Cache;
 import githubcew.arguslog.core.ContextUtil;
 import githubcew.arguslog.core.OutContent;
-import githubcew.arguslog.core.Cache;
-import githubcew.arguslog.business.outer.Outer;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 
@@ -36,7 +36,8 @@ public class MethodAdvice implements MethodInterceptor {
             ParamFormatter formatter = ContextUtil.getBean(ParamFormatter.class);
             Object format = formatter.format(invocation.getMethod().getParameters(), invocation.getArguments());
             content.setParam(format);
-
+            StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+            content.setStackTrace(stackTrace);
             // 计时
             long start = System.currentTimeMillis();
 

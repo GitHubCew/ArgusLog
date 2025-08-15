@@ -1,15 +1,11 @@
 package githubcew.arguslog.business.outer;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import githubcew.arguslog.business.socket.SessionContext;
 import githubcew.arguslog.business.socket.SessionManager;
 import githubcew.arguslog.business.socket.SocketHandler;
-import githubcew.arguslog.core.Constant;
-import githubcew.arguslog.core.ContextUtil;
-import githubcew.arguslog.core.MonitorInfo;
-import githubcew.arguslog.core.OutContent;
-import githubcew.arguslog.core.Cache;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import githubcew.arguslog.core.*;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -49,8 +45,10 @@ public class ArguslogWebSocketOuter implements Outer{
                 }
                 StringBuilder sb = new StringBuilder(Constant.CONCAT_SEPARATOR);
                 StringBuilder err = new StringBuilder(Constant.CONCAT_SEPARATOR);
+                StringBuilder stackTrace = new StringBuilder(Constant.CONCAT_SEPARATOR);
                 boolean sendNormal = false;
                 boolean sendException = false;
+                boolean sendStackTrace = false;
                 if (monitorInfo.isParam()) {
                     sendNormal = true;
                     sb.append("[PARAM] ");
@@ -76,6 +74,13 @@ public class ArguslogWebSocketOuter implements Outer{
                         appendException(err, outContent.getException());
                     }
                 }
+                if (monitorInfo.isStackTrace()) {
+                    if (outContent.getStackTrace() != null) {
+                        sendStackTrace = true;
+                        stackTrace.append("[stackTrace] ");
+                        appendStackTrace(stackTrace, outContent.getStackTrace());
+                    }
+                }
 
                 // 发送正常消息
                 if (sendNormal) {
@@ -84,6 +89,10 @@ public class ArguslogWebSocketOuter implements Outer{
                 // 发送异常消息
                 if (sendException) {
                     socketHandler.sendToClient(session.getSession(), err.toString().replaceAll(Constant.CONCAT_SEPARATOR, Constant.LINE_SEPARATOR));
+                }
+                // 发送异常消息
+                if (sendStackTrace) {
+                    socketHandler.sendToClient(session.getSession(), stackTrace.toString().replaceAll(Constant.CONCAT_SEPARATOR, Constant.LINE_SEPARATOR));
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -134,5 +143,24 @@ public class ArguslogWebSocketOuter implements Outer{
             e.printStackTrace(pw);  // 将堆栈信息输出到 PrintWriter
             sb.append(sw);  // 转换为字符串并追加
         }
+
+        public void appendStackTrace (StringBuilder sb, StackTraceElement[] stackTraceElement) {
+        // 处理堆栈信息
+//            StackTraceElement[] filter = ArrayUtil.filter(stackTraceElement, t ->
+//                    !t.isNativeMethod()
+//                    && !t.getClassName().startsWith("java.")
+//                    && !t.getClassName().startsWith("sun.")
+//            );
+            String str =String.join(Constant.CONCAT_SEPARATOR, Arrays.stream(stackTraceElement).filter(t->
+                    !t.isNativeMethod()
+                    && !t.getClassName().startsWith("java.")
+                    && !t.getClassName().startsWith("sun.") )
+                    .map(Object::toString).toArray(String[]::new));// 将堆栈信息输出到 PrintWriter
+            sb.append(str);  // 转换为字符串并追加
+        }
+
+
+
+
 
 }

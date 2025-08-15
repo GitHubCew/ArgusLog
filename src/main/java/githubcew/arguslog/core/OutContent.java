@@ -27,6 +27,19 @@ public class OutContent {
     private Exception exception;
 
     /**
+     * 异常
+     */
+    private StackTraceElement[] stackTrace;
+
+
+    public StackTraceElement[] getStackTrace() {
+        return stackTrace;
+    }
+
+    public void setStackTrace(StackTraceElement[] stackTrace) {
+        this.stackTrace = stackTrace;
+    }
+    /**
      * 获取参数
      * @return 参数
      */
