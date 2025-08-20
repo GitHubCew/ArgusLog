@@ -21,7 +21,7 @@ import java.util.regex.Matcher;
  * @author chenenwei
  */
 @Controller
-public class ArguslogWeb {
+public class ArgusWeb {
 
     /**
      * alog terminal

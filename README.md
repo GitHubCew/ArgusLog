@@ -1,149 +1,151 @@
-# ArgusLog Documentation
-ArgusLog is a web-based command-line monitoring tool developed with SpringBoot and WebSocket, primarily designed for troubleshooting and performance optimization analysis during development or production. It supports monitoring of request parameters, return values, execution time, exceptions, and call chains for one or multiple APIs, helping to resolve interface monitoring challenges in complex scenarios.
+# ArgusLog 介绍
 
-# Key Features
-- Real-time monitoring via WebSocket connections
-- Support for monitoring multiple interfaces with fuzzy search capability
-- Tracks input parameters, return values, and execution time
-- Allows removal of monitored interfaces
-- High performance with minimal impact on original business operations
-- Compatible with various clients including web terminals and WebSocket tools
+ArgusLog是一个基于SpringBoot + Websocket 开发的接口监测web端命令行工具, 主要用于开发或线上接口定位、性能优化分析，支持针对一个或多个接口的的入参、返回值、耗时、异常、调用链进行监测， 可以解决一些复杂场景下接口监测的问题。
 
-# Usage
-1.Clone the repository:
+# 特性
+- 采用WebSocket连接，实时监控接口请求
+- 支持多接口监控，支持模糊搜索
+- 支持监控入参、返回值、耗时
+- 支持接口移除监控
+- 性能高、不影响原业务
+- 支持多种终端，如：Web终端、websocket工具
+
+# 使用步骤：
+
+1. 克隆项目
 ```shell
 git clone https://github.com/GitHubCew/ArgusLog.git
 ```
 
-2.Install to local Maven repository:
+2. 使用maven clean install 命令安装到本地maven仓库
 ```shell
-mvn clean install
+maven clean install
 ```
+或者从Maven中央仓库拉取最新依赖：
 
-Alternatively, pull the latest dependency from Maven Central:
-[Maven Central Repository (Sonatype)](https://central.sonatype.com/artifact/io.github.githubcew/arguslog)
+[Maven中央仓库地址(Sonatype Central)](https://central.sonatype.com/artifact/io.github.githubcew/arguslog)
 
-3.Add dependency to your project:
+
+3. 在项目中引用依赖:
+
 ```xml
-<dependency>
-    <groupId>io.github.githubcew</groupId>
-    <artifactId>arguslog</artifactId>
-    <version>${version}</version> <!-- Replace with actual version -->
-</dependency>
+      <dependency>
+            <groupId>io.github.githubcew</groupId>
+            <artifactId>arguslog</artifactId>
+            <version>${version}</version> <!-- 换为实际版本号 -->
+        </dependency>
 ```
 
-4.Security Configuration
-  
-If your project has security validation, whitelist these paths:
+4. 如果项目中有安全校验，则需要放开路径：
+    - `/argus-ws`
+    - `/argus/index.html`
 
-- /arguslog-ws
-- /arguslog/index.html
 
-Example for Shiro:
-```java
-filters.put("/arguslog-ws", "anon");
-filters.put("/arguslog/index.html", "anon");
-```
-Example for Spring Security:
+例如：Shiro中添加：
+
+   ```java
+   filters.put("/argus-ws", "anon");
+   filters.put("/argus/index.html", "anon");
+   ```
+
+SpringSecurity中添加：
 ```java
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
-
+    
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
-                .authorizeRequests()
-                .antMatchers("/arguslog-ws", "/arguslog/index.html").permitAll()
+            .authorizeRequests()
+                // 放开指定的接口
+                .antMatchers("/argus-ws", "/argus/index.html").permitAll()
+                // 其他接口需要认证
                 .anyRequest().authenticated()
-                .and()
-                .formLogin().disable()
-                .httpBasic().disable()
-                .csrf().disable();
-
+            .and()
+            .formLogin().disable()
+            .httpBasic().disable()
+            .csrf().disable(); // 根据需求决定是否禁用CSRF
+    }
+}
 ```
 
-5.Getting Started
-   
-- Start your application
-- Access the web interface at:
 
-```shell
-[your-domain]/[context-path]/arguslog/index.html
-```
+5. 启动项目
 
-**Example**: localhost:8080/myapp/arguslog/index.html
 
-**Upon successful connection, you'll see**:
+6. 访问项目web + `/argus/index.html`  
+   例如： `localhost:80/context/argus/index.html` (context: 为项目的context-path上下文)
 
-```shell
+
+7. 进入arguslog,如果出现如下界面，则成功
+
+``` shell
   ,---.                             ,--.                 
  /  O  \ ,--.--. ,---.,--.,--. ,---.|  |    ,---. ,---.  
 |  .-.  ||  .--'| .-. |  ||  |(  .-'|  |   | .-. | .-. | 
 |  | |  ||  |   ' '-' '  ''  '.-'  `)  '--.' '-' ' '-' ' 
 `--' `--'`--'   .`-  / `----' `----'`-----' `---'.`-  /  
-                `---'                            `---'  
-Input 'help' to view command usage.
- 
- 
- $
+                `---'                            `---'   
+                                                         
+          Developed by: chenenwei heyugui               
+16:04:24
+提示: 可以使用 ↑/↓ 方向键浏览历史命令
+'connect' 连接 'exit' 或 'Ctrl+D' 关闭连接 'clear' 清屏 'auth' 认证 'help' 查看命令列表
+
+$
 ```
 
-# Command Reference
-**connect** - Establish WebSocket connection
+8.命令介绍
+- connect 连接 WebSocket 服务器
+- exit/quit 断开 WebSocket 连接
+- clear 清空终端屏幕
+- auth [username] [password] [time] 认证
+- help [command] 查看命令用法
+- ls [-m] [path] 查看API（监听）接口,支持模糊搜索
+- monitor [path] [param | result | time]监控指定API接口,监控内容可选：param:参数 result:结果 time:耗时
+- remove [-a | path] 移除指定监听接口或者全部监听接口
 
-**exit/qui**t： Terminate WebSocket connection
 
-**clear**： Clear terminal screen
+# 例子
 
-**help**： Display help information
+假设我们有以下接口：
 
-**ls** [path]： List API interfaces (supports fuzzy search)
-
-**lsm** ： List Monitored API interfaces
-
-**monitor** [path] [param | result | time]： Monitor specific API (options: param, result, time)
-
-**remove** [path]：Remove monitoring for specified API
-
-**removeall**： remove all monitored APIs
-
-**Tip**: Use ↑/↓ arrow keys to navigate command history
-
-# Example Usage
-
-Consider this sample API:
 ```java
 @GetMapping("/activityWalkRouteActivity/info")
 public Result<ActivityWalkRouteActivityInfoVO> info(@RequestParam("id") Long id) {
-    // Implementation
+    // 接口实现
 }
-
 ```
 
-To monitor input parameters and execution time for /activityWalkRouteActivity/info:
+如果我们要监控 `/activityWalkRouteActivity/info` 的入参和耗时，并监控返回的结果和耗时。
 
-1.Connect to the terminal and establish WebSocket connection:
+
+1 连接和监听接口
+
+首先我们访问localhost:80/context/argus/index.html 进入arguslog终端，输入命令：
+
 ```shell
-$ connect
-arguslog connected
+# 输入connect命令连接 WebSocket 服务器
+$connect
+16:43:18
+Connecting to ws://localhost:8080/argus-ws...
+16:43:18
+argus 已连接
 ```
 
-2.Start monitoring:
-```shell
-arguslog> monitor /activityWalkRouteActivity/info param,time
-ok
-```
-3.Trigger the API (e.g., via curl):
-```shell
-curl http://localhost:8080/activityWalkRouteActivity/info?id=495
+2 结果输出
+```shell 
+
+
+# 输如monitor命令监测后，需要等待或者手动调用接口/activityWalkRouteActivity/info
+# 例如：curl http://localhost:8080/activityWalkRouteActivity/info?id=495
+
+
+# 接口监测结果输出
+[PARAM] "id":495   # 方法参数
+[TIME] 151 # 方法耗时
+
+
 ```
 
-4.View monitoring output:
-```text
-arguslog>monitor /activityWalkRouteActivity/info param,time
-ok
-
-[PARAM] "id":495   # Method parameter
-[TIME] 151        # Execution time (ms)
-```
