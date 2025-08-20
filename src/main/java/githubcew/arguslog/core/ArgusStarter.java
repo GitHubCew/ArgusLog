@@ -37,7 +37,7 @@ public class ArgusStarter {
         CommandManager commandManager = argusManager.getCommandManager();
 
         // 判断命令是否需要鉴权
-        if (commandManager.isIgnoreAuthorization(request.getRequestCommand().getCommand())) {
+        if (commandManager.isUnauthorizedCommand(request.getRequestCommand().getCommand())) {
             // 执行命令
             ExecuteResult executeResult = argusManager.getCommandManager().execute(request);
             response.setExecuteResult(executeResult);

@@ -16,7 +16,7 @@ public class ArgusConstant {
 
     public final static String BASE_RESOURCE_PATH = "META-INF/resources/argus/";
 
-    public final static String ALOG_TERMINAL_HTML = BASE_RESOURCE_PATH + "index.html";
+    public final static String ARGUS_TERMINAL_HTML = BASE_RESOURCE_PATH + "index.html";
 
     public static final Pattern I18N_PATTERN = Pattern.compile("\\$\\{i18n\\.(\\w+)\\}");
 
@@ -35,11 +35,7 @@ public class ArgusConstant {
 
 
     public final static String OK = "ok";
-    public final static String ERROR = "error";
-    public final static String EMPTY = "";
 
-    public final static String OUT_INFO = "[@INFO@]";
-    public final static String OUT_ERROR = "[@ERROR@]";
 
     public final static String TOKEN_SPLIT = "#token#";
 }

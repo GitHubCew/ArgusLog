@@ -6,7 +6,6 @@ import githubcew.arguslog.core.exception.CommandDuplicateException;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
@@ -21,9 +20,9 @@ public class CommandManager {
     private final Map<ArgusCommand, CommandExecutor> executors = Collections.synchronizedMap(new LinkedHashMap<>(10));
 
     /**
-     * 忽略认证命令
+     * 不需要认证命令集
      */
-    private final Set<ArgusCommand> ignoreAuthorization = Collections.synchronizedSet(new HashSet<>(10));
+    private final Set<ArgusCommand> unauthorizedCommands = Collections.synchronizedSet(new HashSet<>(10));
 
     /**
      * 注册命令
@@ -57,23 +56,23 @@ public class CommandManager {
     }
 
     /**
-     * 添加忽略认证命令
-     * @param argusCommand 命令
+     * 注册免认证命令集
+     * @param argusCommands 命令集合
      */
-    public void ignoreAuthorization (ArgusCommand argusCommand) {
-        ignoreAuthorization.add(argusCommand);
+    public void registerUnauthorizedCommands(Collection<ArgusCommand> argusCommands) {
+        unauthorizedCommands.addAll(argusCommands);
     }
 
     /**
-     * 添加忽略认证命令
-     * @param argusCommands 命令
+     * 注册免认证命令集
+     * @param argusCommand 命令
      */
-    public void ignoreAuthorization (Collection<ArgusCommand> argusCommands) {
-        ignoreAuthorization.addAll(argusCommands);
+    public void registerUnauthorizedCommand(ArgusCommand argusCommand) {
+        unauthorizedCommands.add(argusCommand);
     }
 
-    public boolean isIgnoreAuthorization (String command) {
-        return ignoreAuthorization.stream().anyMatch(cmd -> cmd.getCmd().equals(command));
+    public boolean isUnauthorizedCommand(String command) {
+        return unauthorizedCommands.stream().anyMatch(cmd -> cmd.getCmd().equals(command));
     }
     /**
      * 执行命令

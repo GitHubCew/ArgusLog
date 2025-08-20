@@ -51,19 +51,19 @@ public class ArgusWebSocketOuter implements Outer{
                 boolean sendException = false;
                 if (monitorInfo.isParam()) {
                     sendNormal = true;
-                    sb.append("[PARAM] ");
+                    sb.append("param  ==>  ");
                     appendValue(sb, objectMapper, monitorOutput.getParam());
                     sb.append(ArgusConstant.CONCAT_SEPARATOR);
                 }
                 if (monitorInfo.isResult()) {
                     sendNormal = true;
-                    sb.append("[RESULT] ");
+                    sb.append("result ==>  ");
                     appendValue(sb, objectMapper, monitorOutput.getResult());
                     sb.append(ArgusConstant.CONCAT_SEPARATOR);
                 }
                 if (monitorInfo.isTime()) {
                     sendNormal = true;
-                    sb.append("[TIME] ");
+                    sb.append("time   ==>  ");
                     appendValue(sb, objectMapper, monitorOutput.getTime());
                     sb.append(ArgusConstant.CONCAT_SEPARATOR);
                 }

@@ -230,13 +230,23 @@ public class ArgusCache {
     /**
      * 移除凭证过期的用户
      */
-    public static void clearExpiredUser () {
-        methodUsers.forEach((method, users) -> {
-            users.removeIf(user -> user.getToken().getExpireTime() < System.currentTimeMillis());
-            if (users.isEmpty()) {
-                methodUsers.remove(method);
+    public static void clearExpiredUser() {
+        for (ArgusUser user : users) {
+            if (user.getToken().getExpireTime() < System.currentTimeMillis()) {
+
+                // 删除方法监听用户
+                methodUsers.entrySet().removeIf(entry -> {
+                    entry.getValue().removeIf(u -> u.getSession().equals(user.getSession()));
+                    return entry.getValue().isEmpty();
+                });
+
+                // 删除用户监听方法
+                userMonitorMethods.keySet().removeIf(u -> u.getSession().equals(user.getSession()));
+
+                // 删除凭证
+                users.remove(user);
             }
-        });
+        }
     }
 
     /**

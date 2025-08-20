@@ -1,6 +1,8 @@
 package githubcew.arguslog.core;
 
 
+import org.springframework.stereotype.Component;
+
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;

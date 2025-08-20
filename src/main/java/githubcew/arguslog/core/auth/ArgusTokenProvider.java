@@ -11,7 +11,7 @@ public class ArgusTokenProvider implements TokenProvider{
 
     @Override
     public Token provide() {
-        // 默认过期为 1小时
-        return new Token(UUID.randomUUID().toString(), System.currentTimeMillis() + 1000 * 60 * 60);
+        // 默认过期为 10分钟
+        return new Token(UUID.randomUUID().toString(), System.currentTimeMillis() + 1000 * 60 * 10);
     }
 }

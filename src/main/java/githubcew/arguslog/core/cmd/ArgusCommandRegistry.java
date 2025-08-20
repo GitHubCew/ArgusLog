@@ -37,11 +37,11 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
     }
 
     @Override
-    public void ignoreAuthorization(CommandManager commandManager) {
+    public void registerUnauthorizedCommands(CommandManager commandManager) {
         if (this.commandManager == null) {
             this.commandManager = commandManager;
         }
-        this.commandManager.ignoreAuthorization(help().keySet());
+        this.commandManager.registerUnauthorizedCommands(help().keySet());
     }
 
     private Map<ArgusCommand, CommandExecutor> buildCommand (ArgusCommand argusCommand, CommandExecutor executor) {

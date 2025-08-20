@@ -155,7 +155,7 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
      */
     private void registerIgnoreAuthorizationCommand () {
         for (ArgusConfigurer configurer : configurers) {
-            configurer.ignoreAuthorization(this.commandManager);
+            configurer.registerUnauthorizedCommands(this.commandManager);
         }
     }
     /**

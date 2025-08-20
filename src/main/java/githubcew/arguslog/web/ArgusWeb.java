@@ -34,7 +34,7 @@ public class ArgusWeb {
             @RequestHeader(value = "Accept-Language", required = false) String acceptLanguage) throws IOException {
 
         // 1. 加载HTML模板
-        ClassPathResource resource = new ClassPathResource(ArgusConstant.ALOG_TERMINAL_HTML);
+        ClassPathResource resource = new ClassPathResource(ArgusConstant.ARGUS_TERMINAL_HTML);
         if (!resource.exists()) {
             return ResponseEntity.notFound().build();
         }
