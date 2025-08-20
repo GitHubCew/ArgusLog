@@ -1,10 +1,10 @@
 package githubcew.arguslog.aop;
 
-import githubcew.arguslog.business.formater.ParamFormatter;
-import githubcew.arguslog.core.ContextUtil;
-import githubcew.arguslog.core.OutContent;
-import githubcew.arguslog.core.Cache;
-import githubcew.arguslog.business.outer.Outer;
+import githubcew.arguslog.core.formater.ParamFormatter;
+import githubcew.arguslog.core.ArgusCache;
+import githubcew.arguslog.core.util.ContextUtil;
+import githubcew.arguslog.core.MonitorOutput;
+import githubcew.arguslog.core.outer.Outer;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 
@@ -23,9 +23,9 @@ public class MethodAdvice implements MethodInterceptor {
     @Override
     public Object invoke(MethodInvocation invocation) throws Throwable {
 
-        boolean hasMethod = Cache.hasMethod(invocation.getMethod());
+        boolean hasMethod = ArgusCache.containsMethod(invocation.getMethod());
 
-        OutContent content = new OutContent();
+        MonitorOutput content = new MonitorOutput();
         Object returnVal  = null;
         if (!hasMethod) {
             returnVal = invocation.proceed();

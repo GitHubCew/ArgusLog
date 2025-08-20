@@ -1,6 +1,6 @@
 package githubcew.arguslog.web;
 
-import githubcew.arguslog.core.Constant;
+import githubcew.arguslog.core.ArgusConstant;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -28,13 +28,13 @@ public class ArguslogWeb {
      * @return ResponseEntity
      * @throws IOException IOException
      */
-    @GetMapping("/arguslog/index.html")
+    @GetMapping("/argus/index.html")
     public ResponseEntity<byte[]> alogTerminal(
             HttpServletRequest request,
             @RequestHeader(value = "Accept-Language", required = false) String acceptLanguage) throws IOException {
 
         // 1. 加载HTML模板
-        ClassPathResource resource = new ClassPathResource(Constant.ALOG_TERMINAL_HTML);
+        ClassPathResource resource = new ClassPathResource(ArgusConstant.ALOG_TERMINAL_HTML);
         if (!resource.exists()) {
             return ResponseEntity.notFound().build();
         }
@@ -90,11 +90,11 @@ public class ArguslogWeb {
      */
     private Map<String, String> loadI18nResources(String language) throws IOException {
         String i18nFilePath = String.format("locales/%s.json", language);
-        ClassPathResource i18nResource = new ClassPathResource(Constant.BASE_RESOURCE_PATH + i18nFilePath);
+        ClassPathResource i18nResource = new ClassPathResource(ArgusConstant.BASE_RESOURCE_PATH + i18nFilePath);
 
         if (!i18nResource.exists()) {
             // 如果指定语言文件不存在，默认英文
-            i18nResource = new ClassPathResource(Constant.BASE_RESOURCE_PATH + "locales/en.json");
+            i18nResource = new ClassPathResource(ArgusConstant.BASE_RESOURCE_PATH + "locales/en.json");
         }
 
         // 这里简化处理，实际可以使用Jackson等JSON库
@@ -131,7 +131,7 @@ public class ArguslogWeb {
      */
     private String processPlaceholder(String html, Map<String, String> i18nMap) {
         StringBuffer result = new StringBuffer();
-        Matcher matcher = Constant.I18N_PATTERN.matcher(html);
+        Matcher matcher = ArgusConstant.I18N_PATTERN.matcher(html);
 
         while (matcher.find()) {
             String key = matcher.group(1);
