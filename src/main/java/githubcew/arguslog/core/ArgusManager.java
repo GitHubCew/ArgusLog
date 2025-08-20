@@ -81,7 +81,7 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
         this.extractor = applicationContext.getBean(Extractor.class);
         this.userProvider = applicationContext.getBean(UserProvider.class);
         this.tokenProvider = applicationContext.getBean(TokenProvider.class);
-        this.requestMappingHandlerMapping = applicationContext.getBean(RequestMappingHandlerMapping.class);
+        this.requestMappingHandlerMapping = applicationContext.getBean("requestMappingHandlerMapping", RequestMappingHandlerMapping.class);
 
         ArgusCacheManager argusCacheManager = ArgusCacheManager.getInstance();
 
@@ -111,6 +111,9 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
 
         // 注册命令
         registerCommand();
+
+        // 忽略鉴权命令
+        registerIgnoreAuthorizationCommand();
 
         // 认证器排序
         this.authenticators.sort(AnnotationAwareOrderComparator.INSTANCE);
@@ -149,6 +152,14 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
         }
     }
 
+    /**
+     * 注册忽略鉴权命令
+     */
+    private void registerIgnoreAuthorizationCommand () {
+        for (ArgusConfigurer configurer : configurers) {
+            configurer.ignoreAuthorization(this.commandManager);
+        }
+    }
     /**
      * 扫描接口
      */

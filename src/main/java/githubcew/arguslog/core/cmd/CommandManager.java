@@ -5,10 +5,7 @@ import githubcew.arguslog.core.ArgusRequest;
 import githubcew.arguslog.core.exception.CommandDuplicateException;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -21,7 +18,12 @@ public class CommandManager {
     /**
      * 处理器
      */
-    private final Map<ArgusCommand, CommandExecutor> executors = new ConcurrentHashMap<>(10);
+    private final Map<ArgusCommand, CommandExecutor> executors = Collections.synchronizedMap(new LinkedHashMap<>(10));
+
+    /**
+     * 忽略认证命令
+     */
+    private final Set<ArgusCommand> ignoreAuthorization = Collections.synchronizedSet(new HashSet<>(10));
 
     /**
      * 注册命令
@@ -54,6 +56,25 @@ public class CommandManager {
         executors.remove(command);
     }
 
+    /**
+     * 添加忽略认证命令
+     * @param argusCommand 命令
+     */
+    public void ignoreAuthorization (ArgusCommand argusCommand) {
+        ignoreAuthorization.add(argusCommand);
+    }
+
+    /**
+     * 添加忽略认证命令
+     * @param argusCommands 命令
+     */
+    public void ignoreAuthorization (Collection<ArgusCommand> argusCommands) {
+        ignoreAuthorization.addAll(argusCommands);
+    }
+
+    public boolean isIgnoreAuthorization (String command) {
+        return ignoreAuthorization.stream().anyMatch(cmd -> cmd.getCmd().equals(command));
+    }
     /**
      * 执行命令
      * @param request 请求

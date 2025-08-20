@@ -79,7 +79,7 @@
     let historyIndex = -1;
 
     let socket = null;
-    let userId = 'arguslog';
+    let userId = 'argus';
 
     // 从 localStorage 恢复 token
     let token = localStorage.getItem('terminal_token') || null;
@@ -129,7 +129,7 @@
         const type = codePart === '1' ? 'info' : 'error';
 
         // 返回data部分作为内容
-        return { type, content: dataPart || message };
+        return { type, content: dataPart};
     }
 
     function appendToTerminal(text, type='info', time=true) {
@@ -183,7 +183,7 @@
             socket.onerror=(e)=>{ appendToTerminal('WebSocket error: '+(e.message||'Unknown error'),'error'); };
             socket.onclose=(e)=>{ appendToTerminal(`Disconnected (code ${e.code})`,'system'); updatePrompt(false); };
             socket.onmessage=(e)=>{
-                console.log('Received message:',e.data)
+                // console.log('Received message:',e.data)
                 const response = parseServerResponse(e.data);
                 appendToTerminal(response);
             };
@@ -226,7 +226,6 @@
             case 'connect': connectSocket(); break;
             case 'exit': case 'quit': disconnectSocket(); break;
             case 'clear': clearTerminal(); break;
-            // case 'help': showHelp(); break;
             default:
                 if(socket && socket.readyState===WebSocket.OPEN) {
                     let sendCmd = cmd;
@@ -238,16 +237,6 @@
                     appendToTerminal('${i18n.notConnectedError}','error');
                 }
         }
-    }
-
-    function showHelp(){
-        appendToTerminal("${i18n.helpText}",'system');
-        appendToTerminal("┌─────────────────────────────────────────────────────────────────────────────────────────────┐",'default', false);
-        appendToTerminal("  connect                                     ${i18n.connectCmd}                              ",'info', false);
-        appendToTerminal("  exit/quit                                   ${i18n.exitCmd}                                ",'info', false);
-        appendToTerminal("  clear                                       ${i18n.clearCmd}                               ",'info', false);
-        appendToTerminal("└─────────────────────────────────────────────────────────────────────────────────────────────┘",'default', false);
-        appendToTerminal("${i18n.tips}",'info');
     }
 
     hiddenInput.addEventListener('paste', e => {
@@ -314,16 +303,12 @@
         "|  .-.  ||  .--'| .-. |  ||  |(  .-'|  |   | .-. | .-. | \n"+
         "|  | |  ||  |   ' '-' '  ''  '.-'  `)  '--.' '-' ' '-' ' \n"+
         "`--' `--'`--'   .`-  / `----' `----'`-----' `---'.`-  /  \n"+
-        "                `---'                            `---'  "
-        ,'info',false);
-    appendToTerminal("${i18n.helpText}",'system', false);
-    appendToTerminal("┌─────────────────────────────────────────────────────────────┐",'default', false);
-    appendToTerminal("  connect               ${i18n.connectCmd}                     ",'info', false);
-    appendToTerminal("  exit/quit             ${i18n.exitCmd}                        ",'info', false);
-    appendToTerminal("  clear                 ${i18n.clearCmd}                       ",'info', false);
-    appendToTerminal("└─────────────────────────────────────────────────────────────┘",'default', false);
+        "                `---'                            `---'   \n"+
+        "                                                         \n"+
+        "          Developed by: chenenwei heyugui               \n",
+        'info', false);
     appendToTerminal("${i18n.tips}",'info');
-    appendToTerminal("${i18n.helpCommand}",'info',false);
+    appendToTerminal("${i18n.initCmd}",'info',false);
 
     renderCommand();
 </script>

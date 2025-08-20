@@ -7,11 +7,9 @@ import githubcew.arguslog.core.ArgusRequest;
 import githubcew.arguslog.core.account.ArgusUser;
 import githubcew.arguslog.core.method.ArgusMethod;
 import githubcew.arguslog.core.method.MonitorInfo;
-import org.springframework.core.Constants;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
-import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -28,12 +26,26 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
     @Override
     public void registerCommand(CommandManager commandManager) {
 
-        this.commandManager = commandManager;
-
+        if (this.commandManager == null) {
+            this.commandManager = commandManager;
+        }
         // 添加Argus内置命令
         this.commandManager.register(help());
         this.commandManager.register(ls());
         this.commandManager.register(monitor());
+        this.commandManager.register(remove());
+    }
+
+    @Override
+    public void ignoreAuthorization(CommandManager commandManager) {
+        if (this.commandManager == null) {
+            this.commandManager = commandManager;
+        }
+        this.commandManager.ignoreAuthorization(help().keySet());
+    }
+
+    private Map<ArgusCommand, CommandExecutor> buildCommand (ArgusCommand argusCommand, CommandExecutor executor) {
+        return Collections.singletonMap(argusCommand, executor);
     }
 
     /**
@@ -41,18 +53,23 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
      * @return map
      */
     private Map<ArgusCommand, CommandExecutor> help () {
-        ArgusCommand command = new ArgusCommand("help", "命令用法查看", "help [command]", "help ls");
+
+        ArgusCommand command = new ArgusCommand(
+                "help",
+                "命令用法查看， [command]: 命令",
+                "help [command]",
+                "help ls");
         CommandExecutor executor = new CommandExecutor() {
             @Override
             public boolean supports(String command) {
-                return command.equals("help");
+                return "help".equals(command);
             }
 
             @Override
             public ExecuteResult execute(ArgusRequest request) {
                 String[] args = request.getRequestCommand().getArgs();
                 if (args.length > 1) {
-                    return new ExecuteResult(ArgusConstant.FAILED, "param error!");
+                    return new ExecuteResult(ArgusConstant.FAILED, "param error! usage: help [command]");
                 }
                 List<ArgusCommand> commands;
                 if (args.length == 1) {
@@ -74,10 +91,7 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
                 return new ExecuteResult(ArgusConstant.SUCCESS, sb.toString());
             }
         };
-
-        Map<ArgusCommand, CommandExecutor> help = new HashMap<>();
-        help.put(command, executor);
-        return help;
+        return buildCommand(command, executor);
 
     }
 
@@ -86,99 +100,204 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
      * @return map
      */
     private Map<ArgusCommand, CommandExecutor> ls () {
-        ArgusCommand command = new ArgusCommand("ls", "列出监听的接口列表", "ls [path]", "ls /api/v1");
+        ArgusCommand command = new ArgusCommand(
+                "ls",
+                "列出接口列表 [-m]: 过滤已监听的接口, [path]: 接口uri",
+                "ls [-m] [path]",
+                "ls /api/v1");
         CommandExecutor executor = new CommandExecutor() {
             @Override
             public boolean supports(String command) {
-                return command.equals("ls");
-            }
-
-            @Override
-            public ExecuteResult execute(ArgusRequest request) {
-                String[] args = request.getRequestCommand().getArgs();
-                if (args.length > 1) {
-                    return new ExecuteResult(ArgusConstant.FAILED, "param error!");
-                }
-                String uri = "";
-                if (args.length == 1) {
-                    uri = args[0];
-                }
-                List<String> data = ArgusCache.listUriMethod(uri);
-                return new ExecuteResult(ArgusConstant.SUCCESS, String.join(ArgusConstant.LINE_SEPARATOR, data));
-            }
-        };
-
-        Map<ArgusCommand, CommandExecutor> ls = new HashMap<>();
-        ls.put(command, executor);
-        return ls;
-
-    }
-
-    /**
-     * ls命令
-     * @return map
-     */
-    private Map<ArgusCommand, CommandExecutor> monitor () {
-        ArgusCommand command = new ArgusCommand("monitor", "监听接口,<api>为接口路径,[target]可选值为：param（参数）,result（结果）,time（耗时）,ex（异常） ", "monitor <api> [target]", "monitor /api/v1/demo param,result");
-        CommandExecutor executor = new CommandExecutor() {
-            @Override
-            public boolean supports(String command) {
-                return command.equals("monitor");
+                return "ls".equals(command);
             }
 
             @Override
             public ExecuteResult execute(ArgusRequest request) {
                 String[] args = request.getRequestCommand().getArgs();
                 if (args.length > 2) {
-                    return new ExecuteResult(ArgusConstant.FAILED, "param error!");
+                    return new ExecuteResult(ArgusConstant.FAILED, "param error! usage: ls [-m] <path>");
                 }
+                if (args.length > 0) {
+                    String arg = args[0];
+                    if (arg.equals("-m")) {
+                        return listMonitor(new ArgusUser(request), args);
+                    }
+                }
+                return list(args);
+            }
+
+            /**
+             * 查询用户监听接口
+             * @param argusUser 用户
+             * @param args 参数
+             * @return 结果
+             */
+            private ExecuteResult listMonitor (ArgusUser argusUser, String[] args) {
                 String uri = "";
-                String target = "";
-                ArgusMethod method = null;
-                boolean monitorParam = false;
-                boolean monitorResult = false;
-                boolean monitorTime = false;
-                boolean monitorException = false;
-                if (args.length == 1) {
-                    uri = args[0];
-                    if (!ArgusCache.hasUri(uri)) {
-                        return new ExecuteResult(ArgusConstant.FAILED, "uri not exist!");
-                    }
-                    method = ArgusCache.getUriMethod(uri);
+                if (args.length > 1) {
+                    uri = args[1];
                 }
-                else if (args.length == 2) {
+                return new ExecuteResult(ArgusConstant.SUCCESS, String.join(ArgusConstant.LINE_SEPARATOR, ArgusCache.getUserMonitorUris(argusUser, uri)));
+            }
+
+            /**
+             * 查询接口路径
+             * @param args 参数
+             * @return 结果
+             */
+            private ExecuteResult list (String[] args) {
+                String uri = "";
+                if (args.length > 0) {
                     uri = args[0];
-                    if (!ArgusCache.hasUri(uri)) {
-                        return new ExecuteResult(ArgusConstant.FAILED, "uri not exist!");
-                    }
-                    method = ArgusCache.getUriMethod(uri);
-                    target = args[1];
-                    boolean contains = Arrays.asList("param", "result", "time", "ex").containsAll(Arrays.asList(target.split(",")));
-                    if (!contains) {
-                        return new ExecuteResult(ArgusConstant.FAILED, "target param error!");
-                    }
-                    if (target.contains("param")) {
-                        monitorParam = true;
-                    }
-                    if (target.contains("result")) {
-                        monitorResult = true;
-                    }
-                    if (target.contains("time")) {
-                        monitorTime = true;
-                    }
-                    if (target.contains("ex")) {
-                        monitorException = true;
-                    }
+                }
+                List<String> data = ArgusCache.getUris(uri);
+                return new ExecuteResult(ArgusConstant.SUCCESS, String.join(ArgusConstant.LINE_SEPARATOR, data));
+            }
+        };
+        return buildCommand(command, executor);
+    }
+
+    /**
+     * monitor命令
+     * @return map
+     */
+    private Map<ArgusCommand, CommandExecutor> monitor() {
+        ArgusCommand command = new ArgusCommand(
+                "monitor",
+                "监听接口,<path>: 接口路径, [target]:可选值为：param（参数）,result（结果）,time（耗时）,ex（异常）",
+                "monitor <path> [target]",
+                "monitor /api/v1/demo param,result"
+        );
+
+        CommandExecutor executor = new CommandExecutor() {
+            private final Set<String> MONITOR_TARGETS = new HashSet<>(Arrays.asList("param", "result", "time", "ex"));
+
+            @Override
+            public boolean supports(String command) {
+                return "monitor".equals(command);
+            }
+
+            @Override
+            public ExecuteResult execute(ArgusRequest request) {
+                String[] args = request.getRequestCommand().getArgs();
+
+                if (args.length == 0 || args.length > 2) {
+                    return new ExecuteResult(ArgusConstant.FAILED, "param error! usage: monitor <path> [target]");
                 }
 
-                ArgusCache.addMonitorInfo(new ArgusUser(request), new MonitorInfo(method, monitorParam, monitorResult, monitorTime, monitorException, true));
+                String uri = args[0];
+                if (!ArgusCache.hasUri(uri)) {
+                    return new ExecuteResult(ArgusConstant.FAILED, "uri not found: " + uri);
+                }
+
+                try {
+                    MonitorInfo monitorInfo = createMonitorInfo(uri, args);
+                    ArgusCache.addMonitorInfo(new ArgusUser(request), monitorInfo);
+                    return new ExecuteResult(ArgusConstant.SUCCESS, ArgusConstant.OK);
+                } catch (IllegalArgumentException e) {
+                    return new ExecuteResult(ArgusConstant.FAILED, e.getMessage());
+                }
+            }
+
+            /**
+             * 监听方法信息
+             * @param uri uri
+             * @param args 参数
+             * @return 监听信息
+             */
+            private MonitorInfo createMonitorInfo(String uri, String[] args) {
+                ArgusMethod method = ArgusCache.getUriMethod(uri);
+                method.setUri(uri);
+
+                MonitorInfo monitorInfo = new MonitorInfo();
+                monitorInfo.setMethod(method);
+
+                if (args.length == 1) {
+                    // 默认监控所有目标
+                    monitorAll(monitorInfo);
+                } else {
+                    // 解析指定的监控目标
+                    monitorTargets(monitorInfo, args[1]);
+                }
+
+                return monitorInfo;
+            }
+
+            /**
+             * 监听全部信息
+             * @param monitorInfo 监听方法信息
+             */
+            private void monitorAll(MonitorInfo monitorInfo) {
+                monitorInfo.setParam(true);
+                monitorInfo.setResult(true);
+                monitorInfo.setTime(true);
+                monitorInfo.setException(true);
+            }
+
+            /**
+             * 监控方法目标信息
+             * @param monitorInfo 监听方法信息
+             * @param target 目标信息
+             */
+            private void monitorTargets(MonitorInfo monitorInfo, String target) {
+                String[] targets = target.split(",");
+
+                // 验证目标参数
+                if (!MONITOR_TARGETS.containsAll(Arrays.asList(targets))) {
+                    throw new IllegalArgumentException("param error!");
+                }
+
+                // 设置监控目标
+                Set<String> targetSet = new HashSet<>(Arrays.asList(targets));
+                monitorInfo.setParam(targetSet.contains("param"));
+                monitorInfo.setResult(targetSet.contains("result"));
+                monitorInfo.setTime(targetSet.contains("time"));
+                monitorInfo.setException(targetSet.contains("ex"));
+            }
+        };
+
+        return buildCommand(command, executor);
+    }
+
+    /**
+     * 移除命令
+     * @return  map
+     */
+    private Map<ArgusCommand, CommandExecutor> remove() {
+
+        ArgusCommand command = new ArgusCommand(
+                "remove",
+                "移除监听接口,[-a]: 移除监听全部接口, <path>: 接口路径",
+                "remove [-a] <path>",
+                "remove /api/v1/demo, remove -a"
+        );
+
+        CommandExecutor executor = new CommandExecutor() {
+            @Override
+            public boolean supports(String command) {
+                return "remove".equals(command);
+            }
+
+            @Override
+            public ExecuteResult execute(ArgusRequest request) {
+
+                String[] args = request.getRequestCommand().getArgs();
+                if (args.length != 1) {
+                    return new ExecuteResult(ArgusConstant.FAILED, "param error! usage: remove [-a | <path>]");
+                }
+                ArgusUser user = new ArgusUser(request);
+                if (args[0].equals("-a")) {
+                    ArgusCache.userRemoveAllMethod(user);
+                    return new ExecuteResult(ArgusConstant.SUCCESS, ArgusConstant.OK);
+                }
+                if(!ArgusCache.hasUri(args[0])) {
+                    return new ExecuteResult(ArgusConstant.FAILED, "uri not found: " + args[0]);
+                }
+                ArgusCache.userRemoveMethod(user, ArgusCache.getUriMethod(args[0]));
                 return new ExecuteResult(ArgusConstant.SUCCESS, ArgusConstant.OK);
             }
         };
 
-        Map<ArgusCommand, CommandExecutor> monitor = new HashMap<>();
-        monitor.put(command, executor);
-        return monitor;
-
+        return buildCommand(command, executor);
     }
 }

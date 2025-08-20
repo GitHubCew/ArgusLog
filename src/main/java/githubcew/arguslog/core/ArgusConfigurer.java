@@ -23,6 +23,8 @@ public interface ArgusConfigurer {
     default void registerCommand (CommandManager commandManager) {
     }
 
+    default void ignoreAuthorization (CommandManager commandManager) {}
+
     /**
      * 注册自定义认证器
      * @param authenticators 认证器

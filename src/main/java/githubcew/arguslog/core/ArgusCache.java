@@ -76,10 +76,15 @@ public class ArgusCache {
         if (!containsUser(user)) {
             userMonitorMethods.put(user, new ArrayList<>(10));
         }
+        // 添加监听方法
         if (!userContainsMethod(user, monitorInfo.getMethod())) {
-           userMonitorMethods.get(user).add(monitorInfo);
+            userMonitorMethods.get(user).add(monitorInfo);
+        }
+        // 更新监听方法
+        updateUserMethod(user, monitorInfo);
 
-           // 添加到方法
+        // 添加到
+        if (!methodContainsUser(monitorInfo.getMethod(), user)) {
             addMethodUser(monitorInfo.getMethod(), user);
         }
     }
@@ -95,12 +100,27 @@ public class ArgusCache {
     }
 
     /**
+     * 更新用户监听方法
+     * @param user 用户
+     * @param monitorInfo 监控方法
+     */
+    public static void updateUserMethod (ArgusUser user, MonitorInfo monitorInfo) {
+        ListIterator<MonitorInfo> monitorInfoListIterator = userMonitorMethods.get(user).listIterator();
+        while (monitorInfoListIterator.hasNext()) {
+            MonitorInfo monitor = monitorInfoListIterator.next();
+            if (monitor.getMethod().equals(monitorInfo.getMethod())) {
+                monitorInfoListIterator.set(monitorInfo);
+            }
+        }
+    }
+
+    /**
      * 是否包含用户
      * @param argusUser 用户
      * @return 结果
      */
     public static boolean methodContainsUser (ArgusMethod argusMethod, ArgusUser argusUser) {
-        if (!userContainsMethod(argusUser, argusMethod)) {
+        if (!containsMethod(argusMethod)) {
             return false;
         }
         return methodUsers.get(argusMethod).stream().anyMatch(user -> argusUser.getSession().equals(user.getSession()));
@@ -115,6 +135,9 @@ public class ArgusCache {
     public static boolean userContainsMethod (ArgusUser argusUser, ArgusMethod argusMethod) {
 
         if (!containsUser(argusUser)) {
+            return false;
+        }
+        if (Objects.isNull(argusMethod) || Objects.isNull(argusMethod.getMethod())) {
             return false;
         }
         return userMonitorMethods.get(argusUser).stream().anyMatch(monitor -> monitor.getMethod().getMethod().equals(argusMethod.getMethod()));
@@ -190,6 +213,21 @@ public class ArgusCache {
     }
 
     /**
+     * 移除用户监听方法
+     * @param argusUser 用户
+     */
+    public static void userRemoveAllMethod (ArgusUser argusUser) {
+        if (containsUser(argusUser)) {
+            userMonitorMethods.remove(argusUser);
+        }
+
+        // 删除方法监听用户
+        methodUsers.forEach((method, users) -> {
+            users.removeIf(user -> user.getSession().equals(argusUser.getSession()));
+        });
+    }
+
+    /**
      * 移除凭证过期的用户
      */
     public static void clearExpiredUser () {
@@ -246,8 +284,27 @@ public class ArgusCache {
      * @param uri 接口路径
      * @return 方法列表
      */
-    public static List<String> listUriMethod(String uri) {
+    public static List<String> getUris(String uri) {
 
         return uriMethodCache.keySet().stream().filter(key -> key.contains(uri)).sorted().collect(Collectors.toList());
     }
+
+    /**
+     * 查询用户监听接口列表
+     * @param argusUser 用户
+     * @param uri 接口
+     * @return
+     */
+    public static List<String> getUserMonitorUris (ArgusUser argusUser, String uri) {
+
+        if (!containsUser(argusUser)) {
+            return new ArrayList<>();
+        }
+        List<MonitorInfo> monitorInfos = userMonitorMethods.get(argusUser);
+        if (Objects.isNull(uri)) {
+            return monitorInfos.stream().map(monitor -> monitor.getMethod().getUri()).sorted().collect(Collectors.toList());
+        }
+        return monitorInfos.stream().filter(monitor -> monitor.getMethod().getUri().contains(uri)).map(monitor -> monitor.getMethod().getUri()).sorted().collect(Collectors.toList());
+    }
+
 }
