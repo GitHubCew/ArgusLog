@@ -7,6 +7,7 @@ import githubcew.arguslog.core.auth.TokenProvider;
 import githubcew.arguslog.core.cmd.CommandManager;
 import githubcew.arguslog.core.extractor.Extractor;
 import githubcew.arguslog.core.method.ArgusMethod;
+import githubcew.arguslog.core.util.CommonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
@@ -81,16 +82,11 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
         this.tokenProvider = applicationContext.getBean(TokenProvider.class);
         this.requestMappingHandlerMapping = applicationContext.getBean("requestMappingHandlerMapping", RequestMappingHandlerMapping.class);
 
-        ArgusCacheManager argusCacheManager = ArgusCacheManager.getInstance();
-
         // 注册bean
         init();
 
         // 扫描接口
         scan();
-
-        // 启动缓存刷新线程
-        argusCacheManager.start();
 
         // 打印Argus启动信息
         printArgusInfo();
@@ -169,11 +165,16 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
         handlerMethods.forEach((info, handlerMethod) -> {
             Set<String> urlPatterns = info.getPatternsCondition().getPatterns();
             Method method = handlerMethod.getMethod();
-            urlPatterns.forEach(url ->{
-                if (!url.startsWith("/")) {
-                    url = "/" + url;
+            urlPatterns.forEach(uri ->{
+                if (!uri.startsWith("/")) {
+                    uri = "/" + uri;
                 }
-                ArgusCache.addUriMethod(url, new ArgusMethod(method));
+                ArgusMethod argusMethod = new ArgusMethod(method);
+                argusMethod.setMethod(method);
+                argusMethod.setName(method.getName());
+                argusMethod.setSignature(CommonUtil.generateSignature(method));
+                argusMethod.setUri(uri);
+                ArgusCache.addUriMethod(uri, argusMethod);
             });
         });
     }
@@ -197,7 +198,7 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
 
         // 打印用户信息
         if (userProvider instanceof ArgusUserProvider) {
-            log.info("Argus log started, username: {}, password: {}",
+            log.info("【Argus => username: {}, password: {}】",
                     ((ArgusUserProvider) userProvider).getUsername(),
                     ((ArgusUserProvider) userProvider).getPassword());
         }

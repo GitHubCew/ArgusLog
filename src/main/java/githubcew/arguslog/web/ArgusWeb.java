@@ -29,7 +29,7 @@ public class ArgusWeb {
      * @throws IOException IOException
      */
     @GetMapping("/argus/index.html")
-    public ResponseEntity<byte[]> alogTerminal(
+    public ResponseEntity<byte[]> argus(
             HttpServletRequest request,
             @RequestHeader(value = "Accept-Language", required = false) String acceptLanguage) throws IOException {
 

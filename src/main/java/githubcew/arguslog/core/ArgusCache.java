@@ -3,7 +3,9 @@ package githubcew.arguslog.core;
 import githubcew.arguslog.core.account.ArgusUser;
 import githubcew.arguslog.core.auth.Token;
 import githubcew.arguslog.core.method.ArgusMethod;
+import githubcew.arguslog.core.method.GlobalMethodMonitor;
 import githubcew.arguslog.core.method.MonitorInfo;
+import org.springframework.beans.BeanUtils;
 
 import java.lang.reflect.Method;
 import java.util.*;
@@ -36,13 +38,13 @@ public class ArgusCache {
      */
     private final static List<ArgusUser> users;
 
+
     static {
         uriMethodCache = new ConcurrentHashMap<>(256);
         userMonitorMethods = new ConcurrentHashMap<>(1);
         methodUsers = new ConcurrentHashMap<>(1);
         users = new ArrayList<>(1);
     }
-
     /**
      * 添加接口方法
      * @param uri 接口uri
@@ -87,6 +89,30 @@ public class ArgusCache {
         if (!methodContainsUser(monitorInfo.getMethod(), user)) {
             addMethodUser(monitorInfo.getMethod(), user);
         }
+    }
+    /**
+     * 添加用户监测方法
+     * @param user 用户
+     */
+    public static void addAllMonitorInfo (ArgusUser user, MonitorInfo monitorInfo) {
+        if (!containsUser(user)) {
+            userMonitorMethods.put(user, new ArrayList<>(uriMethodCache.size()));
+        }
+        uriMethodCache.forEach((uri, method) -> {
+            if (!methodUsers.containsKey(method)) {
+                methodUsers.put(method, new ArrayList<>(1));
+            }
+            methodUsers.get(method).add(user);
+
+            List<MonitorInfo> monitorInfos = userMonitorMethods.get(user);
+            MonitorInfo monitor;
+            if (!userContainsMethod(user, method)) {
+                monitor = new MonitorInfo();
+                BeanUtils.copyProperties(monitorInfo, monitor);
+                monitor.setMethod(method);
+                monitorInfos.add(monitor);
+            }
+        });
     }
 
     /**
@@ -207,8 +233,8 @@ public class ArgusCache {
         }
         userMonitorMethods.get(argusUser).removeIf(monitor -> monitor.getMethod().getMethod().equals(argusMethod.getMethod()));
         // 如果方法为空，则移除该用户
-        if (userMonitorMethods.get(argusUser).isEmpty()) {
-            userMonitorMethods.remove(argusUser);
+        if (methodUsers.get(argusMethod).isEmpty()) {
+            methodUsers.remove(argusMethod);
         }
     }
 
@@ -225,6 +251,7 @@ public class ArgusCache {
         methodUsers.forEach((method, users) -> {
             users.removeIf(user -> user.getSession().equals(argusUser.getSession()));
         });
+
     }
 
     /**
@@ -296,7 +323,21 @@ public class ArgusCache {
      */
     public static List<String> getUris(String uri) {
 
-        return uriMethodCache.keySet().stream().filter(key -> key.contains(uri)).sorted().collect(Collectors.toList());
+        List<String> uris = new ArrayList<>();
+        uriMethodCache.forEach((u, method) -> {
+            if (u.contains(uri)) {
+                uris.add(u + "  " + method.getSignature());
+            }
+        });
+        return uris;
+    }
+
+    /**
+     * 统计在线用户数
+     * @return 在线用户数
+     */
+    public static int countOnlineUser () {
+        return users.size();
     }
 
     /**
@@ -312,9 +353,24 @@ public class ArgusCache {
         }
         List<MonitorInfo> monitorInfos = userMonitorMethods.get(argusUser);
         if (Objects.isNull(uri)) {
-            return monitorInfos.stream().map(monitor -> monitor.getMethod().getUri()).sorted().collect(Collectors.toList());
+            return monitorInfos.stream().map(monitor -> monitor.getMethod().getUri() + "  " + monitor.getMethod().getSignature()).sorted().collect(Collectors.toList());
         }
-        return monitorInfos.stream().filter(monitor -> monitor.getMethod().getUri().contains(uri)).map(monitor -> monitor.getMethod().getUri()).sorted().collect(Collectors.toList());
+        return monitorInfos.stream().filter(monitor -> monitor.getMethod().getUri().contains(uri)).map(monitor -> monitor.getMethod().getUri() + "  " + monitor.getMethod().getSignature()).sorted().collect(Collectors.toList());
     }
 
+    /**
+     * 获取方法uri
+     * @param method 方法
+     * @return uri
+     */
+    public static String getMethodUri(ArgusMethod method) {
+        if (Objects.isNull(method) || Objects.isNull(method.getMethod())) {
+            return null;
+        }
+       return uriMethodCache.entrySet().stream()
+                    .filter(entry -> entry.getValue().getMethod().equals(method.getMethod()))
+                    .map(Map.Entry::getKey)
+                    .findFirst()
+                    .orElse(null);
+        }
 }

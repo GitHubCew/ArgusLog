@@ -44,7 +44,8 @@ public class MethodPointcut implements Pointcut{
 
             @Override
             public boolean matches(Method method, Class<?> targetClass, Object... args) {
-                // 运行时检查 - 每次方法调用都执行
+
+                // 判断是否监听指定方法
                 return ArgusCache.containsMethod(method);
             }
         };

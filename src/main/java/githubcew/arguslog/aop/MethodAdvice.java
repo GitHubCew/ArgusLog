@@ -25,12 +25,13 @@ public class MethodAdvice implements MethodInterceptor {
 
         boolean hasMethod = ArgusCache.containsMethod(invocation.getMethod());
 
-        MonitorOutput content = new MonitorOutput();
         Object returnVal  = null;
         if (!hasMethod) {
             returnVal = invocation.proceed();
             return returnVal;
         }
+
+        MonitorOutput content = new MonitorOutput();
         long start = 0;
         long end = 0;
         try {

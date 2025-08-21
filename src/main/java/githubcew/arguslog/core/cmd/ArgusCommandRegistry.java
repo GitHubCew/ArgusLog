@@ -164,8 +164,8 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
     private Map<ArgusCommand, CommandExecutor> monitor() {
         ArgusCommand command = new ArgusCommand(
                 "monitor",
-                "监听接口,<path>: 接口路径, [target]:可选值为：param（参数）,result（结果）,time（耗时）,ex（异常）",
-                "monitor <path> [target]",
+                "监听接口 -a: 监听全部接口, path: 接口路径, [target]:可选值为：param（参数）,result（结果）,time（耗时）,ex（异常）",
+                "monitor [-a | path] [target]",
                 "monitor /api/v1/demo param,result"
         );
 
@@ -182,17 +182,24 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
                 String[] args = request.getRequestCommand().getArgs();
 
                 if (args.length == 0 || args.length > 2) {
-                    return new ExecuteResult(ArgusConstant.FAILED, "param error! usage: monitor <path> [target]");
+                    return new ExecuteResult(ArgusConstant.FAILED, "param error! usage: monitor [-a | path] [target]");
                 }
 
-                String uri = args[0];
-                if (!ArgusCache.hasUri(uri)) {
-                    return new ExecuteResult(ArgusConstant.FAILED, "uri not found: " + uri);
+                if (!(args[0].equals("-a") || ArgusCache.hasUri(args[0]))) {
+                    return new ExecuteResult(ArgusConstant.FAILED, "param error or uri not found: " + args[0]);
                 }
 
                 try {
-                    MonitorInfo monitorInfo = createMonitorInfo(uri, args);
-                    ArgusCache.addMonitorInfo(new ArgusUser(request), monitorInfo);
+                    ArgusUser user = new ArgusUser(request);
+                    MonitorInfo monitorInfo = createMonitorInfo(args[0], args);
+                    // 监控全部
+                    if (Objects.isNull(monitorInfo.getMethod())) {
+                        ArgusCache.addAllMonitorInfo(user, monitorInfo);
+                    }
+                    // 监控指定方法
+                    else {
+                        ArgusCache.addMonitorInfo(new ArgusUser(request), monitorInfo);
+                    }
                     return new ExecuteResult(ArgusConstant.SUCCESS, ArgusConstant.OK);
                 } catch (IllegalArgumentException e) {
                     return new ExecuteResult(ArgusConstant.FAILED, e.getMessage());
@@ -201,16 +208,18 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
 
             /**
              * 监听方法信息
-             * @param uri uri
+             * @param type type
              * @param args 参数
              * @return 监听信息
              */
-            private MonitorInfo createMonitorInfo(String uri, String[] args) {
-                ArgusMethod method = ArgusCache.getUriMethod(uri);
-                method.setUri(uri);
-
+            private MonitorInfo createMonitorInfo(String type, String[] args) {
+                ArgusMethod method = null;
                 MonitorInfo monitorInfo = new MonitorInfo();
-                monitorInfo.setMethod(method);
+
+                if (!type.equals("-a")) {
+                    method = ArgusCache.getUriMethod(type);
+                    monitorInfo.setMethod(method);
+                }
 
                 if (args.length == 1) {
                     // 默认监控所有目标

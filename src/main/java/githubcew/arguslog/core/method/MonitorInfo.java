@@ -1,6 +1,5 @@
 package githubcew.arguslog.core.method;
 
-import githubcew.arguslog.core.method.ArgusMethod;
 import lombok.Data;
 
 /**

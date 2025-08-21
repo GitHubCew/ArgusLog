@@ -14,7 +14,9 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * websocket输出器
@@ -45,25 +47,29 @@ public class ArgusWebSocketOuter implements Outer{
                 if (!argusUser.getSession().isOpen()) {
                     return;
                 }
-                StringBuilder sb = new StringBuilder();
-                StringBuilder err = new StringBuilder();
+
                 boolean sendNormal = false;
                 boolean sendException = false;
+                StringBuilder sb = new StringBuilder();
+                StringBuilder err = new StringBuilder();
+                sb.append("method => ").append(monitorInfo.getMethod().getSignature()).append(ArgusConstant.CONCAT_SEPARATOR);
+                sb.append("uri => ").append(monitorInfo.getMethod().getUri()).append(ArgusConstant.CONCAT_SEPARATOR);
+
                 if (monitorInfo.isParam()) {
                     sendNormal = true;
-                    sb.append("param  ==>  ");
+                    sb.append("param => ");
                     appendValue(sb, objectMapper, monitorOutput.getParam());
                     sb.append(ArgusConstant.CONCAT_SEPARATOR);
                 }
                 if (monitorInfo.isResult()) {
                     sendNormal = true;
-                    sb.append("result ==>  ");
+                    sb.append("result => ");
                     appendValue(sb, objectMapper, monitorOutput.getResult());
                     sb.append(ArgusConstant.CONCAT_SEPARATOR);
                 }
                 if (monitorInfo.isTime()) {
                     sendNormal = true;
-                    sb.append("time   ==>  ");
+                    sb.append("time => ");
                     appendValue(sb, objectMapper, monitorOutput.getTime());
                     sb.append(ArgusConstant.CONCAT_SEPARATOR);
                 }
