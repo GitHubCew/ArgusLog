@@ -1,10 +1,10 @@
 package githubcew.arguslog.aop;
 
-import githubcew.arguslog.business.formater.ParamFormatter;
-import githubcew.arguslog.business.outer.Outer;
-import githubcew.arguslog.core.Cache;
-import githubcew.arguslog.core.ContextUtil;
-import githubcew.arguslog.core.OutContent;
+import githubcew.arguslog.core.formater.ParamFormatter;
+import githubcew.arguslog.core.ArgusCache;
+import githubcew.arguslog.core.util.ContextUtil;
+import githubcew.arguslog.core.MonitorOutput;
+import githubcew.arguslog.core.outer.Outer;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 
@@ -23,38 +23,39 @@ public class MethodAdvice implements MethodInterceptor {
     @Override
     public Object invoke(MethodInvocation invocation) throws Throwable {
 
-        boolean hasMethod = Cache.hasMethod(invocation.getMethod());
+        boolean hasMethod = ArgusCache.containsMethod(invocation.getMethod());
 
-        OutContent content = new OutContent();
         Object returnVal  = null;
         if (!hasMethod) {
             returnVal = invocation.proceed();
             return returnVal;
         }
+
+        MonitorOutput content = new MonitorOutput();
+        long start = 0;
+        long end = 0;
         try {
             // 参数格式化
             ParamFormatter formatter = ContextUtil.getBean(ParamFormatter.class);
             Object format = formatter.format(invocation.getMethod().getParameters(), invocation.getArguments());
             content.setParam(format);
-            StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-            content.setStackTrace(stackTrace);
-            // 计时
-            long start = System.currentTimeMillis();
+
+            start = System.currentTimeMillis();
 
             // 执行原方法
             returnVal = invocation.proceed();
             content.setResult(returnVal);
 
-            // 计算方法耗时
-            long spend = System.currentTimeMillis() - start;
-            content.setTime(spend);
-
+            end  = System.currentTimeMillis();
         }
         catch (Exception e) {
+            end = System.currentTimeMillis();
             content.setException(e);
             throw e;
         }
         finally {
+            // 计算耗时
+            content.setTime(end - start);
             // 输出content
             Outer outer = ContextUtil.getBean(Outer.class);
             outer.out(invocation.getMethod(), content);

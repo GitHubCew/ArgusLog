@@ -1,6 +1,6 @@
 package githubcew.arguslog.aop;
 
-import githubcew.arguslog.core.Cache;
+import githubcew.arguslog.core.ArgusCache;
 import org.springframework.aop.ClassFilter;
 import org.springframework.aop.MethodMatcher;
 import org.springframework.aop.Pointcut;
@@ -44,8 +44,9 @@ public class MethodPointcut implements Pointcut{
 
             @Override
             public boolean matches(Method method, Class<?> targetClass, Object... args) {
-                // 运行时检查 - 每次方法调用都执行
-                return Cache.hasMethod(method);
+
+                // 判断是否监听指定方法
+                return ArgusCache.containsMethod(method);
             }
         };
     }
