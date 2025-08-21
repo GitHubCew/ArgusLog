@@ -1,24 +1,26 @@
 package githubcew.arguslog.core.config;
 
-import githubcew.arguslog.core.formater.ArguslogParamFormatter;
-import githubcew.arguslog.core.formater.ParamFormatter;
-import githubcew.arguslog.core.outer.ArgusWebSocketOuter;
-import githubcew.arguslog.core.outer.Outer;
+import githubcew.arguslog.aop.MethodAdvice;
+import githubcew.arguslog.aop.MethodPointcut;
 import githubcew.arguslog.core.ArgusConstant;
 import githubcew.arguslog.core.account.ArgusUserProvider;
 import githubcew.arguslog.core.account.UserProvider;
-import githubcew.arguslog.aop.MethodAdvice;
-import githubcew.arguslog.aop.MethodPointcut;
 import githubcew.arguslog.core.auth.ArgusTokenProvider;
 import githubcew.arguslog.core.auth.TokenProvider;
 import githubcew.arguslog.core.extractor.ArgusRequestExtractor;
 import githubcew.arguslog.core.extractor.Extractor;
+import githubcew.arguslog.core.formater.ArguslogParamFormatter;
+import githubcew.arguslog.core.formater.ParamFormatter;
+import githubcew.arguslog.core.outer.ArgusWebSocketOuter;
+import githubcew.arguslog.core.outer.Outer;
 import githubcew.arguslog.core.socket.ArgusSocketHandler;
 import org.springframework.aop.support.DefaultPointcutAdvisor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.*;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.type.AnnotationMetadata;
@@ -31,6 +33,7 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 /**
  * 自动配置类
  */
+@EnableConfigurationProperties(ArgusProperties.class)
 @EnableWebSocket
 @Configuration
 @EnableAspectJAutoProxy
@@ -40,6 +43,8 @@ public class ArgusAutoConfiguration implements ImportBeanDefinitionRegistrar, We
     @Autowired
     private ArgusSocketHandler argusSocketHandler;
 
+    @Autowired
+    private ArgusProperties argusProperties;
     /**
      * 切点
      * @return 切点
@@ -79,7 +84,7 @@ public class ArgusAutoConfiguration implements ImportBeanDefinitionRegistrar, We
     @Bean
     @ConditionalOnMissingBean(UserProvider.class)
     public UserProvider userProvider() {
-        return new ArgusUserProvider();
+        return new ArgusUserProvider(argusProperties.getUsername(), argusProperties.getPassword());
     }
 
     /**
@@ -89,7 +94,7 @@ public class ArgusAutoConfiguration implements ImportBeanDefinitionRegistrar, We
     @Bean
     @ConditionalOnMissingBean(TokenProvider.class)
     public TokenProvider tokenProvider() {
-        return new ArgusTokenProvider();
+        return new ArgusTokenProvider(argusProperties.getTokenExpireTime());
     }
 
     /**

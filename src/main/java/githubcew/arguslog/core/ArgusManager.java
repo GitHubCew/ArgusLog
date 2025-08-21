@@ -4,7 +4,9 @@ import githubcew.arguslog.core.account.ArgusUserProvider;
 import githubcew.arguslog.core.account.UserProvider;
 import githubcew.arguslog.core.auth.Authenticator;
 import githubcew.arguslog.core.auth.TokenProvider;
+import githubcew.arguslog.core.cmd.ArgusCommand;
 import githubcew.arguslog.core.cmd.CommandManager;
+import githubcew.arguslog.core.config.ArgusProperties;
 import githubcew.arguslog.core.extractor.Extractor;
 import githubcew.arguslog.core.method.ArgusMethod;
 import githubcew.arguslog.core.util.CommonUtil;
@@ -37,7 +39,7 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
 
     private static final Logger log = LoggerFactory.getLogger(ArgusManager.class);
 
-
+    private ArgusProperties argusProperties;
     private Extractor extractor;
     private UserProvider userProvider;
     private TokenProvider tokenProvider;
@@ -45,6 +47,7 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
     private List<ArgusConfigurer> configurers = new ArrayList<>();
     private CommandManager commandManager;
     private ApplicationContext applicationContext;
+
 
     private RequestMappingHandlerMapping requestMappingHandlerMapping;
 
@@ -81,7 +84,7 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
         this.userProvider = applicationContext.getBean(UserProvider.class);
         this.tokenProvider = applicationContext.getBean(TokenProvider.class);
         this.requestMappingHandlerMapping = applicationContext.getBean("requestMappingHandlerMapping", RequestMappingHandlerMapping.class);
-
+        this.argusProperties = applicationContext.getBean(ArgusProperties.class);
         // 注册bean
         init();
 
@@ -147,11 +150,19 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
     }
 
     /**
-     * 注册忽略鉴权命令
+     * 注册不需要认证命令
      */
     private void registerIgnoreAuthorizationCommand () {
+
         for (ArgusConfigurer configurer : configurers) {
             configurer.registerUnauthorizedCommands(this.commandManager);
+        }
+        // 注册自定义的不需要认证的命令
+        List<String> unauthorizedCommands = argusProperties.getUnauthorizedCommands();
+        if (!Objects.isNull(unauthorizedCommands) && !unauthorizedCommands.isEmpty()) {
+            for (String command : unauthorizedCommands) {
+                this.commandManager.registerUnauthorizedCommand(new ArgusCommand(command, "", "", ""));
+            }
         }
     }
     /**
@@ -183,24 +194,28 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
      * 打印argus信息
      */
     private void printArgusInfo() {
-        // 打印 argus banner
-        try (InputStream inputStream = new ClassPathResource("META-INF/resources/argus/banner.txt").getInputStream();
-             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
 
-            String line;
-            while ((line = reader.readLine()) != null) {
-                log.info(line);
+        if (this.argusProperties.getPrintBanner()) {
+            // 打印 argus banner
+            try (InputStream inputStream = new ClassPathResource("META-INF/resources/argus/banner.txt").getInputStream();
+                 BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    log.info(line);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-
-        } catch (Exception e) {
-            e.printStackTrace();
         }
-
         // 打印用户信息
-        if (userProvider instanceof ArgusUserProvider) {
-            log.info("【Argus => username: {}, password: {}】",
-                    ((ArgusUserProvider) userProvider).getUsername(),
-                    ((ArgusUserProvider) userProvider).getPassword());
+        if (this.argusProperties.getPrintUserInfo()) {
+
+            if (userProvider instanceof ArgusUserProvider) {
+                log.info("【Argus => username: {}, password: {}】",
+                        ((ArgusUserProvider) userProvider).getUsername(),
+                        ((ArgusUserProvider) userProvider).getPassword());
+            }
         }
     }
 }

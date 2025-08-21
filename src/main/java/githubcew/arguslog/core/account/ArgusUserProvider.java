@@ -23,10 +23,19 @@ import org.springframework.stereotype.Component;
 public class ArgusUserProvider implements UserProvider {
 
     // 用户名
-    private String username = "argus";
+    private String username;
 
     // 密码
-    private String password = "argus";
+    private String password;
+
+
+    public ArgusUserProvider() {
+    }
+
+    public ArgusUserProvider(String username, String password) {
+        this.username = username;
+        this.password = password;
+    }
 
     /**
      * 自定义用户

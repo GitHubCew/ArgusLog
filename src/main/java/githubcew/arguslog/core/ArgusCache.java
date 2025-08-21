@@ -3,7 +3,6 @@ package githubcew.arguslog.core;
 import githubcew.arguslog.core.account.ArgusUser;
 import githubcew.arguslog.core.auth.Token;
 import githubcew.arguslog.core.method.ArgusMethod;
-import githubcew.arguslog.core.method.GlobalMethodMonitor;
 import githubcew.arguslog.core.method.MonitorInfo;
 import org.springframework.beans.BeanUtils;
 
@@ -323,13 +322,7 @@ public class ArgusCache {
      */
     public static List<String> getUris(String uri) {
 
-        List<String> uris = new ArrayList<>();
-        uriMethodCache.forEach((u, method) -> {
-            if (u.contains(uri)) {
-                uris.add(u + "  " + method.getSignature());
-            }
-        });
-        return uris;
+        return uriMethodCache.keySet().stream().filter(u -> u.contains(uri)).collect(Collectors.toList());
     }
 
     /**
@@ -353,9 +346,9 @@ public class ArgusCache {
         }
         List<MonitorInfo> monitorInfos = userMonitorMethods.get(argusUser);
         if (Objects.isNull(uri)) {
-            return monitorInfos.stream().map(monitor -> monitor.getMethod().getUri() + "  " + monitor.getMethod().getSignature()).sorted().collect(Collectors.toList());
+            return monitorInfos.stream().map(monitor -> monitor.getMethod().getUri()).sorted().collect(Collectors.toList());
         }
-        return monitorInfos.stream().filter(monitor -> monitor.getMethod().getUri().contains(uri)).map(monitor -> monitor.getMethod().getUri() + "  " + monitor.getMethod().getSignature()).sorted().collect(Collectors.toList());
+        return monitorInfos.stream().filter(monitor -> monitor.getMethod().getUri().contains(uri)).map(monitor -> monitor.getMethod().getUri()).sorted().collect(Collectors.toList());
     }
 
     /**

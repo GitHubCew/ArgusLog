@@ -1,10 +1,12 @@
 package githubcew.arguslog.core;
 
 
+import githubcew.arguslog.core.config.ArgusProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.Executors;
@@ -19,14 +21,15 @@ public class ArgusCacheManager implements InitializingBean, DisposableBean {
 
     private static final Logger log = LoggerFactory.getLogger(ArgusCacheManager.class);
 
-    // 缓存凭证刷新时间（秒）
-    private final static long INITIAL_DELAY = 0;
-    private final static long FLUSH_PERIOD = 60;
+
+    private final ArgusProperties argusProperties;
 
     // 定时任务执行器
     private final ScheduledExecutorService scheduler;
 
-    private ArgusCacheManager() {
+    @Autowired
+    public ArgusCacheManager(ArgusProperties argusProperties) {
+        this.argusProperties = argusProperties;
         this.scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
             Thread t = new Thread(r, "[Argus-Cache-Thread]");
             t.setDaemon(false);
@@ -39,7 +42,7 @@ public class ArgusCacheManager implements InitializingBean, DisposableBean {
      */
     public void start() {
         scheduler.scheduleAtFixedRate(this::cleanExpiredCredentials,
-                INITIAL_DELAY, FLUSH_PERIOD, TimeUnit.SECONDS);
+                argusProperties.getTokenFlushTime(), argusProperties.getTokenFlushTime(), TimeUnit.SECONDS);
         log.info("【Argus => Started Argus Cache Manager...】");
     }
 
