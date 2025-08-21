@@ -17,17 +17,12 @@ import java.util.Map;
 import java.util.regex.Matcher;
 
 /**
- * Alog Web
+ * argus Web
  * @author chenenwei
  */
 @Controller
 public class ArgusWeb {
 
-    /**
-     * alog terminal
-     * @return ResponseEntity
-     * @throws IOException IOException
-     */
     @GetMapping("/argus/index.html")
     public ResponseEntity<byte[]> argus(
             HttpServletRequest request,
