@@ -45,14 +45,40 @@ public class ArgusCacheManager implements InitializingBean, DisposableBean {
                 argusProperties.getTokenFlushTime(), argusProperties.getTokenFlushTime(), TimeUnit.SECONDS);
         log.info("【Argus => Started Argus Cache Manager...】");
     }
-
     /**
      * 清理过期凭证
      */
     private void cleanExpiredCredentials() {
-        ArgusCache.clearExpiredUser();
-        if (log.isDebugEnabled()) {
-            log.debug("【Argus => Cleaning expired credentials...remain user: {}】", ArgusCache.countOnlineUser());
+        try {
+            ArgusCache.clearExpiredToken();
+            if (log.isDebugEnabled()) {
+                log.debug("【Argus => Cleaning expired credentials...remain user: {}】", ArgusCache.countOnlineUser());
+            }
+        } catch (Exception e) {
+            log.error("【Argus => Error occurred while cleaning expired credentials】", e);
+            // 这里可以添加重启逻辑
+            restartSchedulerIfNeeded();
+        }
+    }
+
+    /**
+     * 检查并重启调度器
+     */
+    private void restartSchedulerIfNeeded() {
+        if (scheduler.isShutdown()) {
+            log.warn("【Argus => Scheduler is shutdown, attempting to restart...】");
+            // 创建新的调度器
+            ScheduledExecutorService newScheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+                Thread t = new Thread(r, "[Argus-Cache-Thread-Restarted]");
+                t.setDaemon(false);
+                return t;
+            });
+
+            // 重新启动任务
+            newScheduler.scheduleAtFixedRate(this::cleanExpiredCredentials,
+                    argusProperties.getTokenFlushTime(), argusProperties.getTokenFlushTime(), TimeUnit.SECONDS);
+
+            log.info("【Argus => Scheduler restarted successfully】");
         }
     }
 

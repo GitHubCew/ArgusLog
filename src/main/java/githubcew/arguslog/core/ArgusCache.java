@@ -1,10 +1,10 @@
 package githubcew.arguslog.core;
 
 import githubcew.arguslog.core.account.ArgusUser;
-import githubcew.arguslog.core.auth.Token;
 import githubcew.arguslog.core.method.ArgusMethod;
 import githubcew.arguslog.core.method.MonitorInfo;
 import org.springframework.beans.BeanUtils;
+import org.springframework.web.socket.WebSocketSession;
 
 import java.lang.reflect.Method;
 import java.util.*;
@@ -25,25 +25,25 @@ public class ArgusCache {
     /**
      * 监听方法的用户列表
      */
-    private final static Map<ArgusMethod, List<ArgusUser>> methodUsers;
+    private final static Map<ArgusMethod, List<String>> methodUsers;
 
     /**
      * 用户监听方法列表
      */
-    private final static Map<ArgusUser, List<MonitorInfo>> userMonitorMethods;
+    private final static Map<String, List<MonitorInfo>> userMonitorMethods;
 
     /**
-     * 用户列表
+     * 用户tokens
      */
-    private final static List<ArgusUser> users;
-
+    private final static Map<String, ArgusUser> userTokens;
 
     static {
         uriMethodCache = new ConcurrentHashMap<>(256);
         userMonitorMethods = new ConcurrentHashMap<>(1);
         methodUsers = new ConcurrentHashMap<>(1);
-        users = new ArrayList<>(1);
+        userTokens = new ConcurrentHashMap<>(1);
     }
+
     /**
      * 添加接口方法
      * @param uri 接口uri
@@ -58,7 +58,7 @@ public class ArgusCache {
      * @param method 方法
      * @param user 用户
      */
-    public static void addMethodUser (ArgusMethod method, ArgusUser user) {
+    public static void addMethodUser (ArgusMethod method, String user) {
 
         if (!containsMethod(method)) {
             methodUsers.put(method, new ArrayList<>(10));
@@ -73,7 +73,7 @@ public class ArgusCache {
      * @param user 用户
      * @param monitorInfo 监测信息
      */
-    public static void addMonitorInfo (ArgusUser user, MonitorInfo monitorInfo) {
+    public static void addMonitorInfo (String user, MonitorInfo monitorInfo) {
         if (!containsUser(user)) {
             userMonitorMethods.put(user, new ArrayList<>(10));
         }
@@ -93,7 +93,7 @@ public class ArgusCache {
      * 添加用户监测方法
      * @param user 用户
      */
-    public static void addAllMonitorInfo (ArgusUser user, MonitorInfo monitorInfo) {
+    public static void addAllMonitorInfo (String user, MonitorInfo monitorInfo) {
         if (!containsUser(user)) {
             userMonitorMethods.put(user, new ArrayList<>(uriMethodCache.size()));
         }
@@ -115,13 +115,15 @@ public class ArgusCache {
     }
 
     /**
-     * 添加方法监测用户
+     * 添加用户凭证
      * @param argusUser 用户
      */
-    public static void addUser (ArgusUser argusUser) {
-        if (users.stream().noneMatch(user -> user.getSession().equals(argusUser.getSession()))) {
-            users.add(argusUser);
-        }
+    public static void addUserToken(String token, ArgusUser argusUser) {
+        userTokens.put(token, argusUser);
+    }
+
+    public static ArgusUser getUserToken(String token) {
+        return userTokens.get(token);
     }
 
     /**
@@ -129,7 +131,7 @@ public class ArgusCache {
      * @param user 用户
      * @param monitorInfo 监控方法
      */
-    public static void updateUserMethod (ArgusUser user, MonitorInfo monitorInfo) {
+    public static void updateUserMethod (String user, MonitorInfo monitorInfo) {
         ListIterator<MonitorInfo> monitorInfoListIterator = userMonitorMethods.get(user).listIterator();
         while (monitorInfoListIterator.hasNext()) {
             MonitorInfo monitor = monitorInfoListIterator.next();
@@ -144,11 +146,11 @@ public class ArgusCache {
      * @param argusUser 用户
      * @return 结果
      */
-    public static boolean methodContainsUser (ArgusMethod argusMethod, ArgusUser argusUser) {
+    public static boolean methodContainsUser (ArgusMethod argusMethod, String argusUser) {
         if (!containsMethod(argusMethod)) {
             return false;
         }
-        return methodUsers.get(argusMethod).stream().anyMatch(user -> argusUser.getSession().equals(user.getSession()));
+        return methodUsers.get(argusMethod).stream().anyMatch(user -> user.equals(argusUser));
     }
 
     /**
@@ -157,7 +159,7 @@ public class ArgusCache {
      * @param argusMethod 方法
      * @return 结果
      */
-    public static boolean userContainsMethod (ArgusUser argusUser, ArgusMethod argusMethod) {
+    public static boolean userContainsMethod (String argusUser, ArgusMethod argusMethod) {
 
         if (!containsUser(argusUser)) {
             return false;
@@ -197,11 +199,11 @@ public class ArgusCache {
      * @param argusUser 用户
      * @return 结果
      */
-    public static boolean containsUser (ArgusUser argusUser) {
+    public static boolean containsUser (String argusUser) {
         if (userMonitorMethods.isEmpty()) {
             return false;
         }
-        return userMonitorMethods.keySet().stream().anyMatch(user -> user.getSession().equals(argusUser.getSession()));
+        return userMonitorMethods.keySet().stream().anyMatch(user -> user.equals(argusUser));
     }
 
     /**
@@ -209,11 +211,11 @@ public class ArgusCache {
      * @param argusMethod 方法
      * @param argusUser 用户
      */
-    public static void methodRemoveUser (ArgusMethod argusMethod, ArgusUser argusUser) {
+    public static void methodRemoveUser (ArgusMethod argusMethod, String argusUser) {
         if (!methodContainsUser(argusMethod, argusUser)) {
             return;
         }
-        methodUsers.get(argusMethod).removeIf(user -> user.getSession().equals(argusUser.getSession()));
+        methodUsers.get(argusMethod).removeIf(user -> user.equals(argusUser));
 
         // 如果用户为空，则移除该方法
         if (methodUsers.get(argusMethod).isEmpty()) {
@@ -226,7 +228,7 @@ public class ArgusCache {
      * @param argusUser 用户
      * @param argusMethod 方法
      */
-    public static void userRemoveMethod (ArgusUser argusUser, ArgusMethod argusMethod) {
+    public static void userRemoveMethod (String argusUser, ArgusMethod argusMethod) {
         if (!userContainsMethod(argusUser, argusMethod)) {
             return;
         }
@@ -241,38 +243,38 @@ public class ArgusCache {
      * 移除用户监听方法
      * @param argusUser 用户
      */
-    public static void userRemoveAllMethod (ArgusUser argusUser) {
+    public static void userRemoveAllMethod (String argusUser) {
         if (containsUser(argusUser)) {
             userMonitorMethods.remove(argusUser);
         }
 
         // 删除方法监听用户
         methodUsers.forEach((method, users) -> {
-            users.removeIf(user -> user.getSession().equals(argusUser.getSession()));
+            users.removeIf(user -> user.equals(argusUser));
         });
 
     }
 
     /**
-     * 移除凭证过期的用户
+     * 移除过期的凭证
      */
-    public static void clearExpiredUser() {
-        for (ArgusUser user : users) {
+    public static void clearExpiredToken() {
+        userTokens.forEach((token, user) -> {
             if (user.getToken().getExpireTime() < System.currentTimeMillis()) {
 
                 // 删除方法监听用户
                 methodUsers.entrySet().removeIf(entry -> {
-                    entry.getValue().removeIf(u -> u.getSession().equals(user.getSession()));
+                    entry.getValue().removeIf(u -> u.equals(user.getToken().getToken()));
                     return entry.getValue().isEmpty();
                 });
 
                 // 删除用户监听方法
-                userMonitorMethods.keySet().removeIf(u -> u.getSession().equals(user.getSession()));
+                userMonitorMethods.keySet().removeIf(u -> u.equals(user.getToken().getToken()));
 
                 // 删除凭证
-                users.remove(user);
+                userTokens.remove(token);
             }
-        }
+        });
     }
 
     /**
@@ -280,13 +282,18 @@ public class ArgusCache {
      * @param token token
      * @return 结果
      */
-    public static boolean hasToken(Token token) {
-        if (Objects.isNull(token) || Objects.isNull(token.getToken())|| token.getToken().isEmpty()) {
+    public static boolean hasToken(String token) {
+        if (Objects.isNull(token)|| token.isEmpty()) {
             return false;
         }
-        return users.stream().anyMatch(user -> user.getToken().getToken().equals(token.getToken()));
+        return userTokens.containsKey(token);
     }
 
+    /**
+     * 是否有uri
+     * @param uri uri
+     * @return
+     */
     public static boolean hasUri (String uri) {
         return uriMethodCache.containsKey(uri);
     }
@@ -305,9 +312,9 @@ public class ArgusCache {
      * @param method 方法
      * @return 用户列表
      */
-    public static Map<ArgusUser, MonitorInfo> getUsersByMethod (Method method) {
+    public static Map<String, MonitorInfo> getUsersByMethod (Method method) {
 
-        Map<ArgusUser, MonitorInfo> userMonitorMap = new HashMap<>();
+        Map<String, MonitorInfo> userMonitorMap = new HashMap<>();
         userMonitorMethods.forEach((user, methods) -> {
             Optional<MonitorInfo> first = methods.stream().filter(monitor -> monitor.getMethod().getMethod().equals(method)).findFirst();
             first.ifPresent(monitorInfo -> userMonitorMap.put(user, monitorInfo));
@@ -330,7 +337,7 @@ public class ArgusCache {
      * @return 在线用户数
      */
     public static int countOnlineUser () {
-        return users.size();
+        return userTokens.size();
     }
 
     /**
@@ -339,7 +346,7 @@ public class ArgusCache {
      * @param uri 接口
      * @return
      */
-    public static List<String> getUserMonitorUris (ArgusUser argusUser, String uri) {
+    public static List<String> getUserMonitorUris (String argusUser, String uri) {
 
         if (!containsUser(argusUser)) {
             return new ArrayList<>();
@@ -366,4 +373,17 @@ public class ArgusCache {
                     .findFirst()
                     .orElse(null);
         }
+
+    public static void removeUserToken(String id) {
+        userTokens.remove(id);
+    }
+
+    public static ArgusUser getUserBySession (WebSocketSession session) {
+        for (Map.Entry<String, ArgusUser> entry : userTokens.entrySet()) {
+            if (entry.getValue().getSession().equals(session)) {
+                return entry.getValue();
+            }
+        }
+        return null;
+    }
 }

@@ -1,5 +1,6 @@
 package githubcew.arguslog.core.socket;
 
+import githubcew.arguslog.core.ArgusCache;
 import githubcew.arguslog.core.ArgusConstant;
 import githubcew.arguslog.core.ArgusStarter;
 import githubcew.arguslog.core.account.ArgusUser;
@@ -14,6 +15,7 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
+import java.util.Objects;
 
 /**
  * WebSocket处理器
@@ -22,26 +24,26 @@ import java.io.IOException;
 @Component("argusSocketHandler")
 public class ArgusSocketHandler extends TextWebSocketHandler {
 
-    @Qualifier("argusSessionManager")
-    @Autowired
-    private ArgusSessionManager argusSessionManager;
-
     @Autowired
     private ArgusStarter argusStarter;
     /**
      * 构造方法
      */
-    public ArgusSocketHandler(){
+    public ArgusSocketHandler(){}
 
-    }
     /**
      * 连接建立
      * @param session session
      */
     @Override
     public void afterConnectionEstablished(WebSocketSession session) {
-        ArgusUser argusUser = new ArgusUser(session);
-        argusSessionManager.addSession(session.getId(), argusUser);
+        // 添加session
+        String token = (String) session.getAttributes().get("argus-token");
+        ArgusUser argusUser = ArgusCache.getUserToken(token);
+        if (!Objects.isNull(argusUser)) {
+            argusUser.setSession(session);
+            ArgusCache.addUserToken(token, argusUser);
+        }
     }
 
     /**
@@ -52,7 +54,7 @@ public class ArgusSocketHandler extends TextWebSocketHandler {
      */
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-        argusSessionManager.removeSession(session.getId());
+        session.close(new CloseStatus(500, "Server stopped"));
     }
 
     /**

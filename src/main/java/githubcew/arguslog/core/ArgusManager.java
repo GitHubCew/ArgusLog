@@ -2,7 +2,9 @@ package githubcew.arguslog.core;
 
 import githubcew.arguslog.core.account.ArgusUserProvider;
 import githubcew.arguslog.core.account.UserProvider;
+import githubcew.arguslog.core.auth.AccountAuthenticator;
 import githubcew.arguslog.core.auth.Authenticator;
+import githubcew.arguslog.core.auth.TokenAuthenticator;
 import githubcew.arguslog.core.auth.TokenProvider;
 import githubcew.arguslog.core.cmd.ArgusCommand;
 import githubcew.arguslog.core.cmd.CommandManager;
@@ -43,10 +45,11 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
     private Extractor extractor;
     private UserProvider userProvider;
     private TokenProvider tokenProvider;
-    private List<Authenticator> authenticators = new ArrayList<>();
     private List<ArgusConfigurer> configurers = new ArrayList<>();
     private CommandManager commandManager;
     private ApplicationContext applicationContext;
+    private AccountAuthenticator accountAuthenticator;
+    private TokenAuthenticator tokenAuthenticator;
 
 
     private RequestMappingHandlerMapping requestMappingHandlerMapping;
@@ -64,15 +67,17 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
         return tokenProvider;
     }
 
-    public List<Authenticator> getAuthenticators() {
-        return authenticators;
-    }
-
     public CommandManager getCommandManager() {
         return commandManager;
     }
 
+    public AccountAuthenticator getAccountAuthenticator() {
+        return accountAuthenticator;
+    }
 
+    public TokenAuthenticator getTokenAuthenticator() {
+        return tokenAuthenticator;
+    }
 
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
@@ -85,6 +90,8 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
         this.tokenProvider = applicationContext.getBean(TokenProvider.class);
         this.requestMappingHandlerMapping = applicationContext.getBean("requestMappingHandlerMapping", RequestMappingHandlerMapping.class);
         this.argusProperties = applicationContext.getBean(ArgusProperties.class);
+        this.accountAuthenticator = applicationContext.getBean(AccountAuthenticator.class);
+        this.tokenAuthenticator = applicationContext.getBean(TokenAuthenticator.class);
         // 注册bean
         init();
 
@@ -103,8 +110,8 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
         // configurers 排序
         this.configurers.sort(AnnotationAwareOrderComparator.INSTANCE);
 
-        // 注册认证器
-        this.authenticators = registerAuthenticator();
+//        // 注册认证器
+//        this.authenticators = registerAuthenticator();
 
         // 注册命令
         registerCommand();
@@ -112,8 +119,8 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
         // 忽略鉴权命令
         registerIgnoreAuthorizationCommand();
 
-        // 认证器排序
-        this.authenticators.sort(AnnotationAwareOrderComparator.INSTANCE);
+//        // 认证器排序
+//        this.authenticators.sort(AnnotationAwareOrderComparator.INSTANCE);
 
     }
 
@@ -121,22 +128,22 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
      * 初始化认证器列表
      * @return 认证器列表
      */
-    private List<Authenticator> registerAuthenticator() {
-
-        Set<Authenticator> authenticators = new HashSet<>();
-        try {
-            if (this.authenticators.isEmpty()) {
-                authenticators.addAll(applicationContext.getBeansOfType(Authenticator.class).values());
-            }
-        }
-        catch (NoSuchBeanDefinitionException e) {
-            //
-        }
-        for (ArgusConfigurer configurer : configurers) {
-            authenticators.addAll(configurer.registerAuthenticator(this.authenticators));
-        }
-        return new ArrayList<>(authenticators);
-    }
+//    private List<Authenticator> registerAuthenticator() {
+//
+//        Set<Authenticator> authenticators = new HashSet<>();
+//        try {
+//            if (this.authenticators.isEmpty()) {
+//                authenticators.addAll(applicationContext.getBeansOfType(Authenticator.class).values());
+//            }
+//        }
+//        catch (NoSuchBeanDefinitionException e) {
+//            //
+//        }
+//        for (ArgusConfigurer configurer : configurers) {
+//            authenticators.addAll(configurer.registerAuthenticator(this.authenticators));
+//        }
+//        return new ArrayList<>(authenticators);
+//    }
 
     /**
      * 注册命令

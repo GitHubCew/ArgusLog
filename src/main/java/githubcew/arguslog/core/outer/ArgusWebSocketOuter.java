@@ -40,11 +40,12 @@ public class ArgusWebSocketOuter implements Outer{
     @Override
     public void out(Method method, MonitorOutput monitorOutput) {
 
-        Map<ArgusUser, MonitorInfo> usersByMethod = ArgusCache.getUsersByMethod(method);
+        Map<String, MonitorInfo> usersByMethod = ArgusCache.getUsersByMethod(method);
         ArgusSocketHandler argusSocketHandler = ContextUtil.getBean(ArgusSocketHandler.class);
-        usersByMethod.forEach((argusUser, monitorInfo) -> {
+        usersByMethod.forEach((user, monitorInfo) -> {
             try {
-                if (!argusUser.getSession().isOpen()) {
+                ArgusUser argusUser = ArgusCache.getUserToken(user);
+                if (Objects.isNull(argusUser) || !argusUser.getSession().isOpen()) {
                     return;
                 }
 

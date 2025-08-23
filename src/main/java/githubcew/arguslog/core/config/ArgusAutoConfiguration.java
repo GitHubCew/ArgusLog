@@ -13,14 +13,16 @@ import githubcew.arguslog.core.formater.ArguslogParamFormatter;
 import githubcew.arguslog.core.formater.ParamFormatter;
 import githubcew.arguslog.core.outer.ArgusWebSocketOuter;
 import githubcew.arguslog.core.outer.Outer;
+import githubcew.arguslog.core.ArgusServlet;
+import githubcew.arguslog.core.socket.ArgusHandshakeInterceptor;
 import githubcew.arguslog.core.socket.ArgusSocketHandler;
 import org.springframework.aop.support.DefaultPointcutAdvisor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.context.annotation.*;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.type.AnnotationMetadata;
@@ -97,6 +99,17 @@ public class ArgusAutoConfiguration implements ImportBeanDefinitionRegistrar, We
         return new ArgusTokenProvider(argusProperties.getTokenExpireTime());
     }
 
+    @Bean
+    public ArgusServlet argusServlet() {
+        return new ArgusServlet();
+    }
+
+    //Argus servlet
+    @Bean
+    public ServletRegistrationBean<ArgusServlet> argusLoginServletRegistration(ArgusServlet argusServlet) {
+        return new ServletRegistrationBean<>(argusServlet, "/argus/index.html", "/argus/login", "/argus/validateToken");
+    }
+
     /**
      * 默认请求解析器
      * @return 请求解析器
@@ -136,8 +149,11 @@ public class ArgusAutoConfiguration implements ImportBeanDefinitionRegistrar, We
      */
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(argusSocketHandler, "/argus-ws").setAllowedOrigins("*");
+        registry.addHandler(argusSocketHandler, "/argus-ws")
+                .addInterceptors(new ArgusHandshakeInterceptor())
+                .setAllowedOrigins("*");
     }
+
 
     /**
      * 扫描包

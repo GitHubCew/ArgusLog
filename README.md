@@ -59,7 +59,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http
             .authorizeRequests()
                 // 放开指定的接口
-                .antMatchers("/argus-ws", "/argus/index.html").permitAll()
+                .antMatchers("/argus-ws", "/argus/index.1.html").permitAll()
                 // 其他接口需要认证
                 .anyRequest().authenticated()
             .and()
