@@ -54,7 +54,7 @@ public class AccountAuthenticator implements Authenticator{
             argusUser.setAccount(account);
             argusUser.setSession(request.getSession());
             argusUser.setToken(token);
-            ArgusCache.addUser(argusUser);
+            ArgusCache.addUserToken(token.getToken(), argusUser);
             return true;
         }
         return false;

@@ -4,7 +4,6 @@ import githubcew.arguslog.core.ArgusCache;
 import githubcew.arguslog.core.ArgusConfigurer;
 import githubcew.arguslog.core.ArgusConstant;
 import githubcew.arguslog.core.ArgusRequest;
-import githubcew.arguslog.core.account.ArgusUser;
 import githubcew.arguslog.core.method.ArgusMethod;
 import githubcew.arguslog.core.method.MonitorInfo;
 import org.springframework.core.annotation.Order;
@@ -120,7 +119,7 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
                 if (args.length > 0) {
                     String arg = args[0];
                     if (arg.equals("-m")) {
-                        return listMonitor(new ArgusUser(request), args);
+                        return listMonitor(request.getToken().getToken(), args);
                     }
                 }
                 return list(args);
@@ -132,7 +131,7 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
              * @param args 参数
              * @return 结果
              */
-            private ExecuteResult listMonitor (ArgusUser argusUser, String[] args) {
+            private ExecuteResult listMonitor (String argusUser, String[] args) {
                 String uri = "";
                 if (args.length > 1) {
                     uri = args[1];
@@ -190,7 +189,7 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
                 }
 
                 try {
-                    ArgusUser user = new ArgusUser(request);
+                    String user = request.getToken().getToken();
                     MonitorInfo monitorInfo = createMonitorInfo(args[0], args);
                     // 监控全部
                     if (Objects.isNull(monitorInfo.getMethod())) {
@@ -198,7 +197,7 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
                     }
                     // 监控指定方法
                     else {
-                        ArgusCache.addMonitorInfo(new ArgusUser(request), monitorInfo);
+                        ArgusCache.addMonitorInfo(user, monitorInfo);
                     }
                     return new ExecuteResult(ArgusConstant.SUCCESS, ArgusConstant.OK);
                 } catch (IllegalArgumentException e) {
@@ -294,7 +293,7 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
                 if (args.length != 1) {
                     return new ExecuteResult(ArgusConstant.FAILED, "param error! usage: remove [-a | <path>]");
                 }
-                ArgusUser user = new ArgusUser(request);
+                String user = request.getToken().getToken();
                 if (args[0].equals("-a")) {
                     ArgusCache.userRemoveAllMethod(user);
                     return new ExecuteResult(ArgusConstant.SUCCESS, ArgusConstant.OK);

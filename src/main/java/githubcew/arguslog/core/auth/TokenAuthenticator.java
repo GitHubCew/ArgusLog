@@ -16,7 +16,7 @@ public class TokenAuthenticator implements Authenticator{
 
     @Override
     public boolean authenticate(ArgusRequest request, ArgusResponse argusResponse) {
-        return ArgusCache.hasToken(request.getToken());
+        return ArgusCache.hasToken(request.getToken().getToken());
     }
 
     @Override
