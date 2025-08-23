@@ -708,7 +708,7 @@
         // 建立WebSocket连接
         function connectWebSocket() {
 
-            fetch('/argus/validateToken', {
+            fetch(getContextPath() + '/argus/validateToken', {
                 method: 'GET',
                 headers: {
                     'argus-token': authToken  // 使用当前 token
