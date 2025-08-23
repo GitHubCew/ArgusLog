@@ -163,13 +163,13 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
     private Map<ArgusCommand, CommandExecutor> monitor() {
         ArgusCommand command = new ArgusCommand(
                 "monitor",
-                "监听接口 -a: 监听全部接口, path: 接口路径, [target]:可选值为：param（参数）,result（结果）,time（耗时）,ex（异常）",
+                "监听接口 -a: 监听全部接口, path: 接口路径, [target]:可选值为：param（参数）,result（结果）,time（耗时）,ex（异常）,callChain（调用链）",
                 "monitor [-a | path] [target]",
                 "monitor /api/v1/demo param,result"
         );
 
         CommandExecutor executor = new CommandExecutor() {
-            private final Set<String> MONITOR_TARGETS = new HashSet<>(Arrays.asList("param", "result", "time", "ex"));
+            private final Set<String> MONITOR_TARGETS = new HashSet<>(Arrays.asList("param", "result", "time", "ex","callChain"));
 
             @Override
             public boolean supports(String command) {
@@ -240,6 +240,7 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
                 monitorInfo.setResult(true);
                 monitorInfo.setTime(true);
                 monitorInfo.setException(true);
+                monitorInfo.setCallChain(true);
             }
 
             /**
@@ -261,6 +262,7 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
                 monitorInfo.setResult(targetSet.contains("result"));
                 monitorInfo.setTime(targetSet.contains("time"));
                 monitorInfo.setException(targetSet.contains("ex"));
+                monitorInfo.setCallChain(targetSet.contains("callChain"));
             }
         };
 

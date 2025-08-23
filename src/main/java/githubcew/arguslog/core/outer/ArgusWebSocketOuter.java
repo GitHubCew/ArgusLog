@@ -3,12 +3,14 @@ package githubcew.arguslog.core.outer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import githubcew.arguslog.core.cmd.ExecuteResult;
+import githubcew.arguslog.core.config.ArgusProperties;
 import githubcew.arguslog.core.socket.ArgusSocketHandler;
 import githubcew.arguslog.core.*;
 import githubcew.arguslog.core.account.ArgusUser;
 import githubcew.arguslog.core.method.MonitorInfo;
 import githubcew.arguslog.core.util.CommonUtil;
 import githubcew.arguslog.core.util.ContextUtil;
+import org.springframework.util.CollectionUtils;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -51,8 +53,10 @@ public class ArgusWebSocketOuter implements Outer{
 
                 boolean sendNormal = false;
                 boolean sendException = false;
+                boolean sendCallChain = false;
                 StringBuilder sb = new StringBuilder();
                 StringBuilder err = new StringBuilder();
+                StringBuilder callChain = new StringBuilder();
                 sb.append("method => ").append(monitorInfo.getMethod().getSignature()).append(ArgusConstant.CONCAT_SEPARATOR);
                 sb.append("uri => ").append(monitorInfo.getMethod().getUri()).append(ArgusConstant.CONCAT_SEPARATOR);
 
@@ -80,6 +84,12 @@ public class ArgusWebSocketOuter implements Outer{
                         appendException(err, monitorOutput.getException());
                     }
                 }
+                if (monitorInfo.isCallChain()) {
+                    if (monitorOutput.getCallChain() != null) {
+                        sendException = true;
+                        appendCallChain(callChain, monitorOutput.getCallChain());
+                    }
+                }
 
                 // 发送正常消息
                 if (sendNormal) {
@@ -90,6 +100,12 @@ public class ArgusWebSocketOuter implements Outer{
                 // 发送异常消息
                 if (sendException) {
                     String data =  err.toString().replaceAll(ArgusConstant.CONCAT_SEPARATOR, ArgusConstant.LINE_SEPARATOR);
+                    String output = CommonUtil.formatOutput(null, new ExecuteResult(ArgusConstant.FAILED, data));
+                    argusSocketHandler.send(argusUser.getSession(), output);
+                }
+                // 发送调用链消息
+                if (sendException) {
+                    String data =  callChain.toString().replaceAll(ArgusConstant.CONCAT_SEPARATOR, ArgusConstant.LINE_SEPARATOR);
                     String output = CommonUtil.formatOutput(null, new ExecuteResult(ArgusConstant.FAILED, data));
                     argusSocketHandler.send(argusUser.getSession(), output);
                 }
@@ -142,5 +158,29 @@ public class ArgusWebSocketOuter implements Outer{
             e.printStackTrace(pw);
             sb.append(sw);
         }
+
+    public void appendCallChain(StringBuilder sb,StackTraceElement[] stackTraceElement){
+        ArgusProperties argusProperties = ContextUtil.getBean(ArgusProperties.class);
+        String callChainExcludePackage = argusProperties.getCallChainExcludePackage();
+        List<String> excludePackageList = (List<String>)CollectionUtils.arrayToList(callChainExcludePackage.split(","));
+
+        //
+        String str = String.join(ArgusConstant.LINE_SEPARATOR, Arrays.stream(stackTraceElement).filter(t->
+                        !t.isNativeMethod() && notExcludePackage(t.getClassName(),excludePackageList) )
+                .map(Object::toString).toArray(String[]::new));// 将堆栈信息输出到 PrintWriter
+        sb.append(str);  // 转换为字符串并追加
+    }
+
+    // 不在排除包内  && !t.getClassName().startsWith("java.")   && !t.getClassName().startsWith("sun.")
+    public boolean notExcludePackage(String  className,List<String> list){
+        for (String startPackage : list) {
+            if(className.startsWith(startPackage)){
+                return false;
+            }
+        }
+        return true;
+    }
+
+
 
 }

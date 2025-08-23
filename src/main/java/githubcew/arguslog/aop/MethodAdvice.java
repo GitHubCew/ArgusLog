@@ -39,6 +39,8 @@ public class MethodAdvice implements MethodInterceptor {
             ParamFormatter formatter = ContextUtil.getBean(ParamFormatter.class);
             Object format = formatter.format(invocation.getMethod().getParameters(), invocation.getArguments());
             content.setParam(format);
+            // 调用链信息
+            content.setCallChain(new RuntimeException().getStackTrace());
 
             start = System.currentTimeMillis();
 

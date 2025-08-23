@@ -28,4 +28,7 @@ public class MonitorOutput {
      * 异常
      */
     private Exception exception;
+
+
+    StackTraceElement[] callChain;
 }

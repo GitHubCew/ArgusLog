@@ -685,6 +685,7 @@
 
                             // 建立WebSocket连接
                             connectWebSocket();
+                            document.getElementById("commandInput").focus()
                         } else {
                             throw new Error('用户名或密码错误');
                         }

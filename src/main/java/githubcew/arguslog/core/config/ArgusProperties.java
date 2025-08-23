@@ -35,4 +35,8 @@ public class ArgusProperties {
 
     // token过期时间 （10分钟）
     private Long tokenExpireTime = 1000 * 60 * 10L;
+
+    // 调用链排除包
+    private String callChainExcludePackage ="sun.,java.,javax.";
+
 }
