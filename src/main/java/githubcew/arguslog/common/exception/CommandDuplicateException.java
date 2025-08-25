@@ -1,7 +1,6 @@
 package githubcew.arguslog.common.exception;
 
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 /**
  * 命令重复异常

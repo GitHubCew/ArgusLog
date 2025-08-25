@@ -1,7 +1,5 @@
 package githubcew.arguslog.common.constant;
 
-import java.util.regex.Pattern;
-
 /**
  * Argus Constant
  * @author chenenwei
