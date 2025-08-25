@@ -5,6 +5,7 @@ import org.springframework.aop.ClassFilter;
 import org.springframework.aop.MethodMatcher;
 import org.springframework.aop.Pointcut;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 
 /**
@@ -19,7 +20,17 @@ public class MethodPointcut implements Pointcut{
      */
     @Override
     public ClassFilter getClassFilter() {
-        return clazz -> clazz.getSimpleName().toLowerCase().endsWith("controller");
+        return clazz -> {
+            Annotation[] annotations = clazz.getAnnotations();
+            boolean flag = false;
+            for (Annotation annotation : annotations) {
+                flag =  "org.springframework.stereotype.Controller".equals(annotation.annotationType().getName())
+                        ||  "org.springframework.web.bind.annotation.RestController".equals(annotation.annotationType().getName());
+                if(flag)
+                    break;
+            }
+            return flag;
+        };
     }
 
     /**
