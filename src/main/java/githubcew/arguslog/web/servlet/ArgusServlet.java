@@ -29,7 +29,7 @@ public class ArgusServlet extends HttpServlet {
             throws IOException {
 
         // 访问web
-        if ("/argus/index.html".equals(request.getRequestURI())) {
+        if (request.getRequestURI().endsWith("/argus/index.html")) {
             // 加载 HTML 文件
             ClassPathResource resource = new ClassPathResource(ArgusConstant.ARGUS_TERMINAL_HTML);
             if (!resource.exists()) {
@@ -47,7 +47,7 @@ public class ArgusServlet extends HttpServlet {
             }
         }
         // 验证token
-        else if ("/argus/validateToken".equals(request.getRequestURI())) {
+        else if (request.getRequestURI().endsWith("/argus/validateToken")) {
             if (!ArgusCache.hasToken(request.getHeader("argus-token"))) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             }
@@ -59,7 +59,7 @@ public class ArgusServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
 
-        if ("/argus/login".equals(request.getRequestURI())) {
+        if (request.getRequestURI().endsWith("/argus/login")) {
             String username = request.getHeader("username");
             String password = request.getHeader("password");
 

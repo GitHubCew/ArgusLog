@@ -160,7 +160,7 @@
             display: block;
             margin-bottom: 6px;
             color: #00ffc8;
-            font-size: 13px;
+            font-size: 14px;
             font-weight: 500;
             text-shadow: 0 0 5px rgba(0, 255, 200, 0.3);
         }
@@ -238,6 +238,7 @@
             background: rgba(20, 20, 20, 0.5);
             border-radius: 6px;
             border: 1px solid rgba(60, 200, 150, 0.2);
+            cursor: text;
         }
 
         .output-container::-webkit-scrollbar {
@@ -281,6 +282,7 @@
             text-shadow: 0 0 5px rgba(0, 255, 200, 0.3);
             font-family: 'Fira Code', 'Courier New', monospace;
             letter-spacing: 0.5px;
+            cursor: text;
         }
 
         .input-line {
@@ -289,20 +291,42 @@
             align-items: center;
         }
 
-        .command-input {
-            background: transparent;
-            border: none;
-            color: #e0e0e0;
-            font-size: 14px;
-            width: 100%;
-            outline: none;
-            caret-color: #00ffc8;
-            text-shadow: 0 0 5px rgba(0, 255, 200, 0.3);
-            font-weight: 500;
+        .command-input-wrapper {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            flex-grow: 1;
         }
 
+        /* ✅ 恢复原生光标 */
+        .command-input {
+            font-family: 'Fira Code', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1;
+            white-space: nowrap;
+            overflow: visible;
+            letter-spacing: 0;
+            padding: 0;
+            margin: 0;
+            border: none;
+            background: transparent;
+            color: #e0e0e0;
+            width: 100%;
+            outline: none;
+            /* ✅ 移除：caret-color: transparent; */
+            height: 18px;
+            min-height: 18px;
+            max-height: 18px;
+            flex-shrink: 0;
+        }
+
+        /* ✅ 移除：.custom-caret 样式 */
         .response {
             color: #e0e0e0;
+        }
+
+        .warn {
+            color: #bb8240;
         }
 
         .error {
@@ -318,15 +342,6 @@
             color: #b0b0b0;
         }
 
-        .welcome-message {
-            margin-bottom: 15px;
-            color: #00ffc8;
-            font-size: 15px;
-            text-align: center;
-            text-shadow: 0 0 8px rgba(0, 255, 200, 0.3);
-            font-weight: 500;
-        }
-
         .terminal-footer {
             padding: 8px 12px;
             background: rgba(20, 20, 20, 0.95);
@@ -335,7 +350,7 @@
             border-top: 1px solid rgba(60, 200, 150, 0.3);
             display: flex;
             justify-content: space-between;
-            font-size: 12px;
+            font-size: 14px;
             flex-shrink: 0;
             box-shadow: 0 -2px 15px rgba(0, 0, 0, 0.3);
             border-radius: 0 0 8px 8px;
@@ -406,29 +421,6 @@
             to { transform: rotate(360deg); }
         }
 
-        .ascii-art {
-            color: #00ffc8;
-            font-family: 'Courier New', monospace;
-            line-height: 1.2;
-            margin: 15px 0;
-            white-space: pre;
-            overflow: hidden;
-            text-align: center;
-            font-size: 12px;
-            text-shadow: 0 0 8px rgba(0, 255, 200, 0.3);
-            opacity: 0.8;
-        }
-
-        .developer-info {
-            color: #00b8ff;
-            text-align: center;
-            margin-top: 8px;
-            font-style: italic;
-            font-size: 12px;
-            opacity: 0.8;
-            text-shadow: 0 0 5px rgba(0, 184, 255, 0.3);
-        }
-
         .login-message {
             margin-top: 15px;
             font-size: 14px;
@@ -437,6 +429,12 @@
             border-radius: 4px;
             background: rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(60, 200, 150, 0.2);
+        }
+
+        .output-container::after {
+            content: '';
+            display: block;
+            height: 20px;
         }
 
         @media (max-width: 768px) {
@@ -457,10 +455,6 @@
                 gap: 8px;
             }
 
-            .ascii-art {
-                font-size: 10px;
-            }
-
             .terminal-body {
                 margin: 0 5px 0 5px;
             }
@@ -476,24 +470,23 @@
 <div class="terminal-header">
     <div class="terminal-title">Argus Terminal <span class="version">v1.0</span></div>
     <div class="terminal-controls">
-        <div class="control close" onclick="minimizeTerminal()"></div>
-        <div class="control minimize" onclick="toggleFullscreen()"></div>
-        <div class="control maximize" onclick="closeTerminal()"></div>
+<!--        <div class="control close" onclick="minimizeTerminal()"></div>-->
+<!--        <div class="control minimize" onclick="toggleFullscreen()"></div>-->
+<!--        <div class="control maximize" onclick="closeTerminal()"></div>-->
     </div>
 </div>
 
 <div class="terminal-body" id="terminalBody">
-    <!-- 初始显示登录界面 -->
     <div class="login-container" id="loginContainer">
         <h1 class="login-title">ARGUS TERMINAL</h1>
         <div class="login-form">
             <div class="input-group">
                 <label class="input-label">用户名</label>
-                <input type="text" class="input-field" id="username" placeholder="输入用户名" value="admin">
+                <input type="text" class="input-field" id="username" placeholder="输入用户名" value="argus">
             </div>
             <div class="input-group">
                 <label class="input-label">密码</label>
-                <input type="password" class="input-field" id="password" placeholder="输入密码" value="password">
+                <input type="password" class="input-field" id="password" placeholder="输入密码" value="argus">
             </div>
             <button class="btn" id="loginBtn">
                 <span id="loginText">登录</span>
@@ -503,18 +496,18 @@
         </div>
     </div>
 
-    <!-- 终端输出区域，初始隐藏 -->
     <div id="terminalOutput" class="terminal-content" style="display: none;">
         <div class="output-container" id="outputContainer">
-            <div class="ascii-art">
-            </div>
             <div class="output" id="commandHistory"></div>
 
             <div class="command-line">
-                <span class="prompt" id="userPrompt">user@argus:~$</span>
+                <span class="prompt">
+                    <span class="user-host">argus@${currentUser}</span> %
+                </span>
                 <div class="input-line">
-                    <input type="text" class="command-input" id="commandInput" autocomplete="off" autofocus>
-                    <span class="cursor"></span>
+                    <div class="command-input-wrapper">
+                        <input type="text" class="command-input" id="commandInput" autocomplete="off">
+                    </div>
                 </div>
             </div>
         </div>
@@ -536,26 +529,26 @@
 </div>
 
 <script>
-    // 全局变量
     let authToken = null;
     let tokenExpiry = null;
     let tokenTimer = null;
-    let tokenInterval = null; // 用于存储setInterval的引用
+    let tokenInterval = null;
     let isConnected = false;
     let currentUser = '';
     let commandIndex = -1;
     let commands = [];
     let websocket = null;
-    let cursorBlinkInterval = null;
+    let isReconnecting = false;
+    let reconnectAttempts = 0;
+    const MAX_RECONNECT_ATTEMPTS = 5;
+    const BASE_RECONNECT_DELAY = 2000;
 
-    // 获取上下文路径
     function getContextPath() {
         const fullPath = window.location.pathname;
         const terminalIndex = fullPath.indexOf('/argus/index.html');
         return terminalIndex > 0 ? fullPath.substring(0, terminalIndex) : '';
     }
 
-    // 获取WebSocket URL
     function getWebSocketUrl() {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const host = window.location.host;
@@ -563,7 +556,6 @@
         return `${protocol}//${host}${contextPath}/argus-ws`;
     }
 
-    // 自动滚动到底部
     function scrollToBottom() {
         const outputContainer = document.getElementById('outputContainer');
         outputContainer.scrollTop = outputContainer.scrollHeight;
@@ -578,67 +570,53 @@
         const loginText = document.getElementById('loginText');
         const loginSpinner = document.getElementById('loginSpinner');
         const loginMessage = document.getElementById('loginMessage');
-        const commandInput = document.getElementById('commandInput');
         const commandHistory = document.getElementById('commandHistory');
-        const userPrompt = document.getElementById('userPrompt');
+        const userHost = document.querySelector('.user-host');
         const statusIndicator = document.getElementById('statusIndicator');
         const statusText = document.getElementById('statusText');
         const tokenInfo = document.getElementById('tokenInfo');
         const tokenExpiryElement = document.getElementById('tokenExpiry');
 
-        // 检查本地存储中是否有有效的token
         checkExistingToken();
 
-        // 登录按钮点击事件
         loginBtn.addEventListener('click', handleLogin);
-
-        // 回车键登录
         passwordInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') handleLogin();
         });
 
-        // 检查本地存储中是否有有效的token
         function checkExistingToken() {
             const token = localStorage.getItem('argus-token');
             const expiry = localStorage.getItem('argus-token-expiry');
-
             if (token && expiry) {
                 const expiryTime = parseInt(expiry);
                 const currentTime = new Date().getTime();
-
                 if (currentTime < expiryTime) {
-                    // Token仍然有效
                     authToken = token;
                     startTokenTimer(expiryTime - currentTime);
                     showTerminal();
                     connectWebSocket();
                 } else {
-                    // Token已过期，清除
                     localStorage.removeItem('argus-token');
                     localStorage.removeItem('argus-token-expiry');
                 }
             }
         }
 
-        // 处理登录
         function handleLogin() {
             const username = usernameInput.value.trim();
             const password = passwordInput.value.trim();
-
             if (!username || !password) {
                 showLoginMessage('请输入用户名和密码', 'error');
                 return;
             }
 
-            // showTerminal()
-            // 显示加载状态
+            showTerminal();
             loginText.textContent = '登录中...';
             loginSpinner.style.display = 'inline-block';
             loginBtn.disabled = true;
             loginMessage.textContent = '';
             loginMessage.style.display = 'none';
 
-            // 调用登录API
             fetch(getContextPath() + '/argus/login', {
                 method: 'POST',
                 headers: {
@@ -648,48 +626,24 @@
             })
                 .then(response => {
                     if (response.status === 200) {
-                        // 登录成功，获取token和过期时间
                         const token = response.headers.get('argus-token');
                         const expireTime = response.headers.get('argus-token-expire-time');
-
                         if (token && expireTime) {
-                            // 保存token和过期时间
                             authToken = token;
                             const expiry = parseInt(expireTime);
-
-                            // 存储到localStorage
                             localStorage.setItem('argus-token', token);
                             localStorage.setItem('argus-token-expiry', expiry.toString());
-
-                            // 启动token过期计时器
                             startTokenTimer(expiry - new Date().getTime());
-
-                            // 显示终端界面
-                            showTerminal();
-
-                            // 更新用户提示
                             currentUser = username;
-                            userPrompt.textContent = `argus@${currentUser}:~$`;
-
-                            // 显示token信息
+                            if (userHost) userHost.textContent = `argus@${currentUser}`;
+                            showTerminal();
                             tokenInfo.style.display = 'flex';
-
-                            // 清除之前的定时器（如果存在）
-                            if (tokenInterval) {
-                                clearInterval(tokenInterval);
-                                tokenInterval = null;
-                            }
-
-                            // 更新token过期时间显示
+                            if (tokenInterval) clearInterval(tokenInterval);
                             updateTokenExpiryDisplay(expiry);
-
-                            // 建立WebSocket连接
                             connectWebSocket();
                         } else {
                             throw new Error('用户名或密码错误');
                         }
-                    } else if (response.status === 401) {
-                        throw new Error('用户名或密码错误');
                     } else {
                         throw new Error('登录失败，状态码: ' + response.status);
                     }
@@ -698,474 +652,267 @@
                     showLoginMessage(error.message, 'error');
                 })
                 .finally(() => {
-                    // 恢复登录按钮状态
                     loginText.textContent = '登录';
                     loginSpinner.style.display = 'none';
                     loginBtn.disabled = false;
                 });
         }
 
-        // 建立WebSocket连接
-        function connectWebSocket() {
-
+        function validateToken(callback) {
+            if (!authToken) return callback(false);
             fetch(getContextPath() + '/argus/validateToken', {
                 method: 'GET',
-                headers: {
-                    'argus-token': authToken  // 使用当前 token
+                headers: { 'argus-token': authToken }
+            }).then(r => callback(r.status === 200)).catch(() => callback(false));
+        }
+
+        function connectWebSocket() {
+            if (!authToken) return;
+            validateToken(valid => {
+                if (!valid) {
+                    addOutput('身份验证失败，无法连接', 'error');
+                    setTimeout(logout, 1500);
+                    return;
                 }
-            })
-                .then(response => {
-                    if (response.status === 401) {
-                        addOutput('登录已过期，无法建立连接。', 'error');
-                        setTimeout(logout, 1000);
-                        // 不继续连接
-                        return false;
-                    }
-                })
-                .catch(error => {
-                    console.error('Token 校验请求失败:', error);
-                    addOutput('网络错误，无法验证身份。', 'error');
-                    setTimeout(logout, 1500); // 安全起见，登出
-                });
-
-            isConnected = true;
-            // 更新连接状态
-            statusIndicator.classList.remove('disconnected', 'connected');
-            statusIndicator.classList.add('connecting');
-            statusText.textContent = '连接中...';
-
-            try {
-                // 创建WebSocket连接，通过URL参数传递token
+                statusIndicator.classList.remove('connected', 'disconnected');
+                statusIndicator.classList.add('connecting');
+                statusText.textContent = '连接中...';
                 const wsUrl = `${getWebSocketUrl()}?argus-token=${encodeURIComponent(authToken)}`;
                 websocket = new WebSocket(wsUrl);
 
-                // 连接建立时的处理
-                websocket.onopen = function(event) {
+                websocket.onopen = () => {
                     isConnected = true;
+                    isReconnecting = false;
+                    reconnectAttempts = 0;
                     statusIndicator.classList.remove('connecting', 'disconnected');
                     statusIndicator.classList.add('connected');
                     statusText.textContent = '已连接';
-
+                    addOutput("已连接 argus", 'success');
+                    addOutput("输入 'help' 查看命令列表。", 'info');
                 };
 
-                // 接收到消息时的处理
-                websocket.onmessage = function(event) {
+                websocket.onmessage = (event) => {
                     try {
-                        // 解析消息格式: code=1##data=结果内容
                         const message = event.data;
                         const parts = message.split('##');
-
-                        if (parts.length >= 2) {
-                            const codePart = parts[0];
-                            const dataPart = parts[1];
-
-                            // 提取code值
-                            if (codePart.startsWith('code=')) {
-                                const code = parseInt(codePart.substring(5));
-
-                                // 提取data值
-                                if (dataPart.startsWith('data=')) {
-                                    const data = dataPart.substring(5);
-
-                                    if (code === 1) {
-                                        // 成功
-                                        addOutput(data, 'response');
-                                    } else {
-                                        // 失败
-                                        addOutput(`${data}`, 'error');
-                                    }
-                                } else {
-                                    addOutput(`无法解析消息: ${message}`, 'error');
-                                }
-                            } else {
-                                addOutput(`无法解析消息: ${message}`, 'error');
-                            }
+                        if (parts.length >= 2 && parts[0].startsWith('code=') && parts[1].startsWith('data=')) {
+                            const code = parseInt(parts[0].substring(5));
+                            const data = parts[1].substring(5);
+                            addOutput(data, code === 1 ? 'response' : 'error');
                         } else {
-                            // 如果不是标准格式，直接显示
                             addOutput(message);
                         }
-                    } catch (error) {
-                        addOutput(`${error.message}`, 'error');
+                    } catch (e) {
+                        addOutput(e.message, 'error');
                     }
                 };
 
-                // 连接关闭时的处理
-                websocket.onclose = function(event) {
+                websocket.onclose = (event) => {
                     isConnected = false;
-
-                    // 更新 UI 状态
                     statusIndicator.classList.remove('connecting', 'connected');
                     statusIndicator.classList.add('disconnected');
                     statusText.textContent = '未连接';
-
-                    // 判断是否是服务器因认证失败关闭
-                    if (event.code === 500) {
-                        // 服务器明确告知认证失败，必须重新登录
-                        addOutput(`会话已失效: ${event.reason || '身份验证失败'}`, 'error');
-                        addOutput('正在跳转到登录页面...', 'error');
-
-                        // 停止任何重连尝试，直接登出
-                        setTimeout(() => {
-                            logout(); // 会关闭连接、清 token、跳回登录页
-                        }, 1000);
-
-                    }
-                    else if (event.wasClean) {
-                        // 正常关闭（如用户主动 disconnect）
-                        addOutput(`连接已关闭: ${event.code} ${event.reason || ''}`, 'info');
+                    if (event.wasClean && event.code === 1000) {
+                        addOutput(`已断开 argus 连接: ${event.code} ${event.reason || ''}`, 'info');
+                    } else if (event.code === 1001) {
+                        addOutput(`argus 断开: ${event.code} ${event.reason || ''}`, 'error')
+                        attemptReconnect();
                     }
                     else {
-                        // 非正常关闭（网络问题等），可尝试重连
-                        addOutput('连接异常断开，正在尝试重新连接...', 'error');
-
-                        // 可选：延迟重连
-                        setTimeout(() => {
-                            if (authToken) {
-                                connectWebSocket(); // 会先校验 token
-                            }
-                            // 否则用户需手动登录
-                        }, 2000);
+                        addOutput('连接 argus 异常断开，正在重试...', 'error');
+                        attemptReconnect();
                     }
                 };
 
-                // 连接错误时的处理
-                websocket.onerror = function(error) {
-                    addOutput('connect error!', 'error');
-                    console.error('WebSocket错误:', error);
+                websocket.onerror = (err) => {
+                    console.error('WebSocket错误:', err);
+                    addOutput('连接 argus 错误', 'error');
                 };
-            } catch (error) {
-                statusIndicator.classList.remove('connecting');
-                statusIndicator.classList.add('disconnected');
-                statusText.textContent = '连接失败';
-
-                addOutput(`Cannot connect to websocket server: ${error.message}`, 'error');
-            }
+            });
         }
 
-        // 通过WebSocket发送命令（只发送纯命令，不包含token）
+        function attemptReconnect() {
+            if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS || isReconnecting) {
+                addOutput('重连失败次数过多，正在跳转至登录页面...', 'error');
+                setTimeout(logout, 1500);
+                return;
+            }
+            isReconnecting = true;
+            reconnectAttempts++;
+            const delay = BASE_RECONNECT_DELAY * Math.pow(2, reconnectAttempts - 1);
+            addOutput(`第 ${reconnectAttempts}/ ${MAX_RECONNECT_ATTEMPTS} 次重连尝试...`, 'info');
+            setTimeout(() => {
+                isReconnecting = false;
+                connectWebSocket();
+            }, delay);
+        }
+
         function sendCommand(command) {
             if (!websocket || websocket.readyState !== WebSocket.OPEN) {
-                addOutput('Not connected', 'error');
+                addOutput('未连接，请先使用 connect 连接', 'error');
                 return false;
             }
-
             try {
-                // 只发送纯命令，token已经在连接时通过URL参数传递
                 websocket.send(command);
                 return true;
             } catch (error) {
-                addOutput(`${error.message}`, 'error');
+                addOutput(error.message, 'error');
                 return false;
             }
         }
 
-        // 显示登录消息
         function showLoginMessage(message, type = 'response') {
             loginMessage.textContent = message;
             loginMessage.className = `login-message ${type}`;
             loginMessage.style.display = 'block';
         }
 
-        // 启动token过期计时器
         function startTokenTimer(expireTime) {
-            // 清除现有的计时器
-            if (tokenTimer) {
-                clearTimeout(tokenTimer);
-            }
-
-            // 设置新的计时器
+            if (tokenTimer) clearTimeout(tokenTimer);
             tokenTimer = setTimeout(() => {
                 addOutput('登录已过期，请重新登录', 'error');
                 logout();
             }, expireTime);
         }
 
-        // 更新token过期时间显示
         function updateTokenExpiryDisplay(expiry) {
-            // 清除之前的定时器（如果存在）
-            if (tokenInterval) {
-                clearInterval(tokenInterval);
-            }
-
-            const updateDisplay = () => {
-                const now = new Date().getTime();
+            if (tokenInterval) clearInterval(tokenInterval);
+            const update = () => {
+                const now = Date.now();
                 const remaining = expiry - now;
-
                 if (remaining <= 0) {
                     tokenExpiryElement.textContent = '已过期';
                     return;
                 }
-
-                // 转换为分钟和秒
                 const minutes = Math.floor(remaining / 60000);
                 const seconds = Math.floor((remaining % 60000) / 1000);
-
-                tokenExpiryElement.textContent = `Token剩余时间: ${minutes}分${seconds}秒`;
+                tokenExpiryElement.textContent = `Token剩余: ${minutes}分${seconds}秒`;
             };
-
-            // 立即更新一次
-            updateDisplay();
-
-            // 每秒更新一次，并保存引用以便后续清除
-            tokenInterval = setInterval(updateDisplay, 1000);
+            update();
+            tokenInterval = setInterval(update, 1000);
         }
 
-        // 显示终端界面
         function showTerminal() {
-            const loginContainer = document.getElementById('loginContainer');
-            const terminalOutput = document.getElementById('terminalOutput');
-
             loginContainer.style.display = 'none';
             terminalOutput.style.display = 'flex';
-            commandInput.focus();
-
-            // 添加欢迎消息
-            addOutput(`欢迎您 ${currentUser}！`, 'success');
-            addOutput('输入 "help" 查看可用命令列表。');
+            addCommandInputLine();
         }
 
-        // 退出登录
         function logout() {
-            // 关闭WebSocket连接
-            if (websocket) {
-                websocket.close();
-                websocket = null;
-            }
-
-            // 清除token和计时器
+            if (websocket) websocket.close();
             authToken = null;
             localStorage.removeItem('argus-token');
             localStorage.removeItem('argus-token-expiry');
-
-            if (tokenTimer) {
-                clearTimeout(tokenTimer);
-                tokenTimer = null;
-            }
-
-            // 清除token显示定时器
-            if (tokenInterval) {
-                clearInterval(tokenInterval);
-                tokenInterval = null;
-            }
-
-            // 隐藏终端界面，显示登录界面
-            const loginContainer = document.getElementById('loginContainer');
-            const terminalOutput = document.getElementById('terminalOutput');
-            const tokenInfo = document.getElementById('tokenInfo');
-
+            if (tokenTimer) clearTimeout(tokenTimer);
+            if (tokenInterval) clearInterval(tokenInterval);
             loginContainer.style.display = 'flex';
             terminalOutput.style.display = 'none';
             tokenInfo.style.display = 'none';
-
-            // 清空密码字段
-            document.getElementById('password').value = '';
+            passwordInput.value = '';
         }
 
-        // 命令输入事件
-        commandInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                const command = commandInput.value.trim();
-                if (command) {
-                    // 保存命令到历史
-                    commands.push(command);
-                    commandIndex = commands.length;
-
-                    // 添加命令到历史
-                    addOutput(`argus@${currentUser}~$ ${command}`, 'command');
-
-                    // 处理命令
-                    handleCommand(command);
-
-                    // 清空输入
-                    commandInput.value = '';
-
-                    // 重新添加命令输入行
-                    addCommandInputLine();
-                }
-            } else if (e.key === 'ArrowUp') {
-                // 上箭头键 - 显示上一条命令
-                e.preventDefault();
-                if (commands.length > 0) {
-                    if (commandIndex > 0) commandIndex--;
-                    commandInput.value = commands[commandIndex] || '';
-                }
-            } else if (e.key === 'ArrowDown') {
-                // 下箭头键 - 显示下一条命令
-                e.preventDefault();
-                if (commandIndex < commands.length - 1) {
-                    commandIndex++;
-                    commandInput.value = commands[commandIndex] || '';
-                } else {
-                    commandIndex = commands.length;
-                    commandInput.value = '';
-                }
-            } else if (e.key === 'Tab') {
-                // Tab键 - 自动补全
-                e.preventDefault();
-                const input = commandInput.value;
-                const availableCommands = ['help', 'date', 'clear', 'connect', 'disconnect', 'logout', 'exit', 'ls', 'pwd', 'whoami', 'echo'];
-                const matches = availableCommands.filter(cmd => cmd.startsWith(input));
-
-                if (matches.length === 1) {
-                    commandInput.value = matches[0];
-                } else if (matches.length > 1) {
-                    addOutput('可能的命令: ' + matches.join(', '));
-                }
+        terminalOutput.addEventListener('click', function(e) {
+            const selection = window.getSelection();
+            const input = document.getElementById('commandInput');
+            if (selection.toString().length > 0) return;
+            if (e.target === input || input.contains(e.target)) return;
+            if (e.target.closest('.prompt') || e.target === document.getElementById('outputContainer')) {
+                input.focus();
             }
         });
 
-        // 添加输出到终端
         function addOutput(text, type = 'response') {
-            const outputDiv = document.createElement('div');
-            outputDiv.className = `output ${type}`;
-            outputDiv.textContent = text;
-            commandHistory.appendChild(outputDiv);
-
-            // 自动滚动到底部
+            const div = document.createElement('div');
+            div.className = `output ${type}`;
+            div.textContent = text;
+            commandHistory.appendChild(div);
             scrollToBottom();
         }
 
-        // 添加命令输入行
         function addCommandInputLine() {
-            // 创建新的命令输入行
-            const commandLine = document.createElement('div');
-            commandLine.className = 'command-line';
-
-            const prompt = document.createElement('span');
-            prompt.className = 'prompt';
-            prompt.textContent = `argus@${currentUser}:~$`;
-            prompt.id = 'userPrompt';
-
-            const inputLine = document.createElement('div');
-            inputLine.className = 'input-line';
-
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.className = 'command-input';
-            input.id = 'commandInput';
-            input.autocomplete = 'off';
-            input.autofocus = true;
-
-            inputLine.appendChild(input);
-
-            commandLine.appendChild(prompt);
-            commandLine.appendChild(inputLine);
-
-            // 添加到输出容器
-            const outputContainer = document.getElementById('outputContainer');
-            outputContainer.appendChild(commandLine);
-
-            // 移除旧的输入行
+            const container = document.getElementById('outputContainer');
             const oldInput = document.getElementById('commandInput');
-            if (oldInput && oldInput.parentNode && oldInput.parentNode.parentNode) {
-                oldInput.parentNode.parentNode.remove();
+            if (oldInput && oldInput.closest('.command-line')) {
+                oldInput.closest('.command-line').remove();
             }
 
-            // 设置焦点到新输入框
-            input.focus();
+            const line = document.createElement('div');
+            line.className = 'command-line';
+            line.innerHTML = `
+                <span class="prompt">
+                    <span class="user-host">argus@${currentUser}</span> %
+                </span>
+                <div class="input-line">
+                    <div class="command-input-wrapper">
+                        <input type="text" class="command-input" id="commandInput" autocomplete="off">
+                    </div>
+                </div>
+            `;
+            container.appendChild(line);
 
-            // 更新全局引用
-            window.commandInput = input;
+            const input = document.getElementById('commandInput');
 
-            // 添加事件监听器
+            // ✅ 仅绑定必要事件
+            input.addEventListener('focus', () => {
+                // 确保光标可见
+            });
+
             input.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter') {
+                    e.preventDefault();
                     const command = input.value.trim();
                     if (command) {
-                        // 保存命令到历史
                         commands.push(command);
                         commandIndex = commands.length;
-
-                        // 添加命令到历史
-                        addOutput(`argus@${currentUser}~$ ${command}`, 'command');
-
-                        // 处理命令
+                        addOutput(`argus@${currentUser}% ${command}`, 'command');
                         handleCommand(command);
-
-                        // 清空输入
                         input.value = '';
-
-                        // 重新添加命令输入行
                         addCommandInputLine();
                     }
                 } else if (e.key === 'ArrowUp') {
-                    // 上箭头键 - 显示上一条命令
                     e.preventDefault();
-                    if (commands.length > 0) {
-                        if (commandIndex > 0) commandIndex--;
-                        input.value = commands[commandIndex] || '';
+                    if (commands.length > 0 && commandIndex > 0) {
+                        commandIndex--;
+                        input.value = commands[commandIndex];
                     }
                 } else if (e.key === 'ArrowDown') {
-                    // 下箭头键 - 显示下一条命令
                     e.preventDefault();
                     if (commandIndex < commands.length - 1) {
                         commandIndex++;
-                        input.value = commands[commandIndex] || '';
+                        input.value = commands[commandIndex];
                     } else {
                         commandIndex = commands.length;
                         input.value = '';
-                    }
-                } else if (e.key === 'Tab') {
-                    // Tab键 - 自动补全
-                    e.preventDefault();
-                    const inputVal = input.value;
-                    const availableCommands = ['help', 'date', 'clear', 'connect', 'disconnect', 'logout', 'exit', 'ls', 'pwd', 'whoami', 'echo'];
-                    const matches = availableCommands.filter(cmd => cmd.startsWith(inputVal));
-
-                    if (matches.length === 1) {
-                        input.value = matches[0];
-                    } else if (matches.length > 1) {
-                        addOutput('可能的命令: ' + matches.join(', '));
                     }
                 }
             });
 
-            // 自动滚动到底部
+            input.focus();
             scrollToBottom();
         }
 
-        // 处理命令
         function handleCommand(command) {
-            // 特殊命令处理
-            switch(command.toLowerCase()) {
+            switch (command.toLowerCase()) {
                 case 'clear':
                     commandHistory.innerHTML = '';
-                    // 重新添加命令输入行
                     addCommandInputLine();
                     break;
                 case 'connect':
-                    if (isConnected) {
-                        addOutput('Already connected.', 'error');
-                    } else {
-                        connectWebSocket();
-                    }
+                    if (!isConnected) connectWebSocket();
+                    else addOutput('已连接', 'error');
                     break;
-                case 'disconnect':
-                    if (!isConnected || !websocket) {
-                        addOutput('', 'error');
-                    } else {
-                        websocket.close();
-                        addOutput('WebSocket连接已关闭。');
-                    }
+                case 'exit':
+                    if (websocket) websocket.close();
                     break;
                 case 'logout':
                     setTimeout(logout, 1000);
                     break;
-                case 'exit':
-                    if (confirm('确定要关闭终端吗？')) {
-                        setTimeout(() => {
-                            window.close();
-                        }, 1000);
-                    }
-                    break;
                 default:
-                    // 其他命令通过WebSocket发送（只发送纯命令）
-                    sendCommand(command)
+                    sendCommand(command);
             }
         }
     });
 
-    // 终端控制函数
     function minimizeTerminal() {
         document.body.style.display = 'none';
         setTimeout(() => {
@@ -1180,9 +927,7 @@
                 alert(`全屏模式错误: ${err.message}`);
             });
         } else {
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-            }
+            document.exitFullscreen();
         }
     }
 

@@ -35,7 +35,6 @@ public class ArgusHandshakeInterceptor implements HandshakeInterceptor {
                 return true;
             }
         }
-        response.setStatusCode(HttpStatus.UNAUTHORIZED);
         return false;
     }
 

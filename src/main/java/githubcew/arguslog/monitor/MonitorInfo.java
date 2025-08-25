@@ -47,6 +47,8 @@ public class MonitorInfo {
      * @param param 参数
      * @param result 结果
      * @param time 时间
+     * @param exception 异常
+     * @param callChain 方法调用链
      */
     public MonitorInfo (ArgusMethod method, boolean param, boolean result, boolean time, boolean exception, boolean callChain) {
         this.method = method;
@@ -55,7 +57,6 @@ public class MonitorInfo {
         this.time = time;
         this.exception = exception;
         this.callChain = callChain;
-
     }
 
 }

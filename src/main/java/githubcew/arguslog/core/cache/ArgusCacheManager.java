@@ -27,6 +27,10 @@ public class ArgusCacheManager implements InitializingBean, DisposableBean {
     // 定时任务执行器
     private final ScheduledExecutorService scheduler;
 
+    /**
+     * 构造方法
+     * @param argusProperties 配置
+     */
     @Autowired
     public ArgusCacheManager(ArgusProperties argusProperties) {
         this.argusProperties = argusProperties;
@@ -82,16 +86,27 @@ public class ArgusCacheManager implements InitializingBean, DisposableBean {
         }
     }
 
+    /**
+     * afterPropertiesSet
+     * @throws Exception 异常
+     */
     @Override
     public void afterPropertiesSet() throws Exception {
         start();
     }
 
+    /**
+     * 销毁方法
+     * @throws Exception 异常
+     */
     @Override
     public void destroy() throws Exception {
         shutdown();
     }
 
+    /**
+     * 关闭线程
+     */
     public void shutdown() {
         if (scheduler != null && !scheduler.isShutdown()) {
             scheduler.shutdown();

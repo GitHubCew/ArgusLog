@@ -75,11 +75,10 @@ public class ArgusWebSocketOuter implements Outer{
                     appendValue(sb, objectMapper, monitorOutput.getTime());
                     sb.append(ArgusConstant.CONCAT_SEPARATOR);
                 }
-                if (monitorInfo.isException()) {
-                    if (monitorOutput.getException() != null) {
-                        sendException = true;
-                        appendException(err, monitorOutput.getException());
-                    }
+                if (monitorOutput.getException() != null) {
+                    sendException = true;
+                    err.append("error => ");
+                    appendException(err, monitorOutput.getException());
                 }
 
                 // 发送正常消息

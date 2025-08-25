@@ -12,6 +12,7 @@ public interface Authenticator {
     /**
      * 认证
      * @param request 请求
+     * @param response 响应
      * @return 认证结果
      */
     boolean authenticate(ArgusRequest request, ArgusResponse response);

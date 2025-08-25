@@ -80,7 +80,7 @@ public class CommandManager {
      * @return 执行结果
      */
     public ExecuteResult execute (ArgusRequest request) {
-        Optional<CommandExecutor> optional = executors.values().stream().filter(e -> e.supports(request.getRequestCommand().getCommand())).findFirst();
+        Optional<CommandExecutor> optional = executors.values().stream().filter(e -> !Objects.isNull(e)  && e.supports(request.getRequestCommand().getCommand())).findFirst();
         CommandExecutor executor = null;
         if (optional.isPresent()) {
             executor = optional.get();

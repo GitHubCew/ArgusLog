@@ -17,7 +17,6 @@ import java.util.Objects;
  *  用户认证器
  *  @author chenenwei
  */
-
 @Component
 public class AccountAuthenticator implements Authenticator{
 
@@ -26,6 +25,11 @@ public class AccountAuthenticator implements Authenticator{
 
     private final TokenProvider tokenProvider;
 
+    /**
+     * 构造方法
+     * @param userProvider 用户提供者
+     * @param tokenProvider token提供者
+     */
     @Autowired
     public AccountAuthenticator(UserProvider userProvider, TokenProvider tokenProvider) {
         this.userProvider = userProvider;
@@ -35,6 +39,7 @@ public class AccountAuthenticator implements Authenticator{
     /**
      * 认证
      * @param request 请求
+     * @param response 响应
      * @return 认证结果
      */
     @Override

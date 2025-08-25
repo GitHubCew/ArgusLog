@@ -35,6 +35,10 @@ public class ArgusMethod {
      */
     public ArgusMethod () {}
 
+    /**
+     * 构造方法
+     * @param method 方法
+     */
     public ArgusMethod(Method method) {
         this.method = method;
     }
@@ -44,6 +48,7 @@ public class ArgusMethod {
      * @param name 参数
      * @param signature 方法签名
      * @param method 方法实例
+     * @param uri 接口uri
      */
     public ArgusMethod (String name, String signature, Method method, String uri) {
         this.name = name;

@@ -29,6 +29,8 @@ public class CommonUtil {
     /**
      * 生成指定格式的方法签名
      * 格式：全限定类名.方法名(参数类型1,参数类型2) 返回类型
+     * @param method 方法
+     * @return 方法签名
      */
     public static String generateSignature(Method method) {
         return method.getDeclaringClass().getName() +
@@ -39,6 +41,11 @@ public class CommonUtil {
                 method.getReturnType().getSimpleName();
     }
 
+    /**
+     * 获取参数类型
+     * @param method 方法
+     * @return 参数类型
+     */
     private static String getParameterTypes(Method method) {
         Class<?>[] params = method.getParameterTypes();
         if (params.length == 0) {

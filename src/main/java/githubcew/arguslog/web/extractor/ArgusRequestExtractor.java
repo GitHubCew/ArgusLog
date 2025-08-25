@@ -15,6 +15,12 @@ import java.util.Objects;
  */
 public class ArgusRequestExtractor implements Extractor {
 
+    /**
+     * 提取请求
+     * @param session session
+     * @param inputCmd 输入的命令
+     * @return ArgusRequest
+     */
     @Override
     public ArgusRequest extract(WebSocketSession session, String inputCmd) {
 
