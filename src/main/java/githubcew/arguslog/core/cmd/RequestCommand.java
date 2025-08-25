@@ -18,8 +18,16 @@ public class RequestCommand {
      */
     private String[] args;
 
+    /**
+     * 构造参数
+     */
     public RequestCommand() {}
 
+    /**
+     * 构造参数
+     * @param command 命令
+     * @param args 参数
+     */
     public RequestCommand(String command, String[] args) {
         this.command = command;
         this.args = args;

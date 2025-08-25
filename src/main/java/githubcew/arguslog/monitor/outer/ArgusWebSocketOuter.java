@@ -87,7 +87,7 @@ public class ArgusWebSocketOuter implements Outer{
                 }
                 if (monitorInfo.isCallChain()) {
                     if (monitorOutput.getCallChain() != null) {
-                        sendException = true;
+                        sendCallChain = true;
                         callChain.append("callChain => ");
                         appendCallChain(callChain, monitorOutput.getCallChain());
                     }
@@ -99,16 +99,16 @@ public class ArgusWebSocketOuter implements Outer{
                     String output = CommonUtil.formatOutput(new ExecuteResult(ArgusConstant.SUCCESS, data));
                     argusSocketHandler.send(argusUser.getSession(), output);
                 }
+                // 发送调用链消息
+                if (sendCallChain) {
+                    String data =  callChain.toString().replaceAll(ArgusConstant.CONCAT_SEPARATOR, ArgusConstant.LINE_SEPARATOR);
+                    String output = CommonUtil.formatOutput(new ExecuteResult(ArgusConstant.SUCCESS, data));
+                    argusSocketHandler.send(argusUser.getSession(), output);
+                }
                 // 发送异常消息
                 if (sendException) {
                     String data =  err.toString().replaceAll(ArgusConstant.CONCAT_SEPARATOR, ArgusConstant.LINE_SEPARATOR);
                     String output = CommonUtil.formatOutput(new ExecuteResult(ArgusConstant.FAILED, data));
-                    argusSocketHandler.send(argusUser.getSession(), output);
-                }
-                // 发送调用链消息
-                if (sendException) {
-                    String data =  callChain.toString().replaceAll(ArgusConstant.CONCAT_SEPARATOR, ArgusConstant.LINE_SEPARATOR);
-                    String output = CommonUtil.formatOutput(new ExecuteResult(ArgusConstant.SUCCESS, data));
                     argusSocketHandler.send(argusUser.getSession(), output);
                 }
             } catch (Exception e) {

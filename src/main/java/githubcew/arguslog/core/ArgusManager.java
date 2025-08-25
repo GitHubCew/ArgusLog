@@ -119,7 +119,6 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
 
     /**
      * 注册命令
-     * @return 命令列表
      */
     private void registerCommand() {
 

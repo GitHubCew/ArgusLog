@@ -82,7 +82,9 @@ public class ArgusCacheManager implements InitializingBean, DisposableBean {
             newScheduler.scheduleAtFixedRate(this::cleanExpiredCredentials,
                     argusProperties.getTokenFlushTime(), argusProperties.getTokenFlushTime(), TimeUnit.SECONDS);
 
-            log.info("【Argus => Scheduler restarted successfully】");
+            if (log.isDebugEnabled()) {
+                log.debug("【Argus => Scheduler restarted successfully】");
+            }
         }
     }
 
