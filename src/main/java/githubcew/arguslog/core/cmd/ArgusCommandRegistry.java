@@ -353,7 +353,7 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
                 monitorInfo.setResult(targetSet.contains("result"));
                 monitorInfo.setTime(targetSet.contains("time"));
                 monitorInfo.setException(targetSet.contains("ex"));
-                monitorInfo.setCallChain(targetSet.contains("callChain"));
+                monitorInfo.setCallChain(targetSet.contains("chain"));
             }
         };
 
