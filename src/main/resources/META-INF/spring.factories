@@ -1,5 +1,2 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
 githubcew.arguslog.config.ArgusAutoConfiguration
-
-
-org.springframework

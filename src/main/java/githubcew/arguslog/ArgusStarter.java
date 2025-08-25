@@ -37,6 +37,6 @@ public class ArgusStarter {
         // 执行命令
         ExecuteResult executeResult = argusManager.getCommandManager().execute(request);
         response.setExecuteResult(executeResult);
-        return CommonUtil.formatOutput(response.getToken(), response.getExecuteResult());
+        return CommonUtil.formatOutput(response.getExecuteResult());
     }
 }

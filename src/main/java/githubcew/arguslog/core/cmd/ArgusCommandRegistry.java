@@ -243,12 +243,12 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
         ArgusCommand monitor = new ArgusCommand(
                 "monitor",
                 "监听指定或者全部接口参数、执行结果、耗时、调用链",
-                "monitor [-a | path] [target], -a: 监听全部接口, path: 接口路径, [target]:可选值为：param（参数）,result（结果）,time（耗时）,callChain（调用链）",
+                "monitor [-a | path] [target], -a: 监听全部接口, path: 接口路径, [target]:可选值为：param（参数）,result（结果）,time（耗时）,chain（调用链）",
                 "monitor /api/v1/demo param,result"
         );
 
         CommandExecutor executor = new CommandExecutor() {
-            private final Set<String> MONITOR_TARGETS = new HashSet<>(Arrays.asList("param", "result", "time", "ex","callChain"));
+            private final Set<String> MONITOR_TARGETS = new HashSet<>(Arrays.asList("param", "result", "time", "chain"));
 
             @Override
             public boolean supports(String command) {
@@ -300,8 +300,8 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
                 }
 
                 if (args.length == 1) {
-                    // 默认监控所有目标
-                    monitorAll(monitorInfo);
+                    // 默认监控所有目标(除调用链)
+                    monitorAllWithoutCallChain(monitorInfo);
                 } else {
                     // 解析指定的监控目标
                     monitorTargets(monitorInfo, args[1]);
@@ -320,6 +320,18 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
                 monitorInfo.setTime(true);
                 monitorInfo.setException(true);
                 monitorInfo.setCallChain(true);
+            }
+
+            /**
+             * 监听全部信息，不监听调用链
+             * @param monitorInfo 监听方法信息
+             */
+            private void monitorAllWithoutCallChain(MonitorInfo monitorInfo) {
+                monitorInfo.setParam(true);
+                monitorInfo.setResult(true);
+                monitorInfo.setTime(true);
+                monitorInfo.setException(true);
+                monitorInfo.setCallChain(false);
             }
 
             /**
@@ -372,7 +384,7 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
 
                 String[] args = request.getRequestCommand().getArgs();
                 if (args.length != 1) {
-                    return new ExecuteResult(ArgusConstant.FAILED, "param error! usage: remove [-a | <path>]");
+                    return new ExecuteResult(ArgusConstant.FAILED, ArgusConstant.PARAM_ERROR);
                 }
                 String user = request.getToken().getToken();
                 if (args[0].equals("-a")) {

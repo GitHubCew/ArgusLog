@@ -96,19 +96,19 @@ public class ArgusWebSocketOuter implements Outer{
                 // 发送正常消息
                 if (sendNormal) {
                     String data = sb.toString().replaceAll(ArgusConstant.CONCAT_SEPARATOR, ArgusConstant.LINE_SEPARATOR);
-                    String output = CommonUtil.formatOutput(null, new ExecuteResult(ArgusConstant.SUCCESS, data));
+                    String output = CommonUtil.formatOutput(new ExecuteResult(ArgusConstant.SUCCESS, data));
                     argusSocketHandler.send(argusUser.getSession(), output);
                 }
                 // 发送异常消息
                 if (sendException) {
                     String data =  err.toString().replaceAll(ArgusConstant.CONCAT_SEPARATOR, ArgusConstant.LINE_SEPARATOR);
-                    String output = CommonUtil.formatOutput(null, new ExecuteResult(ArgusConstant.FAILED, data));
+                    String output = CommonUtil.formatOutput(new ExecuteResult(ArgusConstant.FAILED, data));
                     argusSocketHandler.send(argusUser.getSession(), output);
                 }
                 // 发送调用链消息
                 if (sendException) {
                     String data =  callChain.toString().replaceAll(ArgusConstant.CONCAT_SEPARATOR, ArgusConstant.LINE_SEPARATOR);
-                    String output = CommonUtil.formatOutput(null, new ExecuteResult(ArgusConstant.SUCCESS, data));
+                    String output = CommonUtil.formatOutput(new ExecuteResult(ArgusConstant.SUCCESS, data));
                     argusSocketHandler.send(argusUser.getSession(), output);
                 }
             } catch (Exception e) {

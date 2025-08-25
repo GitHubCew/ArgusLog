@@ -53,7 +53,6 @@ public class ArgusSocketHandler extends TextWebSocketHandler {
      */
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-        session.close(new CloseStatus(500, "Server stopped"));
     }
 
     /**
@@ -96,7 +95,7 @@ public class ArgusSocketHandler extends TextWebSocketHandler {
     private void sendError (WebSocketSession session, String errorMsg) {
         try {
             if (session.isOpen()) {
-                String output = CommonUtil.formatOutput(null, new ExecuteResult(ArgusConstant.FAILED, errorMsg));
+                String output = CommonUtil.formatOutput(new ExecuteResult(ArgusConstant.FAILED, errorMsg));
                 session.sendMessage(new TextMessage(output));
             }
         } catch (IOException e) {

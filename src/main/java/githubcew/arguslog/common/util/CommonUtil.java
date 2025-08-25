@@ -1,10 +1,8 @@
 package githubcew.arguslog.common.util;
 
-import githubcew.arguslog.web.auth.Token;
 import githubcew.arguslog.core.cmd.ExecuteResult;
 
 import java.lang.reflect.Method;
-import java.util.Objects;
 
 /**
  * 公共工具
@@ -14,16 +12,12 @@ public class CommonUtil {
 
     /**
      * 格式化输出
-     * @param token token
      * @param executeResult 执行结果
      * @return 输出
      */
-    public static String formatOutput (Token token, ExecuteResult executeResult) {
-        String out = "code=" + executeResult.getStatus() + "##data=" + executeResult.getData();
-        if (!Objects.isNull(token) && !Objects.isNull(token.getToken())) {
-            out =  "token=" + token.getToken() + "##" + out;
-        }
-        return out;
+    public static String formatOutput (ExecuteResult executeResult) {
+
+        return "code=" + executeResult.getStatus() + "##data=" + executeResult.getData();
     }
 
     /**
