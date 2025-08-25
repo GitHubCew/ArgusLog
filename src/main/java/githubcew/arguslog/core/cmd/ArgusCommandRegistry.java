@@ -1,11 +1,11 @@
 package githubcew.arguslog.core.cmd;
 
-import githubcew.arguslog.core.ArgusCache;
-import githubcew.arguslog.core.ArgusConfigurer;
-import githubcew.arguslog.core.ArgusConstant;
-import githubcew.arguslog.core.ArgusRequest;
-import githubcew.arguslog.core.method.ArgusMethod;
-import githubcew.arguslog.core.method.MonitorInfo;
+import githubcew.arguslog.core.cache.ArgusCache;
+import githubcew.arguslog.config.ArgusConfigurer;
+import githubcew.arguslog.common.constant.ArgusConstant;
+import githubcew.arguslog.web.ArgusRequest;
+import githubcew.arguslog.monitor.ArgusMethod;
+import githubcew.arguslog.monitor.MonitorInfo;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
@@ -22,19 +22,33 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
 
     private CommandManager commandManager;
 
+    /**
+     * 注册命令
+     * @param commandManager 命令管理器
+     */
     @Override
     public void registerCommand(CommandManager commandManager) {
 
         if (this.commandManager == null) {
             this.commandManager = commandManager;
         }
-        // 添加Argus内置命令
+        // 添加终端命令
         this.commandManager.register(help());
+        this.commandManager.register(connect());
+        this.commandManager.register(exit());
+        this.commandManager.register(clear());
+        this.commandManager.register(logout());
+
+        // 添加Argus内置方法监听命令
         this.commandManager.register(ls());
         this.commandManager.register(monitor());
         this.commandManager.register(remove());
     }
 
+    /**
+     * 注册不需要认证的命令
+     * @param commandManager 命令管理器
+     */
     @Override
     public void registerUnauthorizedCommands(CommandManager commandManager) {
         if (this.commandManager == null) {
@@ -43,8 +57,78 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
         this.commandManager.registerUnauthorizedCommands(help().keySet());
     }
 
+    /**
+     * 构建命令
+     * @param argusCommand 命令
+     * @param executor 执行器
+     * @return map
+     */
     private Map<ArgusCommand, CommandExecutor> buildCommand (ArgusCommand argusCommand, CommandExecutor executor) {
         return Collections.singletonMap(argusCommand, executor);
+    }
+
+    /**
+     * 连接connect
+     * @return  map
+     */
+    private Map<ArgusCommand, CommandExecutor> connect() {
+        ArgusCommand connect = new ArgusCommand(
+                "connect",
+                "连接 argus",
+                "connect",
+                "connect",
+                1
+        );
+
+        return buildCommand(connect, null);
+    }
+
+    /**
+     * 断开 Argus 连接
+     * @return  map
+     */
+    private Map<ArgusCommand, CommandExecutor> exit() {
+        ArgusCommand exit = new ArgusCommand(
+                "exit",
+                "断开 argus 连接",
+                "exit",
+                "exit",
+                2
+        );
+
+        return buildCommand(exit, null);
+    }
+
+    /**
+     * 断开 Argus 连接
+     * @return  map
+     */
+    private Map<ArgusCommand, CommandExecutor> logout() {
+        ArgusCommand logout = new ArgusCommand(
+                "logout",
+                "退出登录",
+                "logout",
+                "logout",
+                3
+        );
+
+        return buildCommand(logout, null);
+    }
+
+    /**
+     * 清除终端页面数据
+     * @return map
+     */
+    private Map<ArgusCommand, CommandExecutor> clear() {
+        ArgusCommand clear = new ArgusCommand(
+                "clear",
+                "清除终端",
+                "clear",
+                "clear",
+                4
+        );
+
+        return buildCommand(clear, null);
     }
 
     /**
@@ -53,9 +137,9 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
      */
     private Map<ArgusCommand, CommandExecutor> help () {
 
-        ArgusCommand command = new ArgusCommand(
+        ArgusCommand help = new ArgusCommand(
                 "help",
-                "命令用法查看， [command]: 命令",
+                "查看命令用法",
                 "help [command]",
                 "help ls");
         CommandExecutor executor = new CommandExecutor() {
@@ -68,29 +152,24 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
             public ExecuteResult execute(ArgusRequest request) {
                 String[] args = request.getRequestCommand().getArgs();
                 if (args.length > 1) {
-                    return new ExecuteResult(ArgusConstant.FAILED, "param error! usage: help [command]");
+                    return new ExecuteResult(ArgusConstant.FAILED, ArgusConstant.PARAM_ERROR);
                 }
                 List<ArgusCommand> commands;
+                HelpFormatter helpFormatter = new HelpFormatter();
                 if (args.length == 1) {
                     commands = commandManager.getCommands().stream().filter(c -> c.getCmd().equals(args[0])).sorted().collect(Collectors.toList());
+                    if (commands.size() == 0) {
+                        return new ExecuteResult(ArgusConstant.FAILED, ArgusConstant.COMMAND_NOT_FOUND);
+                    }
+                    String result = helpFormatter.formatHelpDetail(commands.get(0));
+                    return new  ExecuteResult(ArgusConstant.SUCCESS, result);
                 } else {
-                    commands = commandManager.getCommands().stream().sorted().collect(Collectors.toList());
+                    String result = helpFormatter.formatHelp(commandManager.getCommands());
+                    return new ExecuteResult(ArgusConstant.SUCCESS, result);
                 }
-
-                StringBuilder sb = new StringBuilder();
-                sb.append(ArgusConstant.LINE_SEPARATOR);
-
-                for (ArgusCommand cmd : commands) {
-                    sb.append("【").append(cmd.getCmd()).append("】").append(ArgusConstant.LINE_SEPARATOR)
-                            .append("   用法: ").append(cmd.getUsage()).append(ArgusConstant.LINE_SEPARATOR)
-                            .append("   介绍: ").append(cmd.getIntroduction()).append(ArgusConstant.LINE_SEPARATOR)
-                            .append("   例子: ").append(cmd.getExample()).append(ArgusConstant.LINE_SEPARATOR)
-                            .append(ArgusConstant.LINE_SEPARATOR);
-                }
-                return new ExecuteResult(ArgusConstant.SUCCESS, sb.toString());
             }
         };
-        return buildCommand(command, executor);
+        return buildCommand(help, executor);
 
     }
 
@@ -99,10 +178,10 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
      * @return map
      */
     private Map<ArgusCommand, CommandExecutor> ls () {
-        ArgusCommand command = new ArgusCommand(
+        ArgusCommand ls = new ArgusCommand(
                 "ls",
-                "列出接口列表 [-m]: 过滤已监听的接口, [path]: 接口uri",
-                "ls [-m] [path]",
+                "列出接口列表",
+                "ls [-m] [path], -m: 用户监听的接口 path: 接口路径，可模糊匹配",
                 "ls /api/v1");
         CommandExecutor executor = new CommandExecutor() {
             @Override
@@ -114,7 +193,7 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
             public ExecuteResult execute(ArgusRequest request) {
                 String[] args = request.getRequestCommand().getArgs();
                 if (args.length > 2) {
-                    return new ExecuteResult(ArgusConstant.FAILED, "param error! usage: ls [-m] <path>");
+                    return new ExecuteResult(ArgusConstant.FAILED, ArgusConstant.PARAM_ERROR);
                 }
                 if (args.length > 0) {
                     String arg = args[0];
@@ -153,7 +232,7 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
                 return new ExecuteResult(ArgusConstant.SUCCESS, String.join(ArgusConstant.LINE_SEPARATOR, data));
             }
         };
-        return buildCommand(command, executor);
+        return buildCommand(ls, executor);
     }
 
     /**
@@ -161,10 +240,10 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
      * @return map
      */
     private Map<ArgusCommand, CommandExecutor> monitor() {
-        ArgusCommand command = new ArgusCommand(
+        ArgusCommand monitor = new ArgusCommand(
                 "monitor",
-                "监听接口 -a: 监听全部接口, path: 接口路径, [target]:可选值为：param（参数）,result（结果）,time（耗时）,ex（异常）,callChain（调用链）",
-                "monitor [-a | path] [target]",
+                "监听指定或者全部接口参数、执行结果、耗时、调用链",
+                "monitor [-a | path] [target], -a: 监听全部接口, path: 接口路径, [target]:可选值为：param（参数）,result（结果）,time（耗时）,callChain（调用链）",
                 "monitor /api/v1/demo param,result"
         );
 
@@ -181,11 +260,11 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
                 String[] args = request.getRequestCommand().getArgs();
 
                 if (args.length == 0 || args.length > 2) {
-                    return new ExecuteResult(ArgusConstant.FAILED, "param error! usage: monitor [-a | path] [target]");
+                    return new ExecuteResult(ArgusConstant.FAILED, ArgusConstant.PARAM_ERROR);
                 }
 
                 if (!(args[0].equals("-a") || ArgusCache.hasUri(args[0]))) {
-                    return new ExecuteResult(ArgusConstant.FAILED, "param error or uri not found: " + args[0]);
+                    return new ExecuteResult(ArgusConstant.FAILED, ArgusConstant.PARAM_ERROR);
                 }
 
                 try {
@@ -266,7 +345,7 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
             }
         };
 
-        return buildCommand(command, executor);
+        return buildCommand(monitor, executor);
     }
 
     /**
@@ -277,8 +356,8 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
 
         ArgusCommand command = new ArgusCommand(
                 "remove",
-                "移除监听接口,[-a]: 移除监听全部接口, <path>: 接口路径",
-                "remove [-a] <path>",
+                "移除用户指定或者全部已监听接口",
+                "remove [-a] <path>, [-a]: 移除监听全部接口, <path>: 接口路径",
                 "remove /api/v1/demo, remove -a"
         );
 
@@ -310,4 +389,97 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
 
         return buildCommand(command, executor);
     }
+
+    /**
+     * help 命令格式化器
+     */
+    public static class HelpFormatter {
+
+        /**
+         * 获取所有命令的简要帮助
+         * 输出格式：命令名 + 描述，对齐排列
+         * @param commands 命令列表
+         * @return 格式化输出
+         */
+        public String formatHelp(List<ArgusCommand> commands) {
+
+            // 计算最大命令长度，用于对齐
+            int maxCmdLength = commands.stream()
+                    .mapToInt(c -> c.getCmd().length())
+                    .max()
+                    .orElse(4);
+
+            // 建议最小宽度，避免太紧凑
+            int cmdColumnWidth = Math.max(maxCmdLength + 2, 10);
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("=== 可用命令 ===\n");
+
+            for (ArgusCommand cmd : commands) {
+                sb.append(String.format("%-" + cmdColumnWidth + "s%s%n",
+                        cmd.getCmd(),
+                        cmd.getIntroduction()));
+            }
+
+            return sb.toString().trim();
+        }
+
+        /**
+         * 获取指定命令的详细帮助
+         * @param command 指定命令
+         * @return 详细帮助
+         */
+        public String formatHelpDetail(ArgusCommand command) {
+
+            String sb = String.format("=== %s 命令介绍 ===%n", command.getCmd()) +
+                    String.format("%-8s%s%n", "说明:", pad(command.getIntroduction())) +
+                    String.format("%-8s%s%n", "用法:", pad(command.getUsage())) +
+                    String.format("%-8s%s%n", "示例:", pad(command.getExample()));
+
+            return sb.trim();
+        }
+
+        /**
+         * 辅助方法：为多行文本添加缩进（避免 printf 对齐错位）
+         * @param text 多行文本
+         * @return 缩进后的文本
+         */
+        private String pad(String text) {
+            if (text == null || text.isEmpty()) {
+                return "";
+            }
+            return text.replace("\n", "\n        ");
+        }
+
+        public static void main(String[] args) {
+
+            ArgusCommand monitor = new ArgusCommand(
+                    "monitor",
+                    "监听接口 -a: 监听全部接口, path: 接口路径, [target]:可选值为：param（参数）,result（结果）,time（耗时）,ex（异常）",
+                    "monitor [-a | path] [target]",
+                    "monitor /api/v1/demo param,result"
+            );
+            ArgusCommand remove = new ArgusCommand(
+                    "remove",
+                    "移除监听接口,[-a]: 移除监听全部接口, <path>: 接口路径",
+                    "remove [-a] <path>",
+                    "remove /api/v1/demo, remove -a"
+            );
+
+            ArgusCommand clear = new ArgusCommand(
+                    "connect",
+                    "连接 argus",
+                    "connect",
+                    "connect",
+                    1
+            );
+
+            HelpFormatter formatter = new HelpFormatter();
+            System.out.println(formatter.formatHelp(Arrays.asList(monitor, remove, clear)));
+            System.out.println(formatter.formatHelpDetail(clear));
+
+
+        }
+    }
+
 }

@@ -7,7 +7,7 @@ import lombok.Data;
  * @author chennewei
  */
 @Data
-public class ArgusCommand implements Comparable<ArgusCommand>{
+public class ArgusCommand{
 
     /**
      * 命令
@@ -39,8 +39,10 @@ public class ArgusCommand implements Comparable<ArgusCommand>{
         this.example = example;
     }
 
-    @Override
-    public int compareTo(ArgusCommand cmd) {
-        return this.cmd.compareTo(cmd.getCmd());
+    public ArgusCommand(String cmd, String introduction, String usage, String example, Integer order) {
+        this.cmd = cmd;
+        this.usage = usage;
+        this.introduction = introduction;
+        this.example = example;
     }
 }

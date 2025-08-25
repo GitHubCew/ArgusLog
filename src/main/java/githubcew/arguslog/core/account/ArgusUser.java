@@ -1,7 +1,7 @@
 package githubcew.arguslog.core.account;
 
-import githubcew.arguslog.core.ArgusRequest;
-import githubcew.arguslog.core.auth.Token;
+import githubcew.arguslog.web.ArgusRequest;
+import githubcew.arguslog.web.auth.Token;
 import lombok.Data;
 import org.springframework.web.socket.WebSocketSession;
 

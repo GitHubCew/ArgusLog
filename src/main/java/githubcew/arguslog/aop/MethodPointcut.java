@@ -1,6 +1,6 @@
 package githubcew.arguslog.aop;
 
-import githubcew.arguslog.core.ArgusCache;
+import githubcew.arguslog.core.cache.ArgusCache;
 import org.springframework.aop.ClassFilter;
 import org.springframework.aop.MethodMatcher;
 import org.springframework.aop.Pointcut;

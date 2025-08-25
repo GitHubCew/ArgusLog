@@ -1,20 +1,19 @@
 package githubcew.arguslog.core;
 
+import githubcew.arguslog.core.cache.ArgusCache;
+import githubcew.arguslog.config.ArgusConfigurer;
 import githubcew.arguslog.core.account.ArgusUserProvider;
 import githubcew.arguslog.core.account.UserProvider;
-import githubcew.arguslog.core.auth.AccountAuthenticator;
-import githubcew.arguslog.core.auth.Authenticator;
-import githubcew.arguslog.core.auth.TokenAuthenticator;
-import githubcew.arguslog.core.auth.TokenProvider;
-import githubcew.arguslog.core.cmd.ArgusCommand;
+import githubcew.arguslog.web.auth.AccountAuthenticator;
+import githubcew.arguslog.web.auth.TokenAuthenticator;
+import githubcew.arguslog.web.auth.TokenProvider;
 import githubcew.arguslog.core.cmd.CommandManager;
-import githubcew.arguslog.core.config.ArgusProperties;
-import githubcew.arguslog.core.extractor.Extractor;
-import githubcew.arguslog.core.method.ArgusMethod;
-import githubcew.arguslog.core.util.CommonUtil;
+import githubcew.arguslog.config.ArgusProperties;
+import githubcew.arguslog.web.extractor.Extractor;
+import githubcew.arguslog.monitor.ArgusMethod;
+import githubcew.arguslog.common.util.CommonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
@@ -110,40 +109,13 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
         // configurers 排序
         this.configurers.sort(AnnotationAwareOrderComparator.INSTANCE);
 
-//        // 注册认证器
-//        this.authenticators = registerAuthenticator();
-
         // 注册命令
         registerCommand();
 
         // 忽略鉴权命令
         registerIgnoreAuthorizationCommand();
 
-//        // 认证器排序
-//        this.authenticators.sort(AnnotationAwareOrderComparator.INSTANCE);
-
     }
-
-    /**
-     * 初始化认证器列表
-     * @return 认证器列表
-     */
-//    private List<Authenticator> registerAuthenticator() {
-//
-//        Set<Authenticator> authenticators = new HashSet<>();
-//        try {
-//            if (this.authenticators.isEmpty()) {
-//                authenticators.addAll(applicationContext.getBeansOfType(Authenticator.class).values());
-//            }
-//        }
-//        catch (NoSuchBeanDefinitionException e) {
-//            //
-//        }
-//        for (ArgusConfigurer configurer : configurers) {
-//            authenticators.addAll(configurer.registerAuthenticator(this.authenticators));
-//        }
-//        return new ArrayList<>(authenticators);
-//    }
 
     /**
      * 注册命令
@@ -164,14 +136,8 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
         for (ArgusConfigurer configurer : configurers) {
             configurer.registerUnauthorizedCommands(this.commandManager);
         }
-        // 注册自定义的不需要认证的命令
-        List<String> unauthorizedCommands = argusProperties.getUnauthorizedCommands();
-        if (!Objects.isNull(unauthorizedCommands) && !unauthorizedCommands.isEmpty()) {
-            for (String command : unauthorizedCommands) {
-                this.commandManager.registerUnauthorizedCommand(new ArgusCommand(command, "", "", ""));
-            }
-        }
     }
+
     /**
      * 扫描接口
      */

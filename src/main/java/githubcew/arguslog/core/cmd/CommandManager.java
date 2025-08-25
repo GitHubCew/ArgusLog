@@ -1,8 +1,8 @@
 package githubcew.arguslog.core.cmd;
 
-import githubcew.arguslog.core.ArgusConstant;
-import githubcew.arguslog.core.ArgusRequest;
-import githubcew.arguslog.core.exception.CommandDuplicateException;
+import githubcew.arguslog.common.constant.ArgusConstant;
+import githubcew.arguslog.web.ArgusRequest;
+import githubcew.arguslog.common.exception.CommandDuplicateException;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -80,7 +80,7 @@ public class CommandManager {
      * @return 执行结果
      */
     public ExecuteResult execute (ArgusRequest request) {
-        Optional<CommandExecutor> optional = executors.values().stream().filter(e -> e.supports(request.getRequestCommand().getCommand())).findFirst();
+        Optional<CommandExecutor> optional = executors.values().stream().filter(e -> !Objects.isNull(e)  && e.supports(request.getRequestCommand().getCommand())).findFirst();
         CommandExecutor executor = null;
         if (optional.isPresent()) {
             executor = optional.get();
