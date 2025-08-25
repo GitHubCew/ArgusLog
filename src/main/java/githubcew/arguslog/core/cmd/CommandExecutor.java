@@ -1,6 +1,6 @@
 package githubcew.arguslog.core.cmd;
 
-import githubcew.arguslog.core.ArgusRequest;
+import githubcew.arguslog.web.ArgusRequest;
 
 /**
  * @author Envi

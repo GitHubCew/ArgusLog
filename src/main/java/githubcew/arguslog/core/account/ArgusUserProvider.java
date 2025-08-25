@@ -1,22 +1,9 @@
 package githubcew.arguslog.core.account;
 
 import lombok.Data;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.PropertySource;
-import org.springframework.stereotype.Component;
 
 /**
  * 用户信息提供者
- *      用户可以自定义提供账户密码，有两种方式：
- *      1.可通过在项目中配置属性自定义账户密码：
- *       eg:
- *           io.github.githubcew.argus.username = argus
- *           io.github.githubcew.argus.password = argus
- *      2.实现接口@link{githubcew.arguslog.core.account.UserProvider}
- *
  * @author chenenwei
  */
 @Data
