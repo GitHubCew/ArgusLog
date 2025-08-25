@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 
 /**
  * Argus 内置命令
+ *
  * @author chenenwei
  */
 @Order(-Integer.MAX_VALUE)
@@ -24,6 +25,7 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
 
     /**
      * 注册命令
+     *
      * @param commandManager 命令管理器
      */
     @Override
@@ -47,6 +49,7 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
 
     /**
      * 注册不需要认证的命令
+     *
      * @param commandManager 命令管理器
      */
     @Override
@@ -59,25 +62,26 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
 
     /**
      * 构建命令
+     *
      * @param argusCommand 命令
-     * @param executor 执行器
+     * @param executor     执行器
      * @return map
      */
-    private Map<ArgusCommand, CommandExecutor> buildCommand (ArgusCommand argusCommand, CommandExecutor executor) {
+    private Map<ArgusCommand, CommandExecutor> buildCommand(ArgusCommand argusCommand, CommandExecutor executor) {
         return Collections.singletonMap(argusCommand, executor);
     }
 
     /**
      * 连接connect
-     * @return  map
+     *
+     * @return map
      */
     private Map<ArgusCommand, CommandExecutor> connect() {
         ArgusCommand connect = new ArgusCommand(
                 "connect",
                 "连接 argus",
                 "connect",
-                "connect",
-                1
+                "connect"
         );
 
         return buildCommand(connect, null);
@@ -85,15 +89,15 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
 
     /**
      * 断开 Argus 连接
-     * @return  map
+     *
+     * @return map
      */
     private Map<ArgusCommand, CommandExecutor> exit() {
         ArgusCommand exit = new ArgusCommand(
                 "exit",
                 "断开 argus 连接",
                 "exit",
-                "exit",
-                2
+                "exit"
         );
 
         return buildCommand(exit, null);
@@ -101,15 +105,15 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
 
     /**
      * 断开 Argus 连接
-     * @return  map
+     *
+     * @return map
      */
     private Map<ArgusCommand, CommandExecutor> logout() {
         ArgusCommand logout = new ArgusCommand(
                 "logout",
                 "退出登录",
                 "logout",
-                "logout",
-                3
+                "logout"
         );
 
         return buildCommand(logout, null);
@@ -117,6 +121,7 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
 
     /**
      * 清除终端页面数据
+     *
      * @return map
      */
     private Map<ArgusCommand, CommandExecutor> clear() {
@@ -124,8 +129,7 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
                 "clear",
                 "清除终端",
                 "clear",
-                "clear",
-                4
+                "clear"
         );
 
         return buildCommand(clear, null);
@@ -133,9 +137,10 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
 
     /**
      * help 命令
+     *
      * @return map
      */
-    private Map<ArgusCommand, CommandExecutor> help () {
+    private Map<ArgusCommand, CommandExecutor> help() {
 
         ArgusCommand help = new ArgusCommand(
                 "help",
@@ -162,7 +167,7 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
                         return new ExecuteResult(ArgusConstant.FAILED, ArgusConstant.COMMAND_NOT_FOUND);
                     }
                     String result = helpFormatter.formatHelpDetail(commands.get(0));
-                    return new  ExecuteResult(ArgusConstant.SUCCESS, result);
+                    return new ExecuteResult(ArgusConstant.SUCCESS, result);
                 } else {
                     String result = helpFormatter.formatHelp(commandManager.getCommands());
                     return new ExecuteResult(ArgusConstant.SUCCESS, result);
@@ -175,9 +180,10 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
 
     /**
      * ls命令
+     *
      * @return map
      */
-    private Map<ArgusCommand, CommandExecutor> ls () {
+    private Map<ArgusCommand, CommandExecutor> ls() {
         ArgusCommand ls = new ArgusCommand(
                 "ls",
                 "列出接口列表",
@@ -210,7 +216,7 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
              * @param args 参数
              * @return 结果
              */
-            private ExecuteResult listMonitor (String argusUser, String[] args) {
+            private ExecuteResult listMonitor(String argusUser, String[] args) {
                 String uri = "";
                 if (args.length > 1) {
                     uri = args[1];
@@ -223,7 +229,7 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
              * @param args 参数
              * @return 结果
              */
-            private ExecuteResult list (String[] args) {
+            private ExecuteResult list(String[] args) {
                 String uri = "";
                 if (args.length > 0) {
                     uri = args[0];
@@ -237,6 +243,7 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
 
     /**
      * monitor命令
+     *
      * @return map
      */
     private Map<ArgusCommand, CommandExecutor> monitor() {
@@ -362,7 +369,8 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
 
     /**
      * 移除命令
-     * @return  map
+     *
+     * @return map
      */
     private Map<ArgusCommand, CommandExecutor> remove() {
 
@@ -391,7 +399,7 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
                     ArgusCache.userRemoveAllMethod(user);
                     return new ExecuteResult(ArgusConstant.SUCCESS, ArgusConstant.OK);
                 }
-                if(!ArgusCache.hasUri(args[0])) {
+                if (!ArgusCache.hasUri(args[0])) {
                     return new ExecuteResult(ArgusConstant.FAILED, "uri not found: " + args[0]);
                 }
                 ArgusCache.userRemoveMethod(user, ArgusCache.getUriMethod(args[0]));
@@ -410,6 +418,7 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
         /**
          * 获取所有命令的简要帮助
          * 输出格式：命令名 + 描述，对齐排列
+         *
          * @param commands 命令列表
          * @return 格式化输出
          */
@@ -438,6 +447,7 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
 
         /**
          * 获取指定命令的详细帮助
+         *
          * @param command 指定命令
          * @return 详细帮助
          */
@@ -453,6 +463,7 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
 
         /**
          * 辅助方法：为多行文本添加缩进（避免 printf 对齐错位）
+         *
          * @param text 多行文本
          * @return 缩进后的文本
          */
@@ -482,16 +493,13 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
                     "connect",
                     "连接 argus",
                     "connect",
-                    "connect",
-                    1
+                    "connect"
             );
 
             HelpFormatter formatter = new HelpFormatter();
             System.out.println(formatter.formatHelp(Arrays.asList(monitor, remove, clear)));
             System.out.println(formatter.formatHelpDetail(clear));
 
-
         }
     }
-
 }

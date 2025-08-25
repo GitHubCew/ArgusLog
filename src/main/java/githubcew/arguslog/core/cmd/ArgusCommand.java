@@ -20,12 +20,12 @@ public class ArgusCommand{
     private String usage;
 
     /**
-     * 命令介绍
+     * 命令描述
      */
     private String introduction;
 
     /**
-     * 命令例子(中文)
+     * 命令使用例子
      */
     private String example;
 
@@ -33,13 +33,6 @@ public class ArgusCommand{
     }
 
     public ArgusCommand(String cmd, String introduction, String usage, String example) {
-        this.cmd = cmd;
-        this.usage = usage;
-        this.introduction = introduction;
-        this.example = example;
-    }
-
-    public ArgusCommand(String cmd, String introduction, String usage, String example, Integer order) {
         this.cmd = cmd;
         this.usage = usage;
         this.introduction = introduction;

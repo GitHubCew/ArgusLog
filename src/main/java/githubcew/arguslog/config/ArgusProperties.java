@@ -29,8 +29,8 @@ public class ArgusProperties {
     // 打印argus banner
     private Boolean printBanner = true;
 
-    // token过期时间 （10分钟）
-    private Long tokenExpireTime = 1000 * 60 * 10L;
+    // token过期时间 （30分钟）
+    private Long tokenExpireTime = 1000 * 60 * 30L;
 
     // 调用链排除包
     private String callChainExcludePackage ="sun.,java.,javax.";
