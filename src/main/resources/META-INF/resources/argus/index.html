@@ -6,7 +6,6 @@
     <title>Argus Terminal</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* 保持你原有的所有 CSS 不变 */
         * {
             margin: 0;
             padding: 0;
@@ -36,22 +35,6 @@
                     radial-gradient(circle at 80% 70%, rgba(100, 100, 255, 0.03) 0%, transparent 25%);
             pointer-events: none;
             z-index: -1;
-        }
-
-        .copy-btn-hover {
-            opacity: 0;
-            transition: opacity 0.2s ease;
-            background: none;
-            border: none;
-            color: #00ffc8;
-            cursor: pointer;
-            font-size: 0.9em;
-            margin-left: 8px;
-        }
-
-        .copy-line:hover .copy-btn-hover {
-            opacity: 1;
-            display: inline-block !important;
         }
 
         .terminal-header {
@@ -284,6 +267,15 @@
             font-size: 14px;
         }
 
+        .output.error {
+            color: #ff5f56 !important;
+        }
+
+        .output.success {
+            color: #00ffc8 !important;
+            font-weight: 500;
+        }
+
         .command-line {
             display: flex;
             align-items: center;
@@ -341,15 +333,6 @@
 
         .warn {
             color: #bb8240;
-        }
-
-        .error {
-            color: #ff5f56;
-        }
-
-        .success {
-            color: #00ffc8;
-            font-weight: 500;
         }
 
         .command {
@@ -477,6 +460,57 @@
             .terminal-footer {
                 margin: 5px;
             }
+        }
+        /* 在样式部分添加以下代码 */
+        .copy-button-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .copy-button {
+            display: none;
+            position: absolute;
+            right: -70px;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 2px 6px;
+            font-size: 0.85em;
+            background: rgba(0, 255, 200, 0.1);
+            color: #00ffc8;
+            border: 1px solid rgba(0, 255, 200, 0.1);
+            border-radius: 4px;
+            cursor: pointer;
+            opacity: 0.9;
+            transition: all 0.2s ease;
+            z-index: 10;
+            white-space: nowrap;
+        }
+
+        .copy-button:hover {
+            background: rgba(0, 255, 200, 0.2);
+            box-shadow: 0 0 8px rgba(0, 255, 200, 0.3);
+        }
+
+        .copy-content {
+            display: inline;
+            color: #00ffc8;
+            font-weight: 500;
+            background: rgba(0, 255, 200, 0.1);
+            padding: 2px 4px;
+            border-radius: 4px;
+            margin: 0 2px;
+            border: 1px solid rgba(0, 255, 200, 0.1);
+            white-space: pre;
+            line-height: 1.4;
+        }
+
+        .copy-button-container:hover .copy-button {
+            display: block;
+        }
+
+        .copy-button-container:hover .copy-content {
+            background: rgba(0, 255, 200, 0.2);
+            box-shadow: 0 0 8px rgba(0, 255, 200, 0.3);
         }
     </style>
 </head>
@@ -606,9 +640,24 @@
                     startTokenTimer(expiryTime - currentTime);
                     showTerminal();
                     connectWebSocket();
+
+                    // ✅ 新增：恢复 token 显示
+                    const tokenInfo = document.getElementById('tokenInfo');
+                    const tokenExpiryElement = document.getElementById('tokenExpiry');
+                    tokenInfo.style.display = 'flex';
+                    updateTokenExpiryDisplay(expiryTime);  // 注意：传入的是绝对时间戳
+
+                    // 可选：恢复用户名
+                    const storedUsername = localStorage.getItem('argus-username');
+                    if (storedUsername) {
+                        currentUser = storedUsername;
+                        const userHost = document.querySelector('.user-host');
+                        if (userHost) userHost.textContent = `argus@${currentUser}`;
+                    }
                 } else {
                     localStorage.removeItem('argus-token');
                     localStorage.removeItem('argus-token-expiry');
+                    localStorage.removeItem('argus-username');
                 }
             }
         }
@@ -620,8 +669,6 @@
                 showLoginMessage('请输入用户名和密码', 'error');
                 return;
             }
-
-            // showTerminal()
 
             loginText.textContent = '登录中...';
             loginSpinner.style.display = 'inline-block';
@@ -653,7 +700,7 @@
                             if (tokenInterval) clearInterval(tokenInterval);
                             updateTokenExpiryDisplay(expiry);
                             connectWebSocket();
-                            document.getElementById("commandInput").focus()
+                            document.getElementById("commandInput").focus();
                         } else {
                             throw new Error('用户名或密码错误');
                         }
@@ -704,6 +751,146 @@
                     addOutput("输入 'help' 查看命令列表。", 'info');
                 };
 
+                // 在 handleSuccessOutput 函数中确保按钮和文本都能复制
+                function handleSuccessOutput(data) {
+                    const outputDiv = document.createElement('div');
+                    outputDiv.className = 'output response';
+                    outputDiv.style.whiteSpace = 'pre-wrap';
+                    outputDiv.style.wordBreak = 'break-all';
+                    outputDiv.style.fontFamily = 'Fira Code, monospace';
+                    outputDiv.style.lineHeight = '1.5';
+
+                    const START_TAG = '#copystart#';
+                    const END_TAG = '#copyend#';
+                    let index = 0;
+                    let lastIndex = 0;
+
+                    while (index < data.length) {
+                        const startIdx = data.indexOf(START_TAG, index);
+                        if (startIdx === -1) break;
+
+                        if (startIdx > lastIndex) {
+                            const text = data.slice(lastIndex, startIdx);
+                            outputDiv.appendChild(document.createTextNode(text));
+                        }
+
+                        const endIdx = data.indexOf(END_TAG, startIdx + START_TAG.length);
+                        if (endIdx === -1) {
+                            outputDiv.appendChild(document.createTextNode(data.slice(startIdx)));
+                            break;
+                        }
+
+                        const innerContent = data.slice(startIdx + START_TAG.length, endIdx);
+                        const hasValidContent = innerContent.trim() !== '';
+
+                        if (hasValidContent) {
+                            // 创建可复制的文本元素
+                            const copyText = document.createElement('span');
+                            copyText.textContent = innerContent;
+                            copyText.style.cssText = `
+                display: inline;
+                color: #00ffc8;
+                font-weight: 500;
+                background: rgba(0, 255, 200, 0.1);
+                padding: 2px 4px;
+                border-radius: 4px;
+                margin: 0 2px;
+                border: 1px solid rgba(0, 255, 200, 0.1);
+                white-space: pre;
+                line-height: 1.4;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                position: relative;
+            `;
+
+                            // 创建提示文本元素
+                            const tooltip = document.createElement('span');
+                            tooltip.textContent = '点击即可复制';
+                            tooltip.style.cssText = `
+                position: fixed;
+                background: rgba(0, 0, 0, 0.8);
+                color: #00ffc8;
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-size: 12px;
+                white-space: nowrap;
+                opacity: 0;
+                transition: opacity 0.2s ease;
+                pointer-events: none;
+                z-index: 1000;
+                top: 0;
+                left: 0;
+            `;
+
+                            // 鼠标移动事件 - 实时更新提示位置
+                            copyText.addEventListener('mousemove', (e) => {
+                                // 将提示定位到鼠标右侧10px的位置
+                                tooltip.style.top = (e.clientY - 10) + 'px';
+                                tooltip.style.left = (e.clientX + 15) + 'px';
+                            });
+
+                            // 鼠标悬停事件
+                            copyText.addEventListener('mouseenter', (e) => {
+                                copyText.style.background = 'rgba(0, 255, 200, 0.2)';
+                                copyText.style.boxShadow = '0 0 8px rgba(0, 255, 200, 0.3)';
+                                // 初始定位
+                                tooltip.style.top = (e.clientY - 10) + 'px';
+                                tooltip.style.left = (e.clientX + 15) + 'px';
+                                tooltip.style.opacity = '1';
+                            });
+
+                            copyText.addEventListener('mouseleave', () => {
+                                copyText.style.background = 'rgba(0, 255, 200, 0.1)';
+                                copyText.style.boxShadow = 'none';
+                                tooltip.style.opacity = '0';
+                            });
+
+                            // 点击复制事件
+                            copyText.addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+
+                                navigator.clipboard.writeText(innerContent).then(() => {
+                                    // 临时显示复制成功提示
+                                    const originalText = tooltip.textContent;
+                                    tooltip.textContent = '✓ 已复制';
+                                    tooltip.style.opacity = '1';
+
+                                    setTimeout(() => {
+                                        tooltip.textContent = originalText;
+                                        tooltip.style.opacity = '0';
+                                    }, 1500);
+                                }).catch(err => {
+                                    console.error('复制失败:', err);
+                                    const originalText = tooltip.textContent;
+                                    tooltip.textContent = '✗ 复制失败';
+                                    tooltip.style.opacity = '1';
+
+                                    setTimeout(() => {
+                                        tooltip.textContent = originalText;
+                                        tooltip.style.opacity = '0';
+                                    }, 1500);
+                                });
+                            });
+
+                            // 将提示文本添加到body中，避免被父元素裁剪
+                            document.body.appendChild(tooltip);
+                            outputDiv.appendChild(copyText);
+                        }
+
+                        lastIndex = endIdx + END_TAG.length;
+                        index = lastIndex;
+                    }
+
+                    if (lastIndex < data.length) {
+                        const remaining = data.slice(lastIndex);
+                        outputDiv.appendChild(document.createTextNode(remaining));
+                    }
+
+                    commandHistory.appendChild(outputDiv);
+                    scrollToBottom();
+                }
+
                 websocket.onmessage = (event) => {
                     try {
                         const message = event.data;
@@ -714,147 +901,23 @@
                             return;
                         }
 
-                        const payload = message.split('#ouputconcat#', 2)[1]; // 只取第一个 #ouputconcat# 后
-                        if (!payload) return;
-
-                        const dataMatch = payload.match(/^data=(.*)/s);
-                        if (!dataMatch) return;
-                        let data = dataMatch[1]; // 注意：data 是完整字符串，可能含多行、特殊字符
-
-                        const outputDiv = document.createElement('div');
-                        outputDiv.className = 'output response';
-                        outputDiv.style.whiteSpace = 'pre-wrap';
-                        outputDiv.style.wordBreak = 'break-all';
-                        outputDiv.style.fontFamily = 'Fira Code, monospace';
-                        outputDiv.style.lineHeight = '1.5';
-
-                        const START_TAG = '#copystart#';
-                        const END_TAG = '#copyend#';
-                        let index = 0;
-                        let lastIndex = 0;
-
-                        while (index < data.length) {
-                            // 查找下一个 #copystart#
-                            const startIdx = data.indexOf(START_TAG, index);
-                            if (startIdx === -1) break;
-
-                            // 添加前面的普通文本
-                            if (startIdx > lastIndex) {
-                                const text = data.slice(lastIndex, startIdx);
-                                outputDiv.appendChild(document.createTextNode(text));
-                            }
-
-                            // 查找对应的 #copyend#
-                            const endIdx = data.indexOf(END_TAG, startIdx + START_TAG.length);
-                            if (endIdx === -1) {
-                                // 没有闭合标签，当作普通文本
-                                outputDiv.appendChild(document.createTextNode(data.slice(startIdx)));
-                                break;
-                            }
-
-                            // 提取中间内容（原始字面量，不做任何处理）
-                            const innerContent = data.slice(startIdx + START_TAG.length, endIdx);
-                            const hasValidContent = innerContent.trim() !== '';
-
-                            if (hasValidContent) {
-                                // 创建内容显示区域（保留格式）
-                                const pre = document.createElement('pre');
-                                pre.textContent = innerContent;
-                                pre.style.cssText = `
-                    display: inline;
-                    color: #00ffc8;
-                    font-weight: 500;
-                    background: rgba(0, 255, 200, 0.1);
-                    padding: 2px 4px;
-                    border-radius: 4px;
-                    margin: 0 2px;
-                    border: 1px solid rgba(0, 255, 200, 0.1);
-                    white-space: pre;
-                    line-height: 1.4;
-                `;
-
-                                // 创建复制按钮
-                                const copyBtn = document.createElement('button');
-                                copyBtn.innerHTML = ' <i class="fas fa-copy"></i> 复制';
-                                copyBtn.style.cssText = `
-                    display: none;
-                    margin-left: 6px;
-                    padding: 1px 6px;
-                    font-size: 0.85em;
-                    background: rgba(0, 255, 200, 0.1);
-                    color: #00ffc8;
-                    border: 1px solid rgba(0, 255, 200, 0.1);
-                    border-radius: 4px;
-                    cursor: pointer;
-                    opacity: 0.9;
-                    transition: all 0.2s ease;
-                `;
-
-                                // 容器
-                                const container = document.createElement('span');
-                                container.style.display = 'inline-flex';
-                                container.style.alignItems = 'center';
-                                container.appendChild(pre);
-                                container.appendChild(copyBtn);
-
-                                // 悬停显示按钮
-                                container.addEventListener('mouseenter', () => {
-                                    copyBtn.style.display = 'inline-block';
-                                    pre.style.backgroundColor = 'rgba(0, 255, 200, 0.2)';
-                                    pre.style.boxShadow = '0 0 8px rgba(0, 255, 200, 0.3)';
-                                });
-                                container.addEventListener('mouseleave', () => {
-                                    copyBtn.style.display = 'none';
-                                    pre.style.backgroundColor = 'rgba(0, 255, 200, 0.1)';
-                                    pre.style.boxShadow = 'none';
-                                });
-
-                                // 点击复制（原始内容，包含换行、特殊字符等）
-                                copyBtn.onclick = (e) => {
-                                    e.stopPropagation();
-                                    navigator.clipboard.writeText(innerContent).then(() => {
-                                        copyBtn.innerHTML = ' <i class="fas fa-check"></i> 已复制';
-                                        setTimeout(() => {
-                                            if (container.contains(copyBtn)) {
-                                                copyBtn.innerHTML = ' <i class="fas fa-copy"></i> 复制';
-                                            }
-                                        }, 1500);
-                                    }).catch(err => {
-                                        console.error('复制失败:', err);
-                                        copyBtn.innerHTML = ' <i class="fas fa-times"></i> 失败';
-                                        setTimeout(() => {
-                                            if (container.contains(copyBtn)) {
-                                                copyBtn.innerHTML = ' <i class="fas fa-copy"></i> 复制';
-                                            }
-                                        }, 1500);
-                                    });
-                                };
-
-                                // 内容点击也触发复制
-                                pre.addEventListener('click', () => copyBtn.click());
-
-                                outputDiv.appendChild(container);
-                            } else {
-                                // 空内容：不显示按钮，也不显示标签
-                                // 可选：显示为 (空)
-                                // outputDiv.appendChild(document.createTextNode('(空)'));
-                            }
-
-                            // 更新索引
-                            lastIndex = endIdx + END_TAG.length;
-                            index = lastIndex;
+                        // 提取 code 和 data
+                        const codeMatch = message.match(/^code=(\d+)#ouputconcat#data=(.*)/s);
+                        if (!codeMatch) {
+                            addOutput('协议错误：无法解析消息', 'error');
+                            return;
                         }
 
-                        // 添加末尾剩余文本
-                        if (lastIndex < data.length) {
-                            const remaining = data.slice(lastIndex);
-                            outputDiv.appendChild(document.createTextNode(remaining));
-                        }
+                        const code = parseInt(codeMatch[1], 10);
+                        const data = codeMatch[2];
 
-                        commandHistory.appendChild(outputDiv);
-                        scrollToBottom();
+                        if (code === 1) {
+                            handleSuccessOutput(data);
+                        } else {
+                            addOutput(data, 'error');
+                        }
                     } catch (e) {
-                        addOutput(e.message, 'error');
+                        addOutput('解析消息失败: ' + e.message, 'error');
                     }
                 };
 
@@ -866,7 +929,7 @@
                     if (event.wasClean && event.code === 1000) {
                         addOutput(`已断开 argus 连接: ${event.code} ${event.reason || ''}`, 'info');
                     } else if (event.code === 1001) {
-                        addOutput(`argus 断开: ${event.code} ${event.reason || ''}`, 'error')
+                        addOutput(`argus 断开: ${event.code} ${event.reason || ''}`, 'error');
                         attemptReconnect();
                     } else {
                         addOutput('连接 argus 异常断开，正在重试...', 'error');
@@ -1057,7 +1120,6 @@
             }
         }
     });
-
 </script>
 </body>
 </html>
