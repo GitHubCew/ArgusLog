@@ -1,5 +1,6 @@
 package githubcew.arguslog.common.util;
 
+import githubcew.arguslog.common.constant.ArgusConstant;
 import githubcew.arguslog.core.cmd.ExecuteResult;
 
 import java.lang.reflect.Method;
@@ -17,7 +18,7 @@ public class CommonUtil {
      */
     public static String formatOutput (ExecuteResult executeResult) {
 
-        return "code=" + executeResult.getStatus() + "##data=" + executeResult.getData();
+        return "code=" + executeResult.getStatus() + ArgusConstant.OUTPUT_CONCAT +  "data=" + executeResult.getData();
     }
 
     /**

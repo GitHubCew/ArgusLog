@@ -221,7 +221,11 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
                 if (args.length > 1) {
                     uri = args[1];
                 }
-                return new ExecuteResult(ArgusConstant.SUCCESS, String.join(ArgusConstant.LINE_SEPARATOR, ArgusCache.getUserMonitorUris(argusUser, uri)));
+                List<String> dataList = ArgusCache.getUserMonitorUris(argusUser, uri);
+                List<String> wrappedList = dataList.stream()
+                        .map(s -> ArgusConstant.COPY_START + s + ArgusConstant.COPY_END)
+                        .collect(Collectors.toList());
+                return new ExecuteResult(ArgusConstant.SUCCESS, String.join(ArgusConstant.LINE_SEPARATOR, wrappedList));
             }
 
             /**
@@ -234,8 +238,11 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
                 if (args.length > 0) {
                     uri = args[0];
                 }
-                List<String> data = ArgusCache.getUris(uri);
-                return new ExecuteResult(ArgusConstant.SUCCESS, String.join(ArgusConstant.LINE_SEPARATOR, data));
+                List<String> dataList = ArgusCache.getUris(uri);
+                List<String> wrappedList = dataList.stream()
+                        .map(s -> ArgusConstant.COPY_START + s + ArgusConstant.COPY_END)
+                        .collect(Collectors.toList());
+                return new ExecuteResult(ArgusConstant.SUCCESS, String.join(ArgusConstant.LINE_SEPARATOR, wrappedList));
             }
         };
         return buildCommand(ls, executor);
@@ -454,7 +461,7 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
         public String formatHelpDetail(ArgusCommand command) {
 
             String sb = String.format("=== %s 命令介绍 ===%n", command.getCmd()) +
-                    String.format("%-8s%s%n", "说明:", pad(command.getIntroduction())) +
+                    String.format("%-8s%s%n", "介绍:", pad(command.getIntroduction())) +
                     String.format("%-8s%s%n", "用法:", pad(command.getUsage())) +
                     String.format("%-8s%s%n", "示例:", pad(command.getExample()));
 

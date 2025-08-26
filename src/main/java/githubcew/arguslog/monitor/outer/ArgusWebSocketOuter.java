@@ -17,100 +17,44 @@ import org.springframework.util.CollectionUtils;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
- * websocket输出器
- * @author  chenenwei
+ * WebSocket 输出器
+ * @author chenenwei
  */
-public class ArgusWebSocketOuter implements Outer{
+public class ArgusWebSocketOuter implements Outer {
 
-    /**
-     * 构造方法
-     */
-    public ArgusWebSocketOuter() {
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    }
-    ObjectMapper objectMapper = new ObjectMapper();
+    public ArgusWebSocketOuter() {}
 
-    /**
-     * 输出日志
-     * @param method 调用的方法
-     * @param monitorOutput 输出内容
-     */
     @Override
     public void out(Method method, MonitorOutput monitorOutput) {
-
         Map<String, MonitorInfo> usersByMethod = ArgusCache.getUsersByMethod(method);
-        ArgusSocketHandler argusSocketHandler = ContextUtil.getBean(ArgusSocketHandler.class);
+        ArgusSocketHandler socketHandler = ContextUtil.getBean(ArgusSocketHandler.class);
+
         usersByMethod.forEach((user, monitorInfo) -> {
             try {
                 ArgusUser argusUser = ArgusCache.getUserToken(user);
-                if (Objects.isNull(argusUser) || !argusUser.getSession().isOpen()) {
+                if (argusUser == null || !argusUser.getSession().isOpen()) {
                     return;
                 }
 
-                boolean sendNormal = false;
-                boolean sendException = false;
-                boolean sendCallChain = false;
-                StringBuilder sb = new StringBuilder();
-                StringBuilder err = new StringBuilder();
-                StringBuilder callChain = new StringBuilder();
-                sb.append("method => ").append(monitorInfo.getMethod().getSignature()).append(ArgusConstant.CONCAT_SEPARATOR);
-                sb.append("uri => ").append(monitorInfo.getMethod().getUri()).append(ArgusConstant.CONCAT_SEPARATOR);
+                StringBuilder normalBuilder = new StringBuilder();
+                StringBuilder exceptionBuilder = new StringBuilder();
+                StringBuilder callChainBuilder= new StringBuilder();
 
-                if (monitorInfo.isParam()) {
-                    sendNormal = true;
-                    sb.append("param => ");
-                    appendValue(sb, objectMapper, monitorOutput.getParam());
-                    sb.append(ArgusConstant.CONCAT_SEPARATOR);
-                }
-                if (monitorInfo.isResult()) {
-                    sendNormal = true;
-                    sb.append("result => ");
-                    appendValue(sb, objectMapper, monitorOutput.getResult());
-                    sb.append(ArgusConstant.CONCAT_SEPARATOR);
-                }
-                if (monitorInfo.isTime()) {
-                    sendNormal = true;
-                    sb.append("time => ");
-                    appendValue(sb, objectMapper, monitorOutput.getTime());
-                    sb.append(ArgusConstant.CONCAT_SEPARATOR);
-                }
-                if (monitorOutput.getException() != null) {
-                    sendException = true;
-                    err.append("error => ");
-                    appendException(err, monitorOutput.getException());
-                }
-                if (monitorInfo.isCallChain()) {
-                    if (monitorOutput.getCallChain() != null) {
-                        sendCallChain = true;
-                        callChain.append("callChain => ");
-                        appendCallChain(callChain, monitorOutput.getCallChain());
-                    }
-                }
+                // 构建输出
+                boolean sendNormal = buildNormalOutput(monitorInfo, monitorOutput, normalBuilder);
+                boolean sendException = buildExceptionOutput(monitorOutput, exceptionBuilder);
+                boolean sendCallChain = buildCallChainOutput(monitorInfo, monitorOutput, callChainBuilder);
 
-                // 发送正常消息
-                if (sendNormal) {
-                    String data = sb.toString().replaceAll(ArgusConstant.CONCAT_SEPARATOR, ArgusConstant.LINE_SEPARATOR);
-                    String output = CommonUtil.formatOutput(new ExecuteResult(ArgusConstant.SUCCESS, data));
-                    argusSocketHandler.send(argusUser.getSession(), output);
-                }
-                // 发送调用链消息
-                if (sendCallChain) {
-                    String data =  callChain.toString().replaceAll(ArgusConstant.CONCAT_SEPARATOR, ArgusConstant.LINE_SEPARATOR);
-                    String output = CommonUtil.formatOutput(new ExecuteResult(ArgusConstant.SUCCESS, data));
-                    argusSocketHandler.send(argusUser.getSession(), output);
-                }
-                // 发送异常消息
-                if (sendException) {
-                    String data =  err.toString().replaceAll(ArgusConstant.CONCAT_SEPARATOR, ArgusConstant.LINE_SEPARATOR);
-                    String output = CommonUtil.formatOutput(new ExecuteResult(ArgusConstant.FAILED, data));
-                    argusSocketHandler.send(argusUser.getSession(), output);
-                }
+                // 发送消息
+                sendIfRequired(socketHandler, argusUser, sendNormal, ArgusConstant.SUCCESS, normalBuilder);
+                sendIfRequired(socketHandler, argusUser, sendException, ArgusConstant.FAILED, exceptionBuilder);
+                sendIfRequired(socketHandler, argusUser, sendCallChain, ArgusConstant.SUCCESS, callChainBuilder);
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -118,11 +62,125 @@ public class ArgusWebSocketOuter implements Outer{
     }
 
     /**
-     * 处理各种类型的值
-     * @param sb 输出内容
-     * @param mapper 对象序列化器
+     * 构建正常输出（method, uri, param, result, time)
+     * @param monitorInfo 监听信息
+     * @param monitorOutput 输出内容
+     * @param sb bulder
+     */
+    private boolean buildNormalOutput(MonitorInfo monitorInfo, MonitorOutput monitorOutput, StringBuilder sb) throws JsonProcessingException {
+        sb.append("method => ").append(monitorInfo.getMethod().getSignature())
+                .append(ArgusConstant.CONCAT_SEPARATOR);
+
+        sb.append("uri => ")
+                .append(ArgusConstant.COPY_START)
+                .append(monitorInfo.getMethod().getUri())
+                .append(ArgusConstant.COPY_END)
+                .append(ArgusConstant.CONCAT_SEPARATOR);
+
+        boolean hasContent = false;
+
+        if (monitorInfo.isParam()) {
+            sb.append("param => ")
+                    .append(ArgusConstant.COPY_START);
+            appendValue(sb, objectMapper, monitorOutput.getParam());
+            sb.append(ArgusConstant.COPY_END)
+                    .append(ArgusConstant.CONCAT_SEPARATOR);
+            hasContent = true;
+        }
+
+        if (monitorInfo.isResult()) {
+            sb.append("result => ")
+                    .append(ArgusConstant.COPY_START);
+            appendValue(sb, objectMapper, monitorOutput.getResult());
+            sb.append(ArgusConstant.COPY_END)
+                    .append(ArgusConstant.CONCAT_SEPARATOR);
+            hasContent = true;
+        }
+
+        if (monitorInfo.isTime()) {
+            sb.append("time => ");
+            appendValue(sb, objectMapper, monitorOutput.getTime());
+            sb.append(ArgusConstant.CONCAT_SEPARATOR);
+            hasContent = true;
+        }
+
+        return hasContent;
+    }
+
+    /**
+     * 构建异常输出
+     * @param monitorOutput 输出内容
+     * @param sb builder
+     */
+    private boolean buildExceptionOutput(MonitorOutput monitorOutput, StringBuilder sb) {
+        Exception exception = monitorOutput.getException();
+        if (exception == null) {
+            return false;
+        }
+
+        sb.append("error => ");
+        appendException(sb, exception);
+        return true;
+    }
+
+    /**
+     * 构建调用链输出
+     * @param monitorInfo 监听信息
+     * @param monitorOutput 输出内容
+     * @param sb builder
+     */
+    private boolean buildCallChainOutput(MonitorInfo monitorInfo, MonitorOutput monitorOutput, StringBuilder sb) {
+        if (!monitorInfo.isCallChain()) {
+            return false;
+        }
+
+        StackTraceElement[] stackTrace = monitorOutput.getCallChain();
+        if (stackTrace == null || stackTrace.length == 0) {
+            return false;
+        }
+
+        ArgusProperties properties = ContextUtil.getBean(ArgusProperties.class);
+        String excludePackages = properties.getCallChainExcludePackage();
+        List<String> excludeList = CollectionUtils.isEmpty(Collections.singleton(excludePackages)) ?
+                new ArrayList<>() : Arrays.asList(excludePackages.split(","));
+
+        String filteredTrace = Arrays.stream(stackTrace)
+                .filter(element -> !element.isNativeMethod() && notExcludePackage(element.getClassName(), excludeList))
+                .map(Object::toString)
+                .reduce((a, b) -> a + ArgusConstant.CONCAT_SEPARATOR + b)
+                .orElse("");
+
+        if (filteredTrace.isEmpty()) {
+            return false;
+        }
+
+        sb.append("callChain => ").append(filteredTrace);
+        return true;
+    }
+
+    /**
+     * 发送消息
+     * @param handler handler
+     * @param user 用户
+     * @param shouldSend 是否发送
+     * @param code code
+     * @param content 内容
+     */
+    private void sendIfRequired(ArgusSocketHandler handler, ArgusUser user, boolean shouldSend, int code, StringBuilder content) {
+        if (shouldSend && content.length() > 0) {
+            String data = content.toString().endsWith(ArgusConstant.CONCAT_SEPARATOR) ?
+                    content.substring(0, content.length() - ArgusConstant.CONCAT_SEPARATOR.length()) : content.toString();
+            data = data.replaceAll(ArgusConstant.CONCAT_SEPARATOR, ArgusConstant.LINE_SEPARATOR);
+            String output = CommonUtil.formatOutput(new ExecuteResult(code, data));
+            handler.send(user.getSession(), output);
+        }
+    }
+
+    /**
+     * 序列化值
+     * @param sb builder
+     * @param mapper mapper
      * @param value 值
-     * @throws JsonProcessingException 序列化异常
      */
     private void appendValue(StringBuilder sb, ObjectMapper mapper, Object value) throws JsonProcessingException {
         if (value == null) {
@@ -130,59 +188,37 @@ public class ArgusWebSocketOuter implements Outer{
             return;
         }
 
-        // 基本类型直接toString
-        if (value.getClass().isPrimitive() ||
+        Class<?> clazz = value.getClass();
+        if (clazz.isPrimitive() ||
                 value instanceof Number ||
                 value instanceof Boolean ||
                 value instanceof Character ||
                 value instanceof String) {
             sb.append(value);
-        }
-        // 数组类型
-        else if (value.getClass().isArray()) {
-            sb.append(Arrays.toString((Object[])value));
-        }
-        // 其他对象类型使用JSON序列化
-        else {
+        } else if (value.getClass().isArray()) {
+            sb.append(Arrays.toString((Object[]) value));
+        } else {
             sb.append(mapper.writeValueAsString(value));
         }
     }
 
     /**
-     * 追加异常信息
-     * @param sb 输出内容
+     * 追加异常堆栈
+     * @param sb builder
      * @param e 异常
      */
-    public void appendException (StringBuilder sb, Exception e) {
-        // 处理异常信息
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            e.printStackTrace(pw);
-            sb.append(sw);
-        }
-
-    public void appendCallChain(StringBuilder sb,StackTraceElement[] stackTraceElement){
-        ArgusProperties argusProperties = ContextUtil.getBean(ArgusProperties.class);
-        String callChainExcludePackage = argusProperties.getCallChainExcludePackage();
-        List<String> excludePackageList = (List<String>)CollectionUtils.arrayToList(callChainExcludePackage.split(","));
-
-        //
-        String str = String.join(ArgusConstant.LINE_SEPARATOR, Arrays.stream(stackTraceElement).filter(t->
-                        !t.isNativeMethod() && notExcludePackage(t.getClassName(),excludePackageList) )
-                .map(Object::toString).toArray(String[]::new));// 将堆栈信息输出到 PrintWriter
-        sb.append(str);  // 转换为字符串并追加
+    public void appendException(StringBuilder sb, Exception e) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        e.printStackTrace(pw);
+        pw.flush();
+        sb.append(sw);
     }
 
-    // 不在排除包内  && !t.getClassName().startsWith("java.")   && !t.getClassName().startsWith("sun.")
-    public boolean notExcludePackage(String  className,List<String> list){
-        for (String startPackage : list) {
-            if(className.startsWith(startPackage)){
-                return false;
-            }
-        }
-        return true;
+    /**
+     * 检查类名是否在排除包中
+     */
+    public boolean notExcludePackage(String className, List<String> excludeList) {
+        return excludeList.stream().noneMatch(className::startsWith);
     }
-
-
-
 }

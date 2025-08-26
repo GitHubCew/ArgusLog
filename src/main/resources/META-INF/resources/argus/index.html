@@ -6,6 +6,7 @@
     <title>Argus Terminal</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* 保持你原有的所有 CSS 不变 */
         * {
             margin: 0;
             padding: 0;
@@ -35,6 +36,22 @@
                     radial-gradient(circle at 80% 70%, rgba(100, 100, 255, 0.03) 0%, transparent 25%);
             pointer-events: none;
             z-index: -1;
+        }
+
+        .copy-btn-hover {
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            background: none;
+            border: none;
+            color: #00ffc8;
+            cursor: pointer;
+            font-size: 0.9em;
+            margin-left: 8px;
+        }
+
+        .copy-line:hover .copy-btn-hover {
+            opacity: 1;
+            display: inline-block !important;
         }
 
         .terminal-header {
@@ -298,7 +315,6 @@
             flex-grow: 1;
         }
 
-        /* ✅ 恢复原生光标 */
         .command-input {
             font-family: 'Fira Code', 'Courier New', monospace;
             font-size: 14px;
@@ -313,14 +329,12 @@
             color: #e0e0e0;
             width: 100%;
             outline: none;
-            /* ✅ 移除：caret-color: transparent; */
             height: 18px;
             min-height: 18px;
             max-height: 18px;
             flex-shrink: 0;
         }
 
-        /* ✅ 移除：.custom-caret 样式 */
         .response {
             color: #e0e0e0;
         }
@@ -470,9 +484,7 @@
 <div class="terminal-header">
     <div class="terminal-title">Argus Terminal <span class="version">v1.0</span></div>
     <div class="terminal-controls">
-<!--        <div class="control close" onclick="minimizeTerminal()"></div>-->
-<!--        <div class="control minimize" onclick="toggleFullscreen()"></div>-->
-<!--        <div class="control maximize" onclick="closeTerminal()"></div>-->
+        <!-- Controls hidden -->
     </div>
 </div>
 
@@ -610,7 +622,6 @@
                 return;
             }
 
-            // showTerminal();
             loginText.textContent = '登录中...';
             loginSpinner.style.display = 'inline-block';
             loginBtn.disabled = true;
@@ -695,14 +706,129 @@
                 websocket.onmessage = (event) => {
                     try {
                         const message = event.data;
-                        const parts = message.split('##');
-                        if (parts.length >= 2 && parts[0].startsWith('code=') && parts[1].startsWith('data=')) {
-                            const code = parseInt(parts[0].substring(5));
-                            const data = parts[1].substring(5);
-                            addOutput(data, code === 1 ? 'response' : 'error');
-                        } else {
+
+                        if (!message.includes('#ouputconcat#')) {
                             addOutput(message);
+                            return;
                         }
+
+                        const payload = message.split('#ouputconcat#')[1];
+                        if (!payload) return;
+
+                        const dataMatch = payload.match(/^data=(.*)/s);
+                        if (!dataMatch) return;
+                        let data = dataMatch[1];
+
+                        const lines = data.split('\n').filter(line => line.trim() !== '');
+
+                        // 创建外层容器（支持 hover）
+                        const outputDiv = document.createElement('div');
+                        outputDiv.className = 'output response';
+                        outputDiv.style.position = 'relative';
+                        outputDiv.style.whiteSpace = 'pre-wrap';
+                        outputDiv.style.wordBreak = 'break-all';
+
+                        const processLine = (line) => {
+                            const regex = /#copystart#(.*?)#copyend#/g;
+                            let lastIndex = 0;
+                            const fragments = [];
+
+                            let match;
+                            while ((match = regex.exec(line)) !== null) {
+                                if (match.index > lastIndex) {
+                                    fragments.push({ type: 'text', content: line.slice(lastIndex, match.index) });
+                                }
+                                const inner = match[1];
+                                if (inner.trim() !== '') {
+                                    fragments.push({ type: 'copy', content: inner });
+                                } else {
+                                    fragments.push({ type: 'text', content: '' });
+                                }
+                                lastIndex = match.index + match[0].length;
+                            }
+                            if (lastIndex < line.length) {
+                                fragments.push({ type: 'text', content: line.slice(lastIndex) });
+                            }
+
+                            // 创建行容器
+                            const lineContainer = document.createElement('span');
+                            lineContainer.style.display = 'inline-block';
+                            lineContainer.style.width = '100%';
+                            lineContainer.style.position = 'relative';
+
+                            let currentLine = '';
+
+                            fragments.forEach(fragment => {
+                                if (fragment.type === 'text') {
+                                    currentLine += fragment.content;
+                                } else if (fragment.type === 'copy') {
+                                    // 输出当前文本
+                                    if (currentLine) {
+                                        lineContainer.appendChild(document.createTextNode(currentLine));
+                                        currentLine = '';
+                                    }
+
+                                    // 创建复制按钮
+                                    const btn = document.createElement('button');
+                                    btn.innerHTML = ' <i class="fas fa-copy"></i> 复制';
+                                    Object.assign(btn.style, {
+                                        display: 'none',
+                                        marginLeft: '8px',
+                                        fontSize: '0.9em',
+                                        background: 'none',
+                                        border: 'none',
+                                        color: '#00ffc8',
+                                        cursor: 'pointer',
+                                        fontFamily: 'inherit',
+                                        opacity: '0.9'
+                                    });
+
+                                    // 按钮点击事件
+                                    btn.onclick = (e) => {
+                                        e.stopPropagation();
+                                        navigator.clipboard.writeText(fragment.content).then(() => {
+                                            btn.innerHTML = ' <i class="fas fa-check"></i> 已复制';
+                                            setTimeout(() => {
+                                                btn.innerHTML = ' <i class="fas fa-copy"></i> 复制';
+                                            }, 1500);
+                                        }).catch(err => {
+                                            console.error('复制失败:', err);
+                                            btn.innerHTML = ' <i class="fas fa-times"></i> 失败';
+                                            setTimeout(() => {
+                                                btn.innerHTML = ' <i class="fas fa-copy"></i> 复制';
+                                            }, 1500);
+                                        });
+                                    };
+
+                                    // 插入内容和按钮
+                                    lineContainer.appendChild(document.createTextNode(fragment.content));
+                                    lineContainer.appendChild(btn);
+
+                                    // 悬停显示按钮
+                                    lineContainer.addEventListener('mouseenter', () => {
+                                        btn.style.display = 'inline-block';
+                                    });
+                                    lineContainer.addEventListener('mouseleave', () => {
+                                        btn.style.display = 'none';
+                                    });
+                                }
+                            });
+
+                            // 处理末尾文本
+                            if (currentLine) {
+                                lineContainer.appendChild(document.createTextNode(currentLine));
+                            }
+
+                            outputDiv.appendChild(lineContainer);
+                            if (lines.indexOf(line) < lines.length - 1) {
+                                outputDiv.appendChild(document.createElement('br'));
+                            }
+                        };
+
+                        lines.forEach(processLine);
+
+                        commandHistory.appendChild(outputDiv);
+                        scrollToBottom();
                     } catch (e) {
                         addOutput(e.message, 'error');
                     }
@@ -718,8 +844,7 @@
                     } else if (event.code === 1001) {
                         addOutput(`argus 断开: ${event.code} ${event.reason || ''}`, 'error')
                         attemptReconnect();
-                    }
-                    else {
+                    } else {
                         addOutput('连接 argus 异常断开，正在重试...', 'error');
                         attemptReconnect();
                     }
@@ -741,7 +866,7 @@
             isReconnecting = true;
             reconnectAttempts++;
             const delay = BASE_RECONNECT_DELAY * Math.pow(2, reconnectAttempts - 1);
-            addOutput(`第 ${reconnectAttempts}/ ${MAX_RECONNECT_ATTEMPTS} 次重连尝试...`, 'info');
+            addOutput(`第 ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS} 次重连尝试...`, 'info');
             setTimeout(() => {
                 isReconnecting = false;
                 connectWebSocket();
@@ -852,11 +977,6 @@
             container.appendChild(line);
 
             const input = document.getElementById('commandInput');
-
-            // ✅ 仅绑定必要事件
-            input.addEventListener('focus', () => {
-                // 确保光标可见
-            });
 
             input.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter') {

@@ -23,17 +23,21 @@ public class ArgusConstant {
 
     public static final String SPACE_PATTERN ="\\s+";
 
-    /**
-     * 拼接符
-     */
+    // 拼接符
     public final static String CONCAT_SEPARATOR = "#concat#";
 
-    /**
-     * 换行符
-     */
+    // 换行符
     public final static String LINE_SEPARATOR = "\n";
 
-
+    // 执行结果
     public final static String OK = "ok";
+
+    // 复制开始
+    public final static String COPY_START = "#copystart#";
+
+    // 复制结束
+    public final static String COPY_END = "#copyend#";
+
+    public final static String OUTPUT_CONCAT = "#ouputconcat#";
 
 }
