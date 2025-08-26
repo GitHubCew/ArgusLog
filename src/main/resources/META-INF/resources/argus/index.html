@@ -537,7 +537,6 @@
             <span class="token-expiry" id="tokenExpiry"></span>
         </div>
     </div>
-    <div class="terminal-mode">全屏模式</div>
 </div>
 
 <script>
@@ -621,6 +620,8 @@
                 showLoginMessage('请输入用户名和密码', 'error');
                 return;
             }
+
+            // showTerminal()
 
             loginText.textContent = '登录中...';
             loginSpinner.style.display = 'inline-block';
@@ -707,125 +708,148 @@
                     try {
                         const message = event.data;
 
+                        // 仅处理含 #ouputconcat# 的消息
                         if (!message.includes('#ouputconcat#')) {
                             addOutput(message);
                             return;
                         }
 
-                        const payload = message.split('#ouputconcat#')[1];
+                        const payload = message.split('#ouputconcat#', 2)[1]; // 只取第一个 #ouputconcat# 后
                         if (!payload) return;
 
                         const dataMatch = payload.match(/^data=(.*)/s);
                         if (!dataMatch) return;
-                        let data = dataMatch[1];
+                        let data = dataMatch[1]; // 注意：data 是完整字符串，可能含多行、特殊字符
 
-                        const lines = data.split('\n').filter(line => line.trim() !== '');
-
-                        // 创建外层容器（支持 hover）
                         const outputDiv = document.createElement('div');
                         outputDiv.className = 'output response';
-                        outputDiv.style.position = 'relative';
                         outputDiv.style.whiteSpace = 'pre-wrap';
                         outputDiv.style.wordBreak = 'break-all';
+                        outputDiv.style.fontFamily = 'Fira Code, monospace';
+                        outputDiv.style.lineHeight = '1.5';
 
-                        const processLine = (line) => {
-                            const regex = /#copystart#(.*?)#copyend#/g;
-                            let lastIndex = 0;
-                            const fragments = [];
+                        const START_TAG = '#copystart#';
+                        const END_TAG = '#copyend#';
+                        let index = 0;
+                        let lastIndex = 0;
 
-                            let match;
-                            while ((match = regex.exec(line)) !== null) {
-                                if (match.index > lastIndex) {
-                                    fragments.push({ type: 'text', content: line.slice(lastIndex, match.index) });
-                                }
-                                const inner = match[1];
-                                if (inner.trim() !== '') {
-                                    fragments.push({ type: 'copy', content: inner });
-                                } else {
-                                    fragments.push({ type: 'text', content: '' });
-                                }
-                                lastIndex = match.index + match[0].length;
-                            }
-                            if (lastIndex < line.length) {
-                                fragments.push({ type: 'text', content: line.slice(lastIndex) });
+                        while (index < data.length) {
+                            // 查找下一个 #copystart#
+                            const startIdx = data.indexOf(START_TAG, index);
+                            if (startIdx === -1) break;
+
+                            // 添加前面的普通文本
+                            if (startIdx > lastIndex) {
+                                const text = data.slice(lastIndex, startIdx);
+                                outputDiv.appendChild(document.createTextNode(text));
                             }
 
-                            // 创建行容器
-                            const lineContainer = document.createElement('span');
-                            lineContainer.style.display = 'inline-block';
-                            lineContainer.style.width = '100%';
-                            lineContainer.style.position = 'relative';
+                            // 查找对应的 #copyend#
+                            const endIdx = data.indexOf(END_TAG, startIdx + START_TAG.length);
+                            if (endIdx === -1) {
+                                // 没有闭合标签，当作普通文本
+                                outputDiv.appendChild(document.createTextNode(data.slice(startIdx)));
+                                break;
+                            }
 
-                            let currentLine = '';
+                            // 提取中间内容（原始字面量，不做任何处理）
+                            const innerContent = data.slice(startIdx + START_TAG.length, endIdx);
+                            const hasValidContent = innerContent.trim() !== '';
 
-                            fragments.forEach(fragment => {
-                                if (fragment.type === 'text') {
-                                    currentLine += fragment.content;
-                                } else if (fragment.type === 'copy') {
-                                    // 输出当前文本
-                                    if (currentLine) {
-                                        lineContainer.appendChild(document.createTextNode(currentLine));
-                                        currentLine = '';
-                                    }
+                            if (hasValidContent) {
+                                // 创建内容显示区域（保留格式）
+                                const pre = document.createElement('pre');
+                                pre.textContent = innerContent;
+                                pre.style.cssText = `
+                    display: inline;
+                    color: #00ffc8;
+                    font-weight: 500;
+                    background: rgba(0, 255, 200, 0.1);
+                    padding: 2px 4px;
+                    border-radius: 4px;
+                    margin: 0 2px;
+                    border: 1px solid rgba(0, 255, 200, 0.1);
+                    white-space: pre;
+                    line-height: 1.4;
+                `;
 
-                                    // 创建复制按钮
-                                    const btn = document.createElement('button');
-                                    btn.innerHTML = ' <i class="fas fa-copy"></i> 复制';
-                                    Object.assign(btn.style, {
-                                        display: 'none',
-                                        marginLeft: '8px',
-                                        fontSize: '0.9em',
-                                        background: 'none',
-                                        border: 'none',
-                                        color: '#00ffc8',
-                                        cursor: 'pointer',
-                                        fontFamily: 'inherit',
-                                        opacity: '0.9'
+                                // 创建复制按钮
+                                const copyBtn = document.createElement('button');
+                                copyBtn.innerHTML = ' <i class="fas fa-copy"></i> 复制';
+                                copyBtn.style.cssText = `
+                    display: none;
+                    margin-left: 6px;
+                    padding: 1px 6px;
+                    font-size: 0.85em;
+                    background: rgba(0, 255, 200, 0.1);
+                    color: #00ffc8;
+                    border: 1px solid rgba(0, 255, 200, 0.1);
+                    border-radius: 4px;
+                    cursor: pointer;
+                    opacity: 0.9;
+                    transition: all 0.2s ease;
+                `;
+
+                                // 容器
+                                const container = document.createElement('span');
+                                container.style.display = 'inline-flex';
+                                container.style.alignItems = 'center';
+                                container.appendChild(pre);
+                                container.appendChild(copyBtn);
+
+                                // 悬停显示按钮
+                                container.addEventListener('mouseenter', () => {
+                                    copyBtn.style.display = 'inline-block';
+                                    pre.style.backgroundColor = 'rgba(0, 255, 200, 0.2)';
+                                    pre.style.boxShadow = '0 0 8px rgba(0, 255, 200, 0.3)';
+                                });
+                                container.addEventListener('mouseleave', () => {
+                                    copyBtn.style.display = 'none';
+                                    pre.style.backgroundColor = 'rgba(0, 255, 200, 0.1)';
+                                    pre.style.boxShadow = 'none';
+                                });
+
+                                // 点击复制（原始内容，包含换行、特殊字符等）
+                                copyBtn.onclick = (e) => {
+                                    e.stopPropagation();
+                                    navigator.clipboard.writeText(innerContent).then(() => {
+                                        copyBtn.innerHTML = ' <i class="fas fa-check"></i> 已复制';
+                                        setTimeout(() => {
+                                            if (container.contains(copyBtn)) {
+                                                copyBtn.innerHTML = ' <i class="fas fa-copy"></i> 复制';
+                                            }
+                                        }, 1500);
+                                    }).catch(err => {
+                                        console.error('复制失败:', err);
+                                        copyBtn.innerHTML = ' <i class="fas fa-times"></i> 失败';
+                                        setTimeout(() => {
+                                            if (container.contains(copyBtn)) {
+                                                copyBtn.innerHTML = ' <i class="fas fa-copy"></i> 复制';
+                                            }
+                                        }, 1500);
                                     });
+                                };
 
-                                    // 按钮点击事件
-                                    btn.onclick = (e) => {
-                                        e.stopPropagation();
-                                        navigator.clipboard.writeText(fragment.content).then(() => {
-                                            btn.innerHTML = ' <i class="fas fa-check"></i> 已复制';
-                                            setTimeout(() => {
-                                                btn.innerHTML = ' <i class="fas fa-copy"></i> 复制';
-                                            }, 1500);
-                                        }).catch(err => {
-                                            console.error('复制失败:', err);
-                                            btn.innerHTML = ' <i class="fas fa-times"></i> 失败';
-                                            setTimeout(() => {
-                                                btn.innerHTML = ' <i class="fas fa-copy"></i> 复制';
-                                            }, 1500);
-                                        });
-                                    };
+                                // 内容点击也触发复制
+                                pre.addEventListener('click', () => copyBtn.click());
 
-                                    // 插入内容和按钮
-                                    lineContainer.appendChild(document.createTextNode(fragment.content));
-                                    lineContainer.appendChild(btn);
-
-                                    // 悬停显示按钮
-                                    lineContainer.addEventListener('mouseenter', () => {
-                                        btn.style.display = 'inline-block';
-                                    });
-                                    lineContainer.addEventListener('mouseleave', () => {
-                                        btn.style.display = 'none';
-                                    });
-                                }
-                            });
-
-                            // 处理末尾文本
-                            if (currentLine) {
-                                lineContainer.appendChild(document.createTextNode(currentLine));
+                                outputDiv.appendChild(container);
+                            } else {
+                                // 空内容：不显示按钮，也不显示标签
+                                // 可选：显示为 (空)
+                                // outputDiv.appendChild(document.createTextNode('(空)'));
                             }
 
-                            outputDiv.appendChild(lineContainer);
-                            if (lines.indexOf(line) < lines.length - 1) {
-                                outputDiv.appendChild(document.createElement('br'));
-                            }
-                        };
+                            // 更新索引
+                            lastIndex = endIdx + END_TAG.length;
+                            index = lastIndex;
+                        }
 
-                        lines.forEach(processLine);
+                        // 添加末尾剩余文本
+                        if (lastIndex < data.length) {
+                            const remaining = data.slice(lastIndex);
+                            outputDiv.appendChild(document.createTextNode(remaining));
+                        }
 
                         commandHistory.appendChild(outputDiv);
                         scrollToBottom();
@@ -1034,29 +1058,6 @@
         }
     });
 
-    function minimizeTerminal() {
-        document.body.style.display = 'none';
-        setTimeout(() => {
-            alert('终端已最小化。点击确定恢复。');
-            document.body.style.display = 'flex';
-        }, 300);
-    }
-
-    function toggleFullscreen() {
-        if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen().catch(err => {
-                alert(`全屏模式错误: ${err.message}`);
-            });
-        } else {
-            document.exitFullscreen();
-        }
-    }
-
-    function closeTerminal() {
-        if (confirm('确定要关闭终端吗？')) {
-            window.close();
-        }
-    }
 </script>
 </body>
 </html>
