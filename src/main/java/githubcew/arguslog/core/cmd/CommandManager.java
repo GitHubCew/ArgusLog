@@ -1,8 +1,7 @@
 package githubcew.arguslog.core.cmd;
 
-import githubcew.arguslog.common.constant.ArgusConstant;
-import githubcew.arguslog.web.ArgusRequest;
 import githubcew.arguslog.common.exception.CommandDuplicateException;
+import githubcew.arguslog.web.ArgusRequest;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -86,7 +85,7 @@ public class CommandManager {
             executor = optional.get();
         }
         if (executor == null) {
-            return new ExecuteResult(ArgusConstant.FAILED, "command not exist!");
+            return ExecuteResult.failed("command not exist!");
         }
         return executor.execute(request);
     }

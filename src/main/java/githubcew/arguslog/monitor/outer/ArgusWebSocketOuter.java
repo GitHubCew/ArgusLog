@@ -2,7 +2,6 @@ package githubcew.arguslog.monitor.outer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import githubcew.arguslog.common.constant.ArgusConstant;
 import githubcew.arguslog.common.util.CommonUtil;
 import githubcew.arguslog.common.util.ContextUtil;
 import githubcew.arguslog.config.ArgusProperties;
@@ -41,19 +40,19 @@ public class ArgusWebSocketOuter implements Outer {
                     return;
                 }
 
-                StringBuilder normalBuilder = new StringBuilder();
-                StringBuilder exceptionBuilder = new StringBuilder();
-                StringBuilder callChainBuilder= new StringBuilder();
+                OutputWrapper normalWrapper = OutputWrapper.create();
+                OutputWrapper exceptionWrapper = OutputWrapper.create();
+                OutputWrapper callChainWrapper = OutputWrapper.create();
 
                 // 构建输出
-                boolean sendNormal = buildNormalOutput(monitorInfo, monitorOutput, normalBuilder);
-                boolean sendException = buildExceptionOutput(monitorOutput, exceptionBuilder);
-                boolean sendCallChain = buildCallChainOutput(monitorInfo, monitorOutput, callChainBuilder);
+                boolean sendNormal = buildNormalOutput(monitorInfo, monitorOutput, normalWrapper);
+                boolean sendException = buildExceptionOutput(monitorOutput, exceptionWrapper);
+                boolean sendCallChain = buildCallChainOutput(monitorInfo, monitorOutput, callChainWrapper);
 
                 // 发送消息
-                sendIfRequired(socketHandler, argusUser, sendNormal, ArgusConstant.SUCCESS, normalBuilder);
-                sendIfRequired(socketHandler, argusUser, sendException, ArgusConstant.FAILED, exceptionBuilder);
-                sendIfRequired(socketHandler, argusUser, sendCallChain, ArgusConstant.SUCCESS, callChainBuilder);
+                sendIfRequired(socketHandler, argusUser, sendNormal, ExecuteResult.SUCCESS, normalWrapper);
+                sendIfRequired(socketHandler, argusUser, sendException, ExecuteResult.FAILED, exceptionWrapper);
+                sendIfRequired(socketHandler, argusUser, sendCallChain, ExecuteResult.SUCCESS, callChainWrapper);
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -65,42 +64,31 @@ public class ArgusWebSocketOuter implements Outer {
      * 构建正常输出（method, uri, param, result, time)
      * @param monitorInfo 监听信息
      * @param monitorOutput 输出内容
-     * @param sb bulder
+     * @param wrapper wrapper
      */
-    private boolean buildNormalOutput(MonitorInfo monitorInfo, MonitorOutput monitorOutput, StringBuilder sb) throws JsonProcessingException {
-        sb.append("method => ").append(monitorInfo.getMethod().getSignature())
-                .append(ArgusConstant.CONCAT_SEPARATOR);
-
-        sb.append("uri => ")
-                .append(ArgusConstant.COPY_START)
-                .append(monitorInfo.getMethod().getUri())
-                .append(ArgusConstant.COPY_END)
-                .append(ArgusConstant.CONCAT_SEPARATOR);
-
+    private boolean buildNormalOutput(MonitorInfo monitorInfo, MonitorOutput monitorOutput, OutputWrapper wrapper) throws JsonProcessingException {
+        wrapper.append("method => ").append(monitorInfo.getMethod().getSignature()).concat();
+        wrapper.append("uri => ").startCopy().append(monitorInfo.getMethod().getUri()).endCopy().concat();
         boolean hasContent = false;
 
         if (monitorInfo.isParam()) {
-            sb.append("param => ")
-                    .append(ArgusConstant.COPY_START);
-            appendValue(sb, objectMapper, monitorOutput.getParam());
-            sb.append(ArgusConstant.COPY_END)
-                    .append(ArgusConstant.CONCAT_SEPARATOR);
+            wrapper.append("param => ").startCopy();
+            appendValue(wrapper.getBuilder(), objectMapper, monitorOutput.getParam());
+            wrapper.endCopy().concat();
             hasContent = true;
         }
 
         if (monitorInfo.isResult()) {
-            sb.append("result => ")
-                    .append(ArgusConstant.COPY_START);
-            appendValue(sb, objectMapper, monitorOutput.getResult());
-            sb.append(ArgusConstant.COPY_END)
-                    .append(ArgusConstant.CONCAT_SEPARATOR);
+            wrapper.append("result => ").startCopy();
+            appendValue(wrapper.getBuilder(), objectMapper, monitorOutput.getResult());
+            wrapper.endCopy().concat();
             hasContent = true;
         }
 
         if (monitorInfo.isTime()) {
-            sb.append("time => ");
-            appendValue(sb, objectMapper, monitorOutput.getTime());
-            sb.append(ArgusConstant.CONCAT_SEPARATOR);
+            wrapper.append("time => ");
+            appendValue(wrapper.getBuilder(), objectMapper, monitorOutput.getTime());
+            wrapper.concat();
             hasContent = true;
         }
 
@@ -110,16 +98,16 @@ public class ArgusWebSocketOuter implements Outer {
     /**
      * 构建异常输出
      * @param monitorOutput 输出内容
-     * @param sb builder
+     * @param wrapper wrapper
      */
-    private boolean buildExceptionOutput(MonitorOutput monitorOutput, StringBuilder sb) {
+    private boolean buildExceptionOutput(MonitorOutput monitorOutput, OutputWrapper wrapper) {
         Exception exception = monitorOutput.getException();
         if (exception == null) {
             return false;
         }
 
-        sb.append("error => ");
-        appendException(sb, exception);
+        wrapper.append("error => ");
+        appendException(wrapper.getBuilder(), exception);
         return true;
     }
 
@@ -127,9 +115,9 @@ public class ArgusWebSocketOuter implements Outer {
      * 构建调用链输出
      * @param monitorInfo 监听信息
      * @param monitorOutput 输出内容
-     * @param sb builder
+     * @param wrapper wrapper
      */
-    private boolean buildCallChainOutput(MonitorInfo monitorInfo, MonitorOutput monitorOutput, StringBuilder sb) {
+    private boolean buildCallChainOutput(MonitorInfo monitorInfo, MonitorOutput monitorOutput, OutputWrapper wrapper) {
         if (!monitorInfo.isCallChain()) {
             return false;
         }
@@ -147,14 +135,14 @@ public class ArgusWebSocketOuter implements Outer {
         String filteredTrace = Arrays.stream(stackTrace)
                 .filter(element -> !element.isNativeMethod() && notExcludePackage(element.getClassName(), excludeList))
                 .map(Object::toString)
-                .reduce((a, b) -> a + ArgusConstant.CONCAT_SEPARATOR + b)
+                .reduce((a, b) -> a + OutputWrapper.CONCAT + b)
                 .orElse("");
 
         if (filteredTrace.isEmpty()) {
             return false;
         }
 
-        sb.append("callChain => ").append(filteredTrace);
+        wrapper.append("callChain => ").append(filteredTrace);
         return true;
     }
 
@@ -164,13 +152,14 @@ public class ArgusWebSocketOuter implements Outer {
      * @param user 用户
      * @param shouldSend 是否发送
      * @param code code
-     * @param content 内容
+     * @param wrapper wrapper
      */
-    private void sendIfRequired(ArgusSocketHandler handler, ArgusUser user, boolean shouldSend, int code, StringBuilder content) {
+    private void sendIfRequired(ArgusSocketHandler handler, ArgusUser user, boolean shouldSend, int code, OutputWrapper wrapper) {
+        String content = wrapper.build();
         if (shouldSend && content.length() > 0) {
-            String data = content.toString().endsWith(ArgusConstant.CONCAT_SEPARATOR) ?
-                    content.substring(0, content.length() - ArgusConstant.CONCAT_SEPARATOR.length()) : content.toString();
-            data = data.replaceAll(ArgusConstant.CONCAT_SEPARATOR, ArgusConstant.LINE_SEPARATOR);
+            String data = content.endsWith(OutputWrapper.CONCAT) ?
+                    content.substring(0, content.length() - OutputWrapper.CONCAT.length()) : content;
+            data = data.replaceAll(OutputWrapper.CONCAT, OutputWrapper.LINE_SEPARATOR);
             String output = CommonUtil.formatOutput(new ExecuteResult(code, data));
             handler.send(user.getSession(), output);
         }

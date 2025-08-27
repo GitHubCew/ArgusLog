@@ -1,11 +1,11 @@
 package githubcew.arguslog.core.cmd;
 
-import githubcew.arguslog.core.cache.ArgusCache;
 import githubcew.arguslog.config.ArgusConfigurer;
-import githubcew.arguslog.common.constant.ArgusConstant;
-import githubcew.arguslog.web.ArgusRequest;
+import githubcew.arguslog.core.cache.ArgusCache;
 import githubcew.arguslog.monitor.ArgusMethod;
 import githubcew.arguslog.monitor.MonitorInfo;
+import githubcew.arguslog.monitor.outer.OutputWrapper;
+import githubcew.arguslog.web.ArgusRequest;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
@@ -157,20 +157,20 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
             public ExecuteResult execute(ArgusRequest request) {
                 String[] args = request.getRequestCommand().getArgs();
                 if (args.length > 1) {
-                    return new ExecuteResult(ArgusConstant.FAILED, ArgusConstant.PARAM_ERROR);
+                    return ExecuteResult.failed(ArgusCommand.PARAM_ERROR);
                 }
                 List<ArgusCommand> commands;
                 HelpFormatter helpFormatter = new HelpFormatter();
                 if (args.length == 1) {
                     commands = commandManager.getCommands().stream().filter(c -> c.getCmd().equals(args[0])).sorted().collect(Collectors.toList());
                     if (commands.size() == 0) {
-                        return new ExecuteResult(ArgusConstant.FAILED, ArgusConstant.COMMAND_NOT_FOUND);
+                        return ExecuteResult.failed(ArgusCommand.COMMAND_NOT_FOUND);
                     }
                     String result = helpFormatter.formatHelpDetail(commands.get(0));
-                    return new ExecuteResult(ArgusConstant.SUCCESS, result);
+                    return ExecuteResult.success(result);
                 } else {
                     String result = helpFormatter.formatHelp(commandManager.getCommands());
-                    return new ExecuteResult(ArgusConstant.SUCCESS, result);
+                    return ExecuteResult.success(result);
                 }
             }
         };
@@ -199,7 +199,7 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
             public ExecuteResult execute(ArgusRequest request) {
                 String[] args = request.getRequestCommand().getArgs();
                 if (args.length > 2) {
-                    return new ExecuteResult(ArgusConstant.FAILED, ArgusConstant.PARAM_ERROR);
+                    return ExecuteResult.failed(ArgusCommand.PARAM_ERROR);
                 }
                 if (args.length > 0) {
                     String arg = args[0];
@@ -222,10 +222,8 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
                     uri = args[1];
                 }
                 List<String> dataList = ArgusCache.getUserMonitorUris(argusUser, uri);
-                List<String> wrappedList = dataList.stream()
-                        .map(s -> ArgusConstant.COPY_START + s + ArgusConstant.COPY_END)
-                        .collect(Collectors.toList());
-                return new ExecuteResult(ArgusConstant.SUCCESS, String.join(ArgusConstant.LINE_SEPARATOR, wrappedList));
+                String wrapperCopy = OutputWrapper.wrapperCopy(dataList, OutputWrapper.LINE_SEPARATOR);
+                return ExecuteResult.success(String.join(OutputWrapper.LINE_SEPARATOR, wrapperCopy));
             }
 
             /**
@@ -239,10 +237,8 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
                     uri = args[0];
                 }
                 List<String> dataList = ArgusCache.getUris(uri);
-                List<String> wrappedList = dataList.stream()
-                        .map(s -> ArgusConstant.COPY_START + s + ArgusConstant.COPY_END)
-                        .collect(Collectors.toList());
-                return new ExecuteResult(ArgusConstant.SUCCESS, String.join(ArgusConstant.LINE_SEPARATOR, wrappedList));
+                String wrapperCopy = OutputWrapper.wrapperCopy(dataList, OutputWrapper.LINE_SEPARATOR);
+                return ExecuteResult.success(String.join(OutputWrapper.LINE_SEPARATOR, wrapperCopy));
             }
         };
         return buildCommand(ls, executor);
@@ -274,11 +270,11 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
                 String[] args = request.getRequestCommand().getArgs();
 
                 if (args.length == 0 || args.length > 2) {
-                    return new ExecuteResult(ArgusConstant.FAILED, ArgusConstant.PARAM_ERROR);
+                    return ExecuteResult.failed(ArgusCommand.PARAM_ERROR);
                 }
 
                 if (!(args[0].equals("-a") || ArgusCache.hasUri(args[0]))) {
-                    return new ExecuteResult(ArgusConstant.FAILED, ArgusConstant.PARAM_ERROR);
+                    return ExecuteResult.failed(ArgusCommand.PARAM_ERROR);
                 }
 
                 try {
@@ -292,9 +288,9 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
                     else {
                         ArgusCache.addMonitorInfo(user, monitorInfo);
                     }
-                    return new ExecuteResult(ArgusConstant.SUCCESS, ArgusConstant.OK);
+                    return ExecuteResult.success(ExecuteResult.OK);
                 } catch (IllegalArgumentException e) {
-                    return new ExecuteResult(ArgusConstant.FAILED, e.getMessage());
+                    return ExecuteResult.failed(e.getMessage());
                 }
             }
 
@@ -399,18 +395,18 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
 
                 String[] args = request.getRequestCommand().getArgs();
                 if (args.length != 1) {
-                    return new ExecuteResult(ArgusConstant.FAILED, ArgusConstant.PARAM_ERROR);
+                    return ExecuteResult.failed(ArgusCommand.PARAM_ERROR);
                 }
                 String user = request.getToken().getToken();
                 if (args[0].equals("-a")) {
                     ArgusCache.userRemoveAllMethod(user);
-                    return new ExecuteResult(ArgusConstant.SUCCESS, ArgusConstant.OK);
+                    return ExecuteResult.success(ExecuteResult.OK);
                 }
                 if (!ArgusCache.hasUri(args[0])) {
-                    return new ExecuteResult(ArgusConstant.FAILED, "uri not found: " + args[0]);
+                    return ExecuteResult.failed("uri not found: " + args[0]);
                 }
                 ArgusCache.userRemoveMethod(user, ArgusCache.getUriMethod(args[0]));
-                return new ExecuteResult(ArgusConstant.SUCCESS, ArgusConstant.OK);
+                return ExecuteResult.success(ExecuteResult.OK);
             }
         };
 

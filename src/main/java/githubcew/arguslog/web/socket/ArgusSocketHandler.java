@@ -1,11 +1,10 @@
 package githubcew.arguslog.web.socket;
 
-import githubcew.arguslog.core.cache.ArgusCache;
-import githubcew.arguslog.common.constant.ArgusConstant;
 import githubcew.arguslog.ArgusStarter;
-import githubcew.arguslog.core.account.ArgusUser;
-import githubcew.arguslog.core.cmd.ExecuteResult;
 import githubcew.arguslog.common.util.CommonUtil;
+import githubcew.arguslog.core.account.ArgusUser;
+import githubcew.arguslog.core.cache.ArgusCache;
+import githubcew.arguslog.core.cmd.ExecuteResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
@@ -95,7 +94,7 @@ public class ArgusSocketHandler extends TextWebSocketHandler {
     private void sendError (WebSocketSession session, String errorMsg) {
         try {
             if (session.isOpen()) {
-                String output = CommonUtil.formatOutput(new ExecuteResult(ArgusConstant.FAILED, errorMsg));
+                String output = CommonUtil.formatOutput(ExecuteResult.failed(errorMsg));
                 session.sendMessage(new TextMessage(output));
             }
         } catch (IOException e) {

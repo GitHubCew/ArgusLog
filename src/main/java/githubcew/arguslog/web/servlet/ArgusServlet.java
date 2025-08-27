@@ -1,14 +1,13 @@
 package githubcew.arguslog.web.servlet;
 
+import githubcew.arguslog.common.util.ContextUtil;
+import githubcew.arguslog.core.ArgusManager;
 import githubcew.arguslog.core.account.Account;
+import githubcew.arguslog.core.cache.ArgusCache;
 import githubcew.arguslog.web.ArgusRequest;
 import githubcew.arguslog.web.ArgusResponse;
 import githubcew.arguslog.web.auth.AccountAuthenticator;
 import githubcew.arguslog.web.auth.Token;
-import githubcew.arguslog.core.cache.ArgusCache;
-import githubcew.arguslog.common.constant.ArgusConstant;
-import githubcew.arguslog.core.ArgusManager;
-import githubcew.arguslog.common.util.ContextUtil;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.util.StreamUtils;
 
@@ -31,7 +30,8 @@ public class ArgusServlet extends HttpServlet {
         // 访问web
         if (request.getRequestURI().endsWith("/argus/index.html")) {
             // 加载 HTML 文件
-            ClassPathResource resource = new ClassPathResource(ArgusConstant.ARGUS_TERMINAL_HTML);
+            String htmlPath = "META-INF/resources/argus/index.html";
+            ClassPathResource resource = new ClassPathResource(htmlPath);
             if (!resource.exists()) {
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
                 return;

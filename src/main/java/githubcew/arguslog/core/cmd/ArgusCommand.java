@@ -9,6 +9,10 @@ import lombok.Data;
 @Data
 public class ArgusCommand{
 
+    public static final String COMMAND_NOT_FOUND = "命令不存在";
+
+    public static final String PARAM_ERROR = "参数错误，请使用help查看命令的用法";
+
     /**
      * 命令
      */

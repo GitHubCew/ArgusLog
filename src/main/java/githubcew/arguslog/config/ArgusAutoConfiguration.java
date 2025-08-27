@@ -2,17 +2,16 @@ package githubcew.arguslog.config;
 
 import githubcew.arguslog.aop.MethodAdvice;
 import githubcew.arguslog.aop.MethodPointcut;
-import githubcew.arguslog.common.constant.ArgusConstant;
 import githubcew.arguslog.core.account.ArgusUserProvider;
 import githubcew.arguslog.core.account.UserProvider;
-import githubcew.arguslog.web.auth.ArgusTokenProvider;
-import githubcew.arguslog.web.auth.TokenProvider;
-import githubcew.arguslog.web.extractor.ArgusRequestExtractor;
-import githubcew.arguslog.web.extractor.Extractor;
 import githubcew.arguslog.monitor.formater.ArguslogParamFormatter;
 import githubcew.arguslog.monitor.formater.ParamFormatter;
 import githubcew.arguslog.monitor.outer.ArgusWebSocketOuter;
 import githubcew.arguslog.monitor.outer.Outer;
+import githubcew.arguslog.web.auth.ArgusTokenProvider;
+import githubcew.arguslog.web.auth.TokenProvider;
+import githubcew.arguslog.web.extractor.ArgusRequestExtractor;
+import githubcew.arguslog.web.extractor.Extractor;
 import githubcew.arguslog.web.servlet.ArgusServlet;
 import githubcew.arguslog.web.socket.ArgusHandshakeInterceptor;
 import githubcew.arguslog.web.socket.ArgusSocketHandler;
@@ -127,7 +126,7 @@ public class ArgusAutoConfiguration implements ImportBeanDefinitionRegistrar, We
             @Override
             public void addResourceHandlers(ResourceHandlerRegistry registry) {
                 registry.addResourceHandler("/argus/**")
-                        .addResourceLocations("classpath:/" + ArgusConstant.BASE_RESOURCE_PATH)
+                        .addResourceLocations("classpath:/META-INF/resources/argus/")
                         .resourceChain(true);
             }
         };

@@ -1,13 +1,12 @@
 package githubcew.arguslog.web.auth;
 
-import githubcew.arguslog.core.cache.ArgusCache;
-import githubcew.arguslog.common.constant.ArgusConstant;
-import githubcew.arguslog.web.ArgusRequest;
-import githubcew.arguslog.web.ArgusResponse;
 import githubcew.arguslog.core.account.Account;
 import githubcew.arguslog.core.account.ArgusUser;
 import githubcew.arguslog.core.account.UserProvider;
+import githubcew.arguslog.core.cache.ArgusCache;
 import githubcew.arguslog.core.cmd.ExecuteResult;
+import githubcew.arguslog.web.ArgusRequest;
+import githubcew.arguslog.web.ArgusResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -52,7 +51,7 @@ public class AccountAuthenticator implements Authenticator{
         if (isAuth) {
             Token token = tokenProvider.provide();
             response.setToken(token);
-            response.setExecuteResult(new ExecuteResult(ArgusConstant.SUCCESS, ArgusConstant.OK));
+            response.setExecuteResult(ExecuteResult.success(ExecuteResult.OK));
 
             // 添加用户到ArgusCache
             ArgusUser argusUser = new ArgusUser();
