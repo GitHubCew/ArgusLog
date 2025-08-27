@@ -2,7 +2,6 @@ package githubcew.arguslog.monitor.outer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import githubcew.arguslog.common.util.CommonUtil;
 import githubcew.arguslog.common.util.ContextUtil;
 import githubcew.arguslog.config.ArgusProperties;
 import githubcew.arguslog.core.account.ArgusUser;
@@ -160,7 +159,7 @@ public class ArgusWebSocketOuter implements Outer {
             String data = content.endsWith(OutputWrapper.CONCAT) ?
                     content.substring(0, content.length() - OutputWrapper.CONCAT.length()) : content;
             data = data.replaceAll(OutputWrapper.CONCAT, OutputWrapper.LINE_SEPARATOR);
-            String output = CommonUtil.formatOutput(new ExecuteResult(code, data));
+            String output = OutputWrapper.formatOutput(new ExecuteResult(code, data));
             handler.send(user.getSession(), output);
         }
     }
@@ -206,6 +205,9 @@ public class ArgusWebSocketOuter implements Outer {
 
     /**
      * 检查类名是否在排除包中
+     * @param className 类名
+     * @param excludeList 排除包列表
+     * @return true/false
      */
     public boolean notExcludePackage(String className, List<String> excludeList) {
         return excludeList.stream().noneMatch(className::startsWith);

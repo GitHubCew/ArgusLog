@@ -10,15 +10,7 @@ import java.lang.reflect.Method;
  */
 public class CommonUtil {
 
-    /**
-     * 格式化输出
-     * @param executeResult 执行结果
-     * @return 输出
-     */
-    public static String formatOutput (ExecuteResult executeResult) {
 
-        return "code=" + executeResult.getStatus() + "#ouputconcat#data=" + executeResult.getData();
-    }
 
     /**
      * 生成指定格式的方法签名

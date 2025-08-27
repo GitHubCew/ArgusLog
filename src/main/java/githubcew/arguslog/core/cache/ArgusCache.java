@@ -9,6 +9,7 @@ import org.springframework.web.socket.WebSocketSession;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -98,12 +99,16 @@ public class ArgusCache {
      * 添加用户监测方法
      * @param user 用户
      * @param monitorInfo 监测信息
+     * @param pattern 正则
      */
-    public static void addAllMonitorInfo(String user, MonitorInfo monitorInfo) {
+    public static void addMonitorInfo(String user, MonitorInfo monitorInfo, String pattern) {
         if (!containsUser(user)) {
             userMonitorMethods.put(user, new ArrayList<>(uriMethodCache.size()));
         }
         uriMethodCache.forEach((uri, method) -> {
+            if (!match(uri, pattern)) {
+                return;
+            }
             if (!methodUsers.containsKey(method)) {
                 methodUsers.put(method, new ArrayList<>(1));
             }
@@ -279,6 +284,23 @@ public class ArgusCache {
     }
 
     /**
+     * 根据pattern移除用户监听方法
+     *
+     * @param argusUser 用户
+     * @param pattern pattern
+     */
+    public static void removeMonitorMethodWithPattern(String argusUser, String pattern) {
+
+        userMonitorMethods.get(argusUser).removeIf(monitorInfo -> match(monitorInfo.getMethod().getUri(), pattern));
+
+        if (userMonitorMethods.get(argusUser).isEmpty()) {
+            userMonitorMethods.remove(argusUser);
+            // 删除方法监听用户
+            methodUsers.forEach((method, users) -> users.removeIf(user -> user.equals(argusUser)));
+        }
+    }
+
+    /**
      * 移除过期的凭证
      */
     public static void clearExpiredToken() {
@@ -361,6 +383,17 @@ public class ArgusCache {
     }
 
     /**
+     * 查询接口方法列表
+     *
+     * @param pattern 接口路径
+     * @return 方法列表
+     */
+    public static List<String> getUrisWithPattern(String pattern) {
+
+        return uriMethodCache.keySet().stream().filter(u -> match(u, pattern)).collect(Collectors.toList());
+    }
+
+    /**
      * 统计在线用户数
      *
      * @return 在线用户数
@@ -373,19 +406,19 @@ public class ArgusCache {
      * 查询用户监听接口列表
      *
      * @param argusUser 用户
-     * @param uri       接口
+     * @param pattern 接口
      * @return 接口列表
      */
-    public static List<String> getUserMonitorUris(String argusUser, String uri) {
+    public static List<String> getUserMonitorUris(String argusUser, String pattern) {
 
         if (!containsUser(argusUser)) {
             return new ArrayList<>();
         }
         List<MonitorInfo> monitorInfos = userMonitorMethods.get(argusUser);
-        if (Objects.isNull(uri)) {
+        if (Objects.isNull(pattern)) {
             return monitorInfos.stream().map(monitor -> monitor.getMethod().getUri()).sorted().collect(Collectors.toList());
         }
-        return monitorInfos.stream().filter(monitor -> monitor.getMethod().getUri().contains(uri)).map(monitor -> monitor.getMethod().getUri()).sorted().collect(Collectors.toList());
+        return monitorInfos.stream().filter(monitor -> match(monitor.getMethod().getUri(), pattern)).map(monitor -> monitor.getMethod().getUri()).sorted().collect(Collectors.toList());
     }
 
     /**
@@ -427,5 +460,52 @@ public class ArgusCache {
             }
         }
         return null;
+    }
+
+    /**
+     * 匹配路径
+     * @param pattern 正则
+     * @param uri 路径
+     * @return 是否匹配
+     */
+    public static boolean match(String uri, String pattern) {
+        if (!pattern.contains("*")) {
+            return uri.equals(pattern);
+        }
+        return matchPattern(uri, pattern);
+    }
+
+    /**
+     * 匹配路径
+     * @param pattern 正则
+     * @param uri 路径
+     * @return 是否匹配
+     */
+    public static boolean matchPattern(String uri, String pattern) {
+        String regex = "^" + escapeAndReplaceWildcard(pattern) + "$";
+        return Pattern.matches(regex, uri);
+    }
+
+    /**
+     * escapeAndReplaceWildcard
+     * @param pattern 正则
+     * @return 正则
+     */
+    private static String escapeAndReplaceWildcard(String pattern) {
+        StringBuilder sb = new StringBuilder();
+        for (char c : pattern.toCharArray()) {
+            if (c == '*') {
+                sb.append(".*");
+            } else if ("\\[]^$.{}?+|()".indexOf(c) != -1) {
+                sb.append('\\').append(c);
+            } else {
+                sb.append(c);
+            }
+        }
+        return sb.toString();
+    }
+
+    public static void main(String[] args) {
+        System.out.println(match("/api/user/list", "*"));
     }
 }

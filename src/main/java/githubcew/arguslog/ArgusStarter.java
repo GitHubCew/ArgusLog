@@ -1,8 +1,8 @@
 package githubcew.arguslog;
 
-import githubcew.arguslog.core.cmd.ExecuteResult;
 import githubcew.arguslog.core.ArgusManager;
-import githubcew.arguslog.common.util.CommonUtil;
+import githubcew.arguslog.core.cmd.ExecuteResult;
+import githubcew.arguslog.monitor.outer.OutputWrapper;
 import githubcew.arguslog.web.ArgusRequest;
 import githubcew.arguslog.web.ArgusResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +37,6 @@ public class ArgusStarter {
         // 执行命令
         ExecuteResult executeResult = argusManager.getCommandManager().execute(request);
         response.setExecuteResult(executeResult);
-        return CommonUtil.formatOutput(response.getExecuteResult());
+        return OutputWrapper.formatOutput(response.getExecuteResult());
     }
 }

@@ -187,8 +187,8 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
         ArgusCommand ls = new ArgusCommand(
                 "ls",
                 "列出接口列表",
-                "ls [-m] [path], -m: 用户监听的接口 path: 接口路径，可模糊匹配",
-                "ls /api/v1");
+                "ls [-m] [path], -m: 用户监听的接口 path: 接口路径，支持 '*' 匹配",
+                "ls /api/v1; ls /api/*; ls /api/*/info");
         CommandExecutor executor = new CommandExecutor() {
             @Override
             public boolean supports(String command) {
@@ -217,11 +217,11 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
              * @return 结果
              */
             private ExecuteResult listMonitor(String argusUser, String[] args) {
-                String uri = "";
+                String pattern = "*";
                 if (args.length > 1) {
-                    uri = args[1];
+                    pattern = args[1];
                 }
-                List<String> dataList = ArgusCache.getUserMonitorUris(argusUser, uri);
+                List<String> dataList = ArgusCache.getUserMonitorUris(argusUser, pattern);
                 String wrapperCopy = OutputWrapper.wrapperCopy(dataList, OutputWrapper.LINE_SEPARATOR);
                 return ExecuteResult.success(String.join(OutputWrapper.LINE_SEPARATOR, wrapperCopy));
             }
@@ -232,11 +232,11 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
              * @return 结果
              */
             private ExecuteResult list(String[] args) {
-                String uri = "";
+                String pattern = "*";
                 if (args.length > 0) {
-                    uri = args[0];
+                    pattern = args[0];
                 }
-                List<String> dataList = ArgusCache.getUris(uri);
+                List<String> dataList = ArgusCache.getUrisWithPattern(pattern);
                 String wrapperCopy = OutputWrapper.wrapperCopy(dataList, OutputWrapper.LINE_SEPARATOR);
                 return ExecuteResult.success(String.join(OutputWrapper.LINE_SEPARATOR, wrapperCopy));
             }
@@ -253,8 +253,8 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
         ArgusCommand monitor = new ArgusCommand(
                 "monitor",
                 "监听指定或者全部接口参数、执行结果、耗时、调用链",
-                "monitor [-a | path] [target], -a: 监听全部接口, path: 接口路径, [target]:可选值为：param（参数）,result（结果）,time（耗时）,chain（调用链）",
-                "monitor /api/v1/demo param,result"
+                "monitor <path> [target], path: 接口路径,支持 '*' 匹配, [target]:可选值为：param（参数）,result（结果）,time（耗时）,chain（调用链）",
+                "monitor /api/v1/demo param,result; monitor *; monitor /api/*/info param,time,result"
         );
 
         CommandExecutor executor = new CommandExecutor() {
@@ -273,20 +273,13 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
                     return ExecuteResult.failed(ArgusCommand.PARAM_ERROR);
                 }
 
-                if (!(args[0].equals("-a") || ArgusCache.hasUri(args[0]))) {
-                    return ExecuteResult.failed(ArgusCommand.PARAM_ERROR);
-                }
-
+                String pattern = args[0];
                 try {
                     String user = request.getToken().getToken();
-                    MonitorInfo monitorInfo = createMonitorInfo(args[0], args);
-                    // 监控全部
+                    MonitorInfo monitorInfo = createMonitorInfo(args);
+                    // 监听接口
                     if (Objects.isNull(monitorInfo.getMethod())) {
-                        ArgusCache.addAllMonitorInfo(user, monitorInfo);
-                    }
-                    // 监控指定方法
-                    else {
-                        ArgusCache.addMonitorInfo(user, monitorInfo);
+                        ArgusCache.addMonitorInfo(user, monitorInfo, pattern);
                     }
                     return ExecuteResult.success(ExecuteResult.OK);
                 } catch (IllegalArgumentException e) {
@@ -296,19 +289,12 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
 
             /**
              * 监听方法信息
-             * @param type type
              * @param args 参数
              * @return 监听信息
              */
-            private MonitorInfo createMonitorInfo(String type, String[] args) {
-                ArgusMethod method = null;
+            private MonitorInfo createMonitorInfo(String[] args) {
+
                 MonitorInfo monitorInfo = new MonitorInfo();
-
-                if (!type.equals("-a")) {
-                    method = ArgusCache.getUriMethod(type);
-                    monitorInfo.setMethod(method);
-                }
-
                 if (args.length == 1) {
                     // 默认监控所有目标(除调用链)
                     monitorAllWithoutCallChain(monitorInfo);
@@ -316,7 +302,6 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
                     // 解析指定的监控目标
                     monitorTargets(monitorInfo, args[1]);
                 }
-
                 return monitorInfo;
             }
 
@@ -379,9 +364,9 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
 
         ArgusCommand command = new ArgusCommand(
                 "remove",
-                "移除用户指定或者全部已监听接口",
-                "remove [-a] <path>, [-a]: 移除监听全部接口, <path>: 接口路径",
-                "remove /api/v1/demo, remove -a"
+                "移除用户已监听接口",
+                "remove <path>, <path>: 接口路径,支持 '*' 匹配",
+                "remove /api/v1/demo, remove *, remove /ap1/*"
         );
 
         CommandExecutor executor = new CommandExecutor() {
@@ -397,15 +382,9 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
                 if (args.length != 1) {
                     return ExecuteResult.failed(ArgusCommand.PARAM_ERROR);
                 }
+                String pattern = args[0];
                 String user = request.getToken().getToken();
-                if (args[0].equals("-a")) {
-                    ArgusCache.userRemoveAllMethod(user);
-                    return ExecuteResult.success(ExecuteResult.OK);
-                }
-                if (!ArgusCache.hasUri(args[0])) {
-                    return ExecuteResult.failed("uri not found: " + args[0]);
-                }
-                ArgusCache.userRemoveMethod(user, ArgusCache.getUriMethod(args[0]));
+                ArgusCache.removeMonitorMethodWithPattern(user, pattern);
                 return ExecuteResult.success(ExecuteResult.OK);
             }
         };
