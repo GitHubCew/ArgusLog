@@ -313,7 +313,7 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
             private void monitorDefault(MonitorInfo monitorInfo) {
                 monitorInfo.setIp(true);
                 monitorInfo.setHeader(false);
-                monitorInfo.setRequestParam(true);
+                monitorInfo.setParam(true);
                 monitorInfo.setMethodParam(true);
                 monitorInfo.setResult(true);
                 monitorInfo.setTime(true);
@@ -336,9 +336,8 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
 
                 // 设置监控目标
                 Set<String> targetSet = new HashSet<>(Arrays.asList(targets));
-                monitorInfo.setMethodParam(targetSet.contains("ip"));
-                monitorInfo.setMethodParam(targetSet.contains("header"));
-                monitorInfo.setMethodParam(targetSet.contains("param"));
+                monitorInfo.setHeader(targetSet.contains("header"));
+                monitorInfo.setParam(targetSet.contains("param"));
                 monitorInfo.setMethodParam(targetSet.contains("methodParam"));
                 monitorInfo.setResult(targetSet.contains("result"));
                 monitorInfo.setTime(targetSet.contains("time"));

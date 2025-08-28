@@ -26,7 +26,7 @@ public class MonitorInfo {
     /**
      * 请求参数
      */
-    private boolean requestParam;
+    private boolean param;
     /**
      * 方法参数
      */

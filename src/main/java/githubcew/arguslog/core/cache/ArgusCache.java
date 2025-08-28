@@ -115,13 +115,11 @@ public class ArgusCache {
             methodUsers.get(method).add(user);
 
             List<MonitorInfo> monitorInfos = userMonitorMethods.get(user);
-            MonitorInfo monitor;
-            if (!userContainsMethod(user, method)) {
-                monitor = new MonitorInfo();
-                BeanUtils.copyProperties(monitorInfo, monitor);
-                monitor.setMethod(method);
-                monitorInfos.add(monitor);
-            }
+            MonitorInfo monitor = new MonitorInfo();
+            monitorInfos.removeIf(m -> m.getMethod().equals(method));
+            BeanUtils.copyProperties(monitorInfo, monitor);
+            monitor.setMethod(method);
+            monitorInfos.add(monitor);
         });
     }
 

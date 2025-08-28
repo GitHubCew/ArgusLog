@@ -70,26 +70,27 @@ public class ArgusWebSocketOuter implements Outer {
      * @param wrapper       wrapper
      */
     private boolean buildNormalOutput(MonitorInfo monitorInfo, MonitorOutput monitorOutput, OutputWrapper wrapper) throws JsonProcessingException {
-        wrapper.append("method => ").append(monitorInfo.getMethod().getSignature()).concat();
-        wrapper.append("uri => ").startCopy().append(monitorInfo.getMethod().getUri()).endCopy().concat();
-        boolean hasContent = false;
-        WebRequestInfo webRequestInfo = monitorOutput.getWebRequestInfo();
 
-        // 请求ip
-        if (monitorInfo.isIp()) {
-            wrapper.append("ip => ").startCopy().append(webRequestInfo.getIp()).endCopy().concat();
-            hasContent = true;
+        boolean hasContent = monitorInfo.isIp() || monitorInfo.isHeader()
+                || monitorInfo.isParam() || monitorInfo.isMethodParam()
+                || monitorInfo.isResult() || monitorInfo.isTime();
+        if (!hasContent) {
+            return false;
         }
+
+        WebRequestInfo webRequestInfo = monitorOutput.getWebRequestInfo();
+        wrapper.append("url => ").startCopy().append(webRequestInfo.getUrl()).endCopy().concat();
+        wrapper.append("api => ").startCopy().append(monitorInfo.getMethod().getUri()).endCopy().concat();
+        wrapper.append("method => ").append(monitorInfo.getMethod().getSignature()).concat();
+        wrapper.append("type => ").append(webRequestInfo.getMethod()).concat();
+        wrapper.append("ip => ").startCopy().append(webRequestInfo.getIp()).endCopy().concat();
         // 请求头
         if (monitorInfo.isHeader()) {
-            wrapper.append("header => ").append(webRequestInfo.getHeaders()).concat();
-            hasContent = true;
+            wrapper.append("header => ").append(webRequestInfo.getHeaders()).concat().concat();
         }
         // 请求参数
-        if (monitorInfo.isRequestParam()) {
+        if (monitorInfo.isParam()) {
             wrapper.append("param => ").startCopy().append(webRequestInfo.getRawParams()).endCopy().concat();
-            hasContent = true;
-
         }
         // 方法参数
         if (monitorInfo.isMethodParam()) {
@@ -97,24 +98,21 @@ public class ArgusWebSocketOuter implements Outer {
             wrapper.append("methodParam => ").startCopy();
             appendValue(wrapper.getBuilder(), objectMapper, monitorOutput.getMethodParam());
             wrapper.endCopy().concat();
-            hasContent = true;
         }
         // 结果
         if (monitorInfo.isResult()) {
             wrapper.append("result => ").startCopy();
             appendValue(wrapper.getBuilder(), objectMapper, monitorOutput.getResult());
             wrapper.endCopy().concat();
-            hasContent = true;
         }
         // 请求耗时
         if (monitorInfo.isTime()) {
             wrapper.append("time => ");
             appendValue(wrapper.getBuilder(), objectMapper, monitorOutput.getTime());
-            wrapper.append("ms").concat();
-            hasContent = true;
+            wrapper.append(" ms").concat();
         }
 
-        return hasContent;
+        return true;
     }
 
     /**
