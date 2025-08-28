@@ -15,9 +15,22 @@ public class MonitorInfo {
      */
     private ArgusMethod method;
     /**
-     * 参数
+     * 请求头
      */
-    private boolean param;
+    private boolean header;
+
+    /**
+     * 请求ip
+     */
+    private boolean ip;
+    /**
+     * 请求参数
+     */
+    private boolean requestParam;
+    /**
+     * 方法参数
+     */
+    private boolean methodParam;
     /**
      * 结果
      */
@@ -46,15 +59,15 @@ public class MonitorInfo {
      * 构造方法
      *
      * @param method    方法
-     * @param param     参数
+     * @param methodParam     参数
      * @param result    结果
      * @param time      时间
      * @param exception 异常
      * @param callChain 方法调用链
      */
-    public MonitorInfo(ArgusMethod method, boolean param, boolean result, boolean time, boolean exception, boolean callChain) {
+    public MonitorInfo(ArgusMethod method, boolean methodParam, boolean result, boolean time, boolean exception, boolean callChain) {
         this.method = method;
-        this.param = param;
+        this.methodParam = methodParam;
         this.result = result;
         this.time = time;
         this.exception = exception;

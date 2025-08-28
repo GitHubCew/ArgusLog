@@ -2,7 +2,6 @@ package githubcew.arguslog.core.cmd;
 
 import githubcew.arguslog.config.ArgusConfigurer;
 import githubcew.arguslog.core.cache.ArgusCache;
-import githubcew.arguslog.monitor.ArgusMethod;
 import githubcew.arguslog.monitor.MonitorInfo;
 import githubcew.arguslog.monitor.outer.OutputWrapper;
 import githubcew.arguslog.web.ArgusRequest;
@@ -201,13 +200,14 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
                 if (args.length > 2) {
                     return ExecuteResult.failed(ArgusCommand.PARAM_ERROR);
                 }
+                // 查询监听的接口
                 if (args.length > 0) {
                     String arg = args[0];
                     if (arg.equals("-m")) {
                         return listMonitor(request.getToken().getToken(), args);
                     }
-                    return ExecuteResult.success("");
                 }
+                // 查询接口
                 return list(args);
             }
 
@@ -254,12 +254,12 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
         ArgusCommand monitor = new ArgusCommand(
                 "monitor",
                 "监听指定或者全部接口参数、执行结果、耗时、调用链",
-                "monitor <path> [target], path: 接口路径,支持 '*' 匹配, [target]:可选值为：param（参数）,result（结果）,time（耗时）,chain（调用链）",
+                "monitor <path> [target], path: 接口路径,支持 '*' 匹配, [target]: 可选值为：header（请求头）, ip(请求ip), param(前端请求参数), methodParam(方法参数), result（结果）,time（耗时）,chain（调用链）",
                 "monitor /api/v1/demo param,result; monitor *; monitor /api/*/info param,time,result"
         );
 
         CommandExecutor executor = new CommandExecutor() {
-            private final Set<String> MONITOR_TARGETS = new HashSet<>(Arrays.asList("param", "result", "time", "chain"));
+            private final Set<String> MONITOR_TARGETS = new HashSet<>(Arrays.asList("header", "ip", "param", "methodParam", "result", "time", "chain"));
 
             @Override
             public boolean supports(String command) {
@@ -297,33 +297,24 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
 
                 MonitorInfo monitorInfo = new MonitorInfo();
                 if (args.length == 1) {
-                    // 默认监控所有目标(除调用链)
-                    monitorAllWithoutCallChain(monitorInfo);
+                    // 默认监听
+                    monitorDefault(monitorInfo);
                 } else {
-                    // 解析指定的监控目标
+                    // 监听指定目标
                     monitorTargets(monitorInfo, args[1]);
                 }
                 return monitorInfo;
             }
 
             /**
-             * 监听全部信息
-             * @param monitorInfo 监听方法信息
-             */
-            private void monitorAll(MonitorInfo monitorInfo) {
-                monitorInfo.setParam(true);
-                monitorInfo.setResult(true);
-                monitorInfo.setTime(true);
-                monitorInfo.setException(true);
-                monitorInfo.setCallChain(true);
-            }
-
-            /**
              * 监听全部信息，不监听调用链
              * @param monitorInfo 监听方法信息
              */
-            private void monitorAllWithoutCallChain(MonitorInfo monitorInfo) {
-                monitorInfo.setParam(true);
+            private void monitorDefault(MonitorInfo monitorInfo) {
+                monitorInfo.setIp(true);
+                monitorInfo.setHeader(false);
+                monitorInfo.setRequestParam(true);
+                monitorInfo.setMethodParam(true);
                 monitorInfo.setResult(true);
                 monitorInfo.setTime(true);
                 monitorInfo.setException(true);
@@ -345,7 +336,10 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
 
                 // 设置监控目标
                 Set<String> targetSet = new HashSet<>(Arrays.asList(targets));
-                monitorInfo.setParam(targetSet.contains("param"));
+                monitorInfo.setMethodParam(targetSet.contains("ip"));
+                monitorInfo.setMethodParam(targetSet.contains("header"));
+                monitorInfo.setMethodParam(targetSet.contains("param"));
+                monitorInfo.setMethodParam(targetSet.contains("methodParam"));
                 monitorInfo.setResult(targetSet.contains("result"));
                 monitorInfo.setTime(targetSet.contains("time"));
                 monitorInfo.setException(targetSet.contains("ex"));

@@ -1,10 +1,10 @@
 package githubcew.arguslog.monitor.formater;
 
+import githubcew.arguslog.monitor.MonitorInfo;
+
 import javax.servlet.*;
 import javax.servlet.http.*;
-import java.lang.reflect.Array;
-import java.lang.reflect.Field;
-import java.lang.reflect.Parameter;
+import java.lang.reflect.*;
 import java.util.*;
 
 /**
@@ -12,9 +12,9 @@ import java.util.*;
  *
  * @author chenenwei
  */
-public class ArguslogParamFormatter implements ParamFormatter {
+public class ArgusMethodParamFormatter implements MethodParamFormatter {
 
-    // 预定义常见Servlet相关类型集合（静态初始化提高性能）
+    // 定义常见Servlet相关类型集合（静态初始化提高性能）
     private static final Set<Class<?>> SERVLET_TYPES = new HashSet<>();
 
     static {
@@ -57,7 +57,7 @@ public class ArguslogParamFormatter implements ParamFormatter {
                 continue;
             }
             String formatValues = formatValue(parameterValues[i]);
-            sb.append("\"").append(parameters[i].getName()).append("\"").append(":").append(formatValues).append(" ");
+            sb.append("\"").append(parameters[i].getName()).append("\"").append(": ").append(formatValues).append(",");
         }
         return sb.toString();
     }
@@ -76,12 +76,14 @@ public class ArguslogParamFormatter implements ParamFormatter {
         Class<?> clazz = value.getClass();
 
         if (isPrimitiveOrWrapper(clazz)) {
-            if (value instanceof String && "".equals(value.toString().trim())) {
-                return "\"\"";
+            if (value instanceof String) {
+                if ("".equals(value.toString().trim())) {
+                    return "\"\"";
+                }
+                return "\"" + value + "\"";
             }
             return value.toString();
         }
-
         if (clazz.isArray()) {
             return formatArray(value);
         }
@@ -183,7 +185,7 @@ public class ArguslogParamFormatter implements ParamFormatter {
                 sb.append("\"")
                         .append(field.getName())
                         .append("\"")
-                        .append(":")
+                        .append(": ")
                         .append(formatValue(field.get(obj)));
                 if (i < fields.size() - 1) sb.append(", ");
             }
@@ -229,5 +231,16 @@ public class ArguslogParamFormatter implements ParamFormatter {
         return className.contains("javax.servlet") ||
                 className.contains("jakarta.servlet") ||
                 className.contains("org.springframework.web.context.request");
+    }
+
+    public static void main(String[] args) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        ArgusMethodParamFormatter argusMethodParamFormatter = new ArgusMethodParamFormatter();
+        Method demo = ArgusMethodParamFormatter.class.getMethod("demo", String.class, int.class, boolean.class, MonitorInfo.class);
+        Object format = argusMethodParamFormatter.format(demo.getParameters(), new Object[]{"哈哈", 1, true, new MonitorInfo()});
+        System.out.println(format);
+    }
+
+    public static void demo (String a, int b, boolean c, MonitorInfo monitorInfo) {
+        System.out.println(a);
     }
 }

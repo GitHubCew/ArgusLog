@@ -9,6 +9,7 @@ import githubcew.arguslog.core.cache.ArgusCache;
 import githubcew.arguslog.core.cmd.ExecuteResult;
 import githubcew.arguslog.monitor.MonitorInfo;
 import githubcew.arguslog.monitor.MonitorOutput;
+import githubcew.arguslog.monitor.WebRequestInfo;
 import githubcew.arguslog.web.socket.ArgusSocketHandler;
 import org.springframework.util.CollectionUtils;
 
@@ -62,7 +63,7 @@ public class ArgusWebSocketOuter implements Outer {
     }
 
     /**
-     * 构建正常输出（method, uri, param, result, time)
+     * 构建正常输出（method, uri, requestParam, methodParam, header, ip, result, time)
      *
      * @param monitorInfo   监听信息
      * @param monitorOutput 输出内容
@@ -72,25 +73,44 @@ public class ArgusWebSocketOuter implements Outer {
         wrapper.append("method => ").append(monitorInfo.getMethod().getSignature()).concat();
         wrapper.append("uri => ").startCopy().append(monitorInfo.getMethod().getUri()).endCopy().concat();
         boolean hasContent = false;
+        WebRequestInfo webRequestInfo = monitorOutput.getWebRequestInfo();
 
-        if (monitorInfo.isParam()) {
-            wrapper.append("param => ").startCopy();
-            appendValue(wrapper.getBuilder(), objectMapper, monitorOutput.getParam());
+        // 请求ip
+        if (monitorInfo.isIp()) {
+            wrapper.append("ip => ").startCopy().append(webRequestInfo.getIp()).endCopy().concat();
+            hasContent = true;
+        }
+        // 请求头
+        if (monitorInfo.isHeader()) {
+            wrapper.append("header => ").append(webRequestInfo.getHeaders()).concat();
+            hasContent = true;
+        }
+        // 请求参数
+        if (monitorInfo.isRequestParam()) {
+            wrapper.append("param => ").startCopy().append(webRequestInfo.getRawParams()).endCopy().concat();
+            hasContent = true;
+
+        }
+        // 方法参数
+        if (monitorInfo.isMethodParam()) {
+            // 方法参数
+            wrapper.append("methodParam => ").startCopy();
+            appendValue(wrapper.getBuilder(), objectMapper, monitorOutput.getMethodParam());
             wrapper.endCopy().concat();
             hasContent = true;
         }
-
+        // 结果
         if (monitorInfo.isResult()) {
             wrapper.append("result => ").startCopy();
             appendValue(wrapper.getBuilder(), objectMapper, monitorOutput.getResult());
             wrapper.endCopy().concat();
             hasContent = true;
         }
-
+        // 请求耗时
         if (monitorInfo.isTime()) {
             wrapper.append("time => ");
             appendValue(wrapper.getBuilder(), objectMapper, monitorOutput.getTime());
-            wrapper.concat();
+            wrapper.append("ms").concat();
             hasContent = true;
         }
 

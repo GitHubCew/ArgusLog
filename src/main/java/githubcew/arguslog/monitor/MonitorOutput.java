@@ -11,12 +11,12 @@ import lombok.Data;
 public class MonitorOutput {
 
     /**
-     * 接口参数
+     * 方法参数
      */
-    private Object param;
+    private Object methodParam;
 
     /**
-     * 接口耗时（毫秒）
+     * 方法耗时（毫秒）
      */
     private Long time;
 
@@ -30,6 +30,13 @@ public class MonitorOutput {
      */
     private Exception exception;
 
-
+    /**
+     * 调用链
+     */
     StackTraceElement[] callChain;
+
+    /**
+     * web 请求信息
+     */
+    private WebRequestInfo webRequestInfo;
 }

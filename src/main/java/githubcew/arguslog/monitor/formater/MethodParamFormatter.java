@@ -7,7 +7,7 @@ import java.lang.reflect.Parameter;
  *
  * @author chenenwei
  */
-public interface ParamFormatter {
+public interface MethodParamFormatter {
 
     /**
      * 参数格式化
