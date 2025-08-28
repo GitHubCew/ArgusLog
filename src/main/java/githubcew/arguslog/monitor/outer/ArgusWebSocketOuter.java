@@ -86,7 +86,7 @@ public class ArgusWebSocketOuter implements Outer {
         wrapper.append("ip => ").startCopy().append(webRequestInfo.getIp()).endCopy().concat();
         // 请求头
         if (monitorInfo.isHeader()) {
-            wrapper.append("header => ").append(webRequestInfo.getHeaders()).concat().concat();
+            wrapper.append("header => ").append(webRequestInfo.getHeaders()).concat();
         }
         // 请求参数
         if (monitorInfo.isParam()) {
