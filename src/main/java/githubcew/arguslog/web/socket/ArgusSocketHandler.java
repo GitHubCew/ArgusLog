@@ -17,20 +17,24 @@ import java.util.Objects;
 
 /**
  * WebSocket处理器
- * @author  chenenwei
+ *
+ * @author chenenwei
  */
 @Component("argusSocketHandler")
 public class ArgusSocketHandler extends TextWebSocketHandler {
 
     @Autowired
     private ArgusStarter argusStarter;
+
     /**
      * 构造方法
      */
-    public ArgusSocketHandler(){}
+    public ArgusSocketHandler() {
+    }
 
     /**
      * 连接建立
+     *
      * @param session session
      */
     @Override
@@ -46,8 +50,9 @@ public class ArgusSocketHandler extends TextWebSocketHandler {
 
     /**
      * 连接关闭
+     *
      * @param session session
-     * @param status 状态
+     * @param status  状态
      * @throws Exception 异常
      */
     @Override
@@ -56,6 +61,7 @@ public class ArgusSocketHandler extends TextWebSocketHandler {
 
     /**
      * 处理消息
+     *
      * @param session session
      * @param message 消息
      * @throws Exception 异常
@@ -73,6 +79,7 @@ public class ArgusSocketHandler extends TextWebSocketHandler {
 
     /**
      * 发送消息
+     *
      * @param session session
      * @param message 消息
      */
@@ -88,10 +95,11 @@ public class ArgusSocketHandler extends TextWebSocketHandler {
 
     /**
      * 发送失败消息
-     * @param session session
+     *
+     * @param session  session
      * @param errorMsg 消息
      */
-    private void sendError (WebSocketSession session, String errorMsg) {
+    private void sendError(WebSocketSession session, String errorMsg) {
         try {
             if (session.isOpen()) {
                 String output = OutputWrapper.formatOutput(ExecuteResult.failed(errorMsg));
@@ -101,5 +109,5 @@ public class ArgusSocketHandler extends TextWebSocketHandler {
             e.printStackTrace();
         }
     }
-    
+
 }

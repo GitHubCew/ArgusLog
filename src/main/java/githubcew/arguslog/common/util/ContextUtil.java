@@ -7,7 +7,8 @@ import org.springframework.stereotype.Component;
 
 /**
  * 上下文工具
- * @author  chenenwei
+ *
+ * @author chenenwei
  */
 @Component
 public class ContextUtil implements ApplicationContextAware {
@@ -16,6 +17,7 @@ public class ContextUtil implements ApplicationContextAware {
 
     /**
      * 设置ApplicationContext
+     *
      * @param applicationContext applicationContext
      * @throws BeansException 异常
      */
@@ -26,8 +28,9 @@ public class ContextUtil implements ApplicationContextAware {
 
     /**
      * 获取bean
+     *
      * @param beanClass beanClass
-     * @param <T> 泛型
+     * @param <T>       泛型
      * @return bean
      */
     public static <T> T getBean(Class<T> beanClass) {

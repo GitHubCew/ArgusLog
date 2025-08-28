@@ -10,12 +10,14 @@ import java.lang.reflect.Method;
 
 /**
  * 方法拦截
- * @author  chenenwei
+ *
+ * @author chenenwei
  */
-public class MethodPointcut implements Pointcut{
+public class MethodPointcut implements Pointcut {
 
     /**
      * 获取类过滤器
+     *
      * @return 类过滤器
      */
     @Override
@@ -24,9 +26,9 @@ public class MethodPointcut implements Pointcut{
             Annotation[] annotations = clazz.getAnnotations();
             boolean flag = false;
             for (Annotation annotation : annotations) {
-                flag =  "org.springframework.stereotype.Controller".equals(annotation.annotationType().getName())
-                        ||  "org.springframework.web.bind.annotation.RestController".equals(annotation.annotationType().getName());
-                if(flag)
+                flag = "org.springframework.stereotype.Controller".equals(annotation.annotationType().getName())
+                        || "org.springframework.web.bind.annotation.RestController".equals(annotation.annotationType().getName());
+                if (flag)
                     break;
             }
             return flag;
@@ -35,6 +37,7 @@ public class MethodPointcut implements Pointcut{
 
     /**
      * 获取方法匹配器
+     *
      * @return 方法匹配器
      */
     @Override

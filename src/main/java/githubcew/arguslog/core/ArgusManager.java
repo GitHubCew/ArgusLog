@@ -1,17 +1,17 @@
 package githubcew.arguslog.core;
 
-import githubcew.arguslog.core.cache.ArgusCache;
+import githubcew.arguslog.common.util.CommonUtil;
 import githubcew.arguslog.config.ArgusConfigurer;
+import githubcew.arguslog.config.ArgusProperties;
 import githubcew.arguslog.core.account.ArgusUserProvider;
 import githubcew.arguslog.core.account.UserProvider;
+import githubcew.arguslog.core.cache.ArgusCache;
+import githubcew.arguslog.core.cmd.CommandManager;
+import githubcew.arguslog.monitor.ArgusMethod;
 import githubcew.arguslog.web.auth.AccountAuthenticator;
 import githubcew.arguslog.web.auth.TokenAuthenticator;
 import githubcew.arguslog.web.auth.TokenProvider;
-import githubcew.arguslog.core.cmd.CommandManager;
-import githubcew.arguslog.config.ArgusProperties;
 import githubcew.arguslog.web.extractor.Extractor;
-import githubcew.arguslog.monitor.ArgusMethod;
-import githubcew.arguslog.common.util.CommonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -29,10 +29,14 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Argus
+ *
  * @author chenenwei
  */
 @Component
@@ -104,7 +108,7 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
     /**
      * 初始化
      */
-    public void init () {
+    public void init() {
 
         // configurers 排序
         this.configurers.sort(AnnotationAwareOrderComparator.INSTANCE);
@@ -130,7 +134,7 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
     /**
      * 注册不需要认证命令
      */
-    private void registerIgnoreAuthorizationCommand () {
+    private void registerIgnoreAuthorizationCommand() {
 
         for (ArgusConfigurer configurer : configurers) {
             configurer.registerUnauthorizedCommands(this.commandManager);
@@ -140,7 +144,7 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
     /**
      * 扫描接口
      */
-    private void scan () {
+    private void scan() {
         // 获取Spring MVC中所有的RequestMapping信息
         Map<RequestMappingInfo, HandlerMethod> handlerMethods = requestMappingHandlerMapping.getHandlerMethods();
 
@@ -148,7 +152,7 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
         handlerMethods.forEach((info, handlerMethod) -> {
             Set<String> urlPatterns = info.getPatternsCondition().getPatterns();
             Method method = handlerMethod.getMethod();
-            urlPatterns.forEach(uri ->{
+            urlPatterns.forEach(uri -> {
                 if (!uri.startsWith("/")) {
                     uri = "/" + uri;
                 }

@@ -46,29 +46,42 @@ public class ArgusAutoConfiguration implements ImportBeanDefinitionRegistrar, We
 
     @Autowired
     private ArgusProperties argusProperties;
+
     /**
      * 切点
+     *
      * @return 切点
      */
     @Bean
-    public MethodPointcut pointcut() {return new MethodPointcut();}
+    public MethodPointcut pointcut() {
+        return new MethodPointcut();
+    }
 
     /**
      * 通知
+     *
      * @return 通知
      */
     @Bean
-    public MethodAdvice advice() {return new MethodAdvice();}
+    public MethodAdvice advice() {
+        return new MethodAdvice();
+    }
 
     @ConditionalOnMissingBean(ParamFormatter.class)
     @Bean
-    public ParamFormatter paramFormatter() {return new ArguslogParamFormatter();}
+    public ParamFormatter paramFormatter() {
+        return new ArguslogParamFormatter();
+    }
 
     @ConditionalOnMissingBean(Outer.class)
     @Bean
-    public Outer outer () {return new ArgusWebSocketOuter();}
+    public Outer outer() {
+        return new ArgusWebSocketOuter();
+    }
+
     /**
      * 默认切面
+     *
      * @return 切面
      */
     @Bean
@@ -80,6 +93,7 @@ public class ArgusAutoConfiguration implements ImportBeanDefinitionRegistrar, We
 
     /**
      * 默认用户提供者
+     *
      * @return 用户提供者
      */
     @Bean
@@ -90,6 +104,7 @@ public class ArgusAutoConfiguration implements ImportBeanDefinitionRegistrar, We
 
     /**
      * 默认token提供者
+     *
      * @return token提供者
      */
     @Bean
@@ -111,6 +126,7 @@ public class ArgusAutoConfiguration implements ImportBeanDefinitionRegistrar, We
 
     /**
      * 默认请求解析器
+     *
      * @return 请求解析器
      */
     @Bean
@@ -134,8 +150,9 @@ public class ArgusAutoConfiguration implements ImportBeanDefinitionRegistrar, We
 
     /**
      * 注册BeanDefinition
+     *
      * @param importingClassMetadata importingClassMetadata
-     * @param registry registry
+     * @param registry               registry
      */
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
@@ -144,6 +161,7 @@ public class ArgusAutoConfiguration implements ImportBeanDefinitionRegistrar, We
 
     /**
      * 注册WebSocketHandler
+     *
      * @param registry registry
      */
     @Override
@@ -156,7 +174,8 @@ public class ArgusAutoConfiguration implements ImportBeanDefinitionRegistrar, We
 
     /**
      * 扫描包
-     * @param registry registry
+     *
+     * @param registry     registry
      * @param basePackages basePackages
      */
     private void scanPackages(BeanDefinitionRegistry registry, String... basePackages) {

@@ -12,8 +12,10 @@ import org.springframework.stereotype.Component;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
 /**
  * Argus Cache 管理器
+ *
  * @author chenenwei
  */
 @Component
@@ -29,6 +31,7 @@ public class ArgusCacheManager implements InitializingBean, DisposableBean {
 
     /**
      * 构造方法
+     *
      * @param argusProperties 配置
      */
     @Autowired
@@ -49,6 +52,7 @@ public class ArgusCacheManager implements InitializingBean, DisposableBean {
                 argusProperties.getTokenFlushTime(), argusProperties.getTokenFlushTime(), TimeUnit.SECONDS);
         log.info("【Argus => Started Argus Cache Manager...】");
     }
+
     /**
      * 清理过期凭证
      */
@@ -90,6 +94,7 @@ public class ArgusCacheManager implements InitializingBean, DisposableBean {
 
     /**
      * afterPropertiesSet
+     *
      * @throws Exception 异常
      */
     @Override
@@ -99,6 +104,7 @@ public class ArgusCacheManager implements InitializingBean, DisposableBean {
 
     /**
      * 销毁方法
+     *
      * @throws Exception 异常
      */
     @Override

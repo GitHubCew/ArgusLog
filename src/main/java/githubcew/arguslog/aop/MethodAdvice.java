@@ -1,21 +1,23 @@
 package githubcew.arguslog.aop;
 
-import githubcew.arguslog.monitor.formater.ParamFormatter;
-import githubcew.arguslog.core.cache.ArgusCache;
 import githubcew.arguslog.common.util.ContextUtil;
+import githubcew.arguslog.core.cache.ArgusCache;
 import githubcew.arguslog.monitor.MonitorOutput;
+import githubcew.arguslog.monitor.formater.ParamFormatter;
 import githubcew.arguslog.monitor.outer.Outer;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 
 /**
  * 方法增强
- * @author  chenenwei
+ *
+ * @author chenenwei
  */
 public class MethodAdvice implements MethodInterceptor {
 
     /**
      * 拦截方法
+     *
      * @param invocation 方法调用
      * @return 返回值
      * @throws Throwable 异常
@@ -25,7 +27,7 @@ public class MethodAdvice implements MethodInterceptor {
 
         boolean hasMethod = ArgusCache.containsMethod(invocation.getMethod());
 
-        Object returnVal  = null;
+        Object returnVal = null;
         if (!hasMethod) {
             returnVal = invocation.proceed();
             return returnVal;
@@ -48,14 +50,12 @@ public class MethodAdvice implements MethodInterceptor {
             returnVal = invocation.proceed();
             content.setResult(returnVal);
 
-            end  = System.currentTimeMillis();
-        }
-        catch (Exception e) {
+            end = System.currentTimeMillis();
+        } catch (Exception e) {
             end = System.currentTimeMillis();
             content.setException(e);
             throw e;
-        }
-        finally {
+        } finally {
             // 计算耗时
             content.setTime(end - start);
             // 输出content

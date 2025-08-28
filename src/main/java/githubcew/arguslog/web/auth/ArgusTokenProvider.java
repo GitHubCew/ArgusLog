@@ -6,10 +6,11 @@ import java.util.UUID;
 
 /**
  * Argus token provider
+ *
  * @author chenenwei
  */
 @Data
-public class ArgusTokenProvider implements TokenProvider{
+public class ArgusTokenProvider implements TokenProvider {
 
     private Long expireTime;
 
@@ -19,6 +20,6 @@ public class ArgusTokenProvider implements TokenProvider{
 
     @Override
     public Token provide() {
-        return new Token(UUID.randomUUID().toString(), System.currentTimeMillis() +   this.expireTime);
+        return new Token(UUID.randomUUID().toString(), System.currentTimeMillis() + this.expireTime);
     }
 }

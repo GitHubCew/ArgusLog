@@ -3,14 +3,12 @@ package githubcew.arguslog.config;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-import java.util.Arrays;
-import java.util.List;
-
 /**
  * Argus配置
+ *
  * @author chenenwei
  */
-@ConfigurationProperties(prefix="argus")
+@ConfigurationProperties(prefix = "argus")
 @Data
 public class ArgusProperties {
 
@@ -33,6 +31,6 @@ public class ArgusProperties {
     private Long tokenExpireTime = 1000 * 60 * 30L;
 
     // 调用链排除包
-    private String callChainExcludePackage ="sun.,java.,javax.";
+    private String callChainExcludePackage = "sun.,java.,javax.";
 
 }

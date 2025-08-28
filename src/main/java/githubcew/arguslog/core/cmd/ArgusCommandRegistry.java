@@ -206,6 +206,7 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
                     if (arg.equals("-m")) {
                         return listMonitor(request.getToken().getToken(), args);
                     }
+                    return ExecuteResult.success("");
                 }
                 return list(args);
             }

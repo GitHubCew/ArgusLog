@@ -4,7 +4,8 @@ import lombok.Data;
 
 /**
  * 输出内容
- * @author  chenenwei
+ *
+ * @author chenenwei
  */
 @Data
 public class MonitorOutput {

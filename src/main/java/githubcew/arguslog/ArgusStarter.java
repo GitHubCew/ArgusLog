@@ -11,6 +11,7 @@ import org.springframework.web.socket.WebSocketSession;
 
 /**
  * Argus
+ *
  * @author chenenwei
  */
 @Component
@@ -19,13 +20,14 @@ public class ArgusStarter {
     private final ArgusManager argusManager;
 
     @Autowired
-    public ArgusStarter (ArgusManager argusManager) {
+    public ArgusStarter(ArgusManager argusManager) {
         this.argusManager = argusManager;
     }
 
     /**
      * 启动
-     * @param session session
+     *
+     * @param session  session
      * @param inputCmd 输入命令
      * @return 输出结果
      */

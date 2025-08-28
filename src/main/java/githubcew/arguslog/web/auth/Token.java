@@ -4,6 +4,7 @@ import lombok.Data;
 
 /**
  * 凭证
+ *
  * @author chenenwei
  */
 @Data
@@ -19,7 +20,8 @@ public class Token {
      */
     private long expireTime;
 
-    public Token() {}
+    public Token() {
+    }
 
     public Token(String token, Long expireTime) {
         this.token = token;

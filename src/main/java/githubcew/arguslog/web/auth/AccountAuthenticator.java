@@ -13,11 +13,12 @@ import org.springframework.stereotype.Component;
 import java.util.Objects;
 
 /**
- *  用户认证器
- *  @author chenenwei
+ * 用户认证器
+ *
+ * @author chenenwei
  */
 @Component
-public class AccountAuthenticator implements Authenticator{
+public class AccountAuthenticator implements Authenticator {
 
 
     private final UserProvider userProvider;
@@ -26,7 +27,8 @@ public class AccountAuthenticator implements Authenticator{
 
     /**
      * 构造方法
-     * @param userProvider 用户提供者
+     *
+     * @param userProvider  用户提供者
      * @param tokenProvider token提供者
      */
     @Autowired
@@ -37,7 +39,8 @@ public class AccountAuthenticator implements Authenticator{
 
     /**
      * 认证
-     * @param request 请求
+     *
+     * @param request  请求
      * @param response 响应
      * @return 认证结果
      */
@@ -66,6 +69,7 @@ public class AccountAuthenticator implements Authenticator{
 
     /**
      * 是否支持
+     *
      * @param request 用户
      * @return 是否支持
      */
@@ -78,6 +82,7 @@ public class AccountAuthenticator implements Authenticator{
 
     /**
      * 如果校验成功,立即返回
+     *
      * @return 是否立即返回
      */
     @Override

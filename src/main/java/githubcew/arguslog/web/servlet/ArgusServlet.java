@@ -19,6 +19,8 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 /**
+ * ArgusServlet
+ *
  * @author chenenwei
  */
 public class ArgusServlet extends HttpServlet {

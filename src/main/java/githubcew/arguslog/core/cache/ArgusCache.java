@@ -470,9 +470,9 @@ public class ArgusCache {
      */
     public static boolean match(String uri, String pattern) {
         if (!pattern.contains("*")) {
-            return uri.equals(pattern);
+            return uri.equalsIgnoreCase(pattern);
         }
-        return matchPattern(uri, pattern);
+        return matchPattern(uri.toLowerCase(), pattern.toLowerCase());
     }
 
     /**
@@ -506,6 +506,6 @@ public class ArgusCache {
     }
 
     public static void main(String[] args) {
-        System.out.println(match("/api/user/list", "*"));
+        System.out.println(match("/api/User/list", "*user/*"));
     }
 }

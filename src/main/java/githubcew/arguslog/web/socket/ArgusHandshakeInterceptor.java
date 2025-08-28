@@ -1,7 +1,6 @@
 package githubcew.arguslog.web.socket;
 
 import githubcew.arguslog.core.cache.ArgusCache;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.ServletServerHttpRequest;
@@ -14,6 +13,7 @@ import java.util.Objects;
 
 /**
  * Argus校验拦截器
+ *
  * @author chenenwei
  */
 public class ArgusHandshakeInterceptor implements HandshakeInterceptor {
@@ -30,7 +30,7 @@ public class ArgusHandshakeInterceptor implements HandshakeInterceptor {
             if (token == null || token.isEmpty()) {
                 token = httpServletRequest.getHeader("argus-token");
             }
-            if(validateToken(token)) {
+            if (validateToken(token)) {
                 attributes.put("argus-token", token);
                 return true;
             }
@@ -45,6 +45,7 @@ public class ArgusHandshakeInterceptor implements HandshakeInterceptor {
 
     /**
      * 校验token
+     *
      * @param token token
      * @return true/false
      */

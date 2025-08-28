@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 /**
  * 输出可copy内容生成 - Builder模式实现
+ *
  * @author chenenwei
  */
 public class OutputWrapper {
@@ -35,6 +36,7 @@ public class OutputWrapper {
 
     /**
      * 构造方法
+     *
      * @param builder builder
      */
     private OutputWrapper(StringBuilder builder) {
@@ -43,7 +45,8 @@ public class OutputWrapper {
 
     /**
      * 创建实例
-     * @return  OutputWrapper
+     *
+     * @return OutputWrapper
      */
     public static OutputWrapper create() {
         return new OutputWrapper();
@@ -51,6 +54,7 @@ public class OutputWrapper {
 
     /**
      * 创建实例
+     *
      * @param builder builder
      */
     public static OutputWrapper from(StringBuilder builder) {
@@ -59,7 +63,8 @@ public class OutputWrapper {
 
     /**
      * 包装复制开始信息
-     * @return  this
+     *
+     * @return this
      */
     public OutputWrapper startCopy() {
         builder.append(COPY_START);
@@ -68,7 +73,8 @@ public class OutputWrapper {
 
     /**
      * 包装复制结束信息
-     * @return  this
+     *
+     * @return this
      */
     public OutputWrapper endCopy() {
         builder.append(COPY_END);
@@ -77,7 +83,8 @@ public class OutputWrapper {
 
     /**
      * 添加连接符
-     * @return  this
+     *
+     * @return this
      */
     public OutputWrapper concat() {
         builder.append(CONCAT);
@@ -86,7 +93,8 @@ public class OutputWrapper {
 
     /**
      * 添加换行符
-     * @return  this
+     *
+     * @return this
      */
     public OutputWrapper newLine() {
         builder.append(LINE_SEPARATOR);
@@ -95,8 +103,9 @@ public class OutputWrapper {
 
     /**
      * 添加自定义文本内容
+     *
      * @param text 添加的文本内容
-     * @return  this
+     * @return this
      */
     public OutputWrapper append(String text) {
         builder.append(text);
@@ -105,9 +114,10 @@ public class OutputWrapper {
 
     /**
      * 添加多个文本内容，用指定分隔符连接
-     * @param textList 文本列表
+     *
+     * @param textList  文本列表
      * @param delimiter 分隔符
-     * @return  this
+     * @return this
      */
     public OutputWrapper appendAll(List<String> textList, String delimiter) {
         if (Objects.isNull(textList) || textList.isEmpty()) {
@@ -120,8 +130,9 @@ public class OutputWrapper {
 
     /**
      * 包装单个文本为可复制格式
+     *
      * @param text 文本
-     * @return  this
+     * @return this
      */
     public OutputWrapper appendCopy(String text) {
         return startCopy().append(text).endCopy();
@@ -129,9 +140,10 @@ public class OutputWrapper {
 
     /**
      * 包装多个文本为可复制格式，用指定分隔符连接
-     * @param textList 文本列表
+     *
+     * @param textList  文本列表
      * @param delimiter 分隔符
-     * @return  this
+     * @return this
      */
     public OutputWrapper appendAllCopy(List<String> textList, String delimiter) {
         if (Objects.isNull(textList) || textList.isEmpty()) {
@@ -147,6 +159,7 @@ public class OutputWrapper {
 
     /**
      * 获取构建结果
+     *
      * @return 构建结果
      */
     public String build() {
@@ -155,6 +168,7 @@ public class OutputWrapper {
 
     /**
      * 清空当前构建内容
+     *
      * @return this
      */
     public OutputWrapper clear() {
@@ -164,6 +178,7 @@ public class OutputWrapper {
 
     /**
      * 获取Builder
+     *
      * @return Builder
      */
     public StringBuilder getBuilder() {
@@ -172,6 +187,7 @@ public class OutputWrapper {
 
     /**
      * 包装文本复制标签
+     *
      * @param text 文本
      * @return 结果
      */
@@ -181,7 +197,8 @@ public class OutputWrapper {
 
     /**
      * 包装文本列表复制标签
-     * @param textList 文本列表
+     *
+     * @param textList  文本列表
      * @param delimiter 分隔符
      * @return 结果
      */
@@ -191,10 +208,11 @@ public class OutputWrapper {
 
     /**
      * 格式化输出
+     *
      * @param executeResult 执行结果
      * @return 输出
      */
-    public static String formatOutput (ExecuteResult executeResult) {
+    public static String formatOutput(ExecuteResult executeResult) {
 
         return "code=" + executeResult.getStatus() + "#ouputconcat#data=" + executeResult.getData();
     }

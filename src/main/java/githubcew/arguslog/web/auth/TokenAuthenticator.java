@@ -12,7 +12,7 @@ import java.util.Objects;
  */
 
 @Component
-public class TokenAuthenticator implements Authenticator{
+public class TokenAuthenticator implements Authenticator {
 
     @Override
     public boolean authenticate(ArgusRequest request, ArgusResponse argusResponse) {

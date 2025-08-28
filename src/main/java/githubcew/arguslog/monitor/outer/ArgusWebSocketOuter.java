@@ -19,13 +19,15 @@ import java.util.*;
 
 /**
  * WebSocket 输出器
+ *
  * @author chenenwei
  */
 public class ArgusWebSocketOuter implements Outer {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public ArgusWebSocketOuter() {}
+    public ArgusWebSocketOuter() {
+    }
 
     @Override
     public void out(Method method, MonitorOutput monitorOutput) {
@@ -61,9 +63,10 @@ public class ArgusWebSocketOuter implements Outer {
 
     /**
      * 构建正常输出（method, uri, param, result, time)
-     * @param monitorInfo 监听信息
+     *
+     * @param monitorInfo   监听信息
      * @param monitorOutput 输出内容
-     * @param wrapper wrapper
+     * @param wrapper       wrapper
      */
     private boolean buildNormalOutput(MonitorInfo monitorInfo, MonitorOutput monitorOutput, OutputWrapper wrapper) throws JsonProcessingException {
         wrapper.append("method => ").append(monitorInfo.getMethod().getSignature()).concat();
@@ -96,8 +99,9 @@ public class ArgusWebSocketOuter implements Outer {
 
     /**
      * 构建异常输出
+     *
      * @param monitorOutput 输出内容
-     * @param wrapper wrapper
+     * @param wrapper       wrapper
      */
     private boolean buildExceptionOutput(MonitorOutput monitorOutput, OutputWrapper wrapper) {
         Exception exception = monitorOutput.getException();
@@ -112,9 +116,10 @@ public class ArgusWebSocketOuter implements Outer {
 
     /**
      * 构建调用链输出
-     * @param monitorInfo 监听信息
+     *
+     * @param monitorInfo   监听信息
      * @param monitorOutput 输出内容
-     * @param wrapper wrapper
+     * @param wrapper       wrapper
      */
     private boolean buildCallChainOutput(MonitorInfo monitorInfo, MonitorOutput monitorOutput, OutputWrapper wrapper) {
         if (!monitorInfo.isCallChain()) {
@@ -147,11 +152,12 @@ public class ArgusWebSocketOuter implements Outer {
 
     /**
      * 发送消息
-     * @param handler handler
-     * @param user 用户
+     *
+     * @param handler    handler
+     * @param user       用户
      * @param shouldSend 是否发送
-     * @param code code
-     * @param wrapper wrapper
+     * @param code       code
+     * @param wrapper    wrapper
      */
     private void sendIfRequired(ArgusSocketHandler handler, ArgusUser user, boolean shouldSend, int code, OutputWrapper wrapper) {
         String content = wrapper.build();
@@ -166,9 +172,10 @@ public class ArgusWebSocketOuter implements Outer {
 
     /**
      * 序列化值
-     * @param sb builder
+     *
+     * @param sb     builder
      * @param mapper mapper
-     * @param value 值
+     * @param value  值
      */
     private void appendValue(StringBuilder sb, ObjectMapper mapper, Object value) throws JsonProcessingException {
         if (value == null) {
@@ -192,8 +199,9 @@ public class ArgusWebSocketOuter implements Outer {
 
     /**
      * 追加异常堆栈
+     *
      * @param sb builder
-     * @param e 异常
+     * @param e  异常
      */
     public void appendException(StringBuilder sb, Exception e) {
         StringWriter sw = new StringWriter();
@@ -205,7 +213,8 @@ public class ArgusWebSocketOuter implements Outer {
 
     /**
      * 检查类名是否在排除包中
-     * @param className 类名
+     *
+     * @param className   类名
      * @param excludeList 排除包列表
      * @return true/false
      */

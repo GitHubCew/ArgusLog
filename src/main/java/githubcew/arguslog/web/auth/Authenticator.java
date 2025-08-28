@@ -5,13 +5,15 @@ import githubcew.arguslog.web.ArgusResponse;
 
 /**
  * 认证器
+ *
  * @author chenenwei
  */
 public interface Authenticator {
 
     /**
      * 认证
-     * @param request 请求
+     *
+     * @param request  请求
      * @param response 响应
      * @return 认证结果
      */
@@ -19,14 +21,20 @@ public interface Authenticator {
 
     /**
      * 是否支持
+     *
      * @param request 请求
      * @return 是否支持
      */
-    boolean supports (ArgusRequest request);
+    boolean supports(ArgusRequest request);
 
     /**
      * 立即返回
+     *
      * @return 是否立即返回
      */
-    default boolean returnImmediately() {return false;};
+    default boolean returnImmediately() {
+        return false;
+    }
+
+    ;
 }

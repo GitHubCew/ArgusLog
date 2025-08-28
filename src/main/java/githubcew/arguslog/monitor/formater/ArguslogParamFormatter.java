@@ -9,9 +9,10 @@ import java.util.*;
 
 /**
  * 默认的参数格式化器
- * @author  chenenwei
+ *
+ * @author chenenwei
  */
-public class ArguslogParamFormatter implements ParamFormatter{
+public class ArguslogParamFormatter implements ParamFormatter {
 
     // 预定义常见Servlet相关类型集合（静态初始化提高性能）
     private static final Set<Class<?>> SERVLET_TYPES = new HashSet<>();
@@ -43,7 +44,8 @@ public class ArguslogParamFormatter implements ParamFormatter{
 
     /**
      * 格式化
-     * @param parameters 参数列表
+     *
+     * @param parameters      参数列表
      * @param parameterValues 参数值列表
      * @return 格式化后的参数字符串
      */
@@ -62,6 +64,7 @@ public class ArguslogParamFormatter implements ParamFormatter{
 
     /**
      * 格式化参数值
+     *
      * @param value 参数值
      * @return 格式化后的参数值字符串
      */
@@ -96,6 +99,7 @@ public class ArguslogParamFormatter implements ParamFormatter{
 
     /**
      * 判断是否为基本类型或包装类型
+     *
      * @param clazz 类
      * @return true/false
      */
@@ -114,6 +118,7 @@ public class ArguslogParamFormatter implements ParamFormatter{
 
     /**
      * 格式化数组
+     *
      * @param array 数组
      * @return 格式化后的数组字符串
      */
@@ -129,6 +134,7 @@ public class ArguslogParamFormatter implements ParamFormatter{
 
     /**
      * 格式化集合
+     *
      * @param collection 集合
      * @return 格式化后的集合字符串
      */
@@ -144,6 +150,7 @@ public class ArguslogParamFormatter implements ParamFormatter{
 
     /**
      * 格式化Map
+     *
      * @param map Map
      * @return 格式化后的Map字符串
      */
@@ -162,6 +169,7 @@ public class ArguslogParamFormatter implements ParamFormatter{
 
     /**
      * 格式化普通对象（递归遍历字段）
+     *
      * @param obj 对象
      * @return 格式化后的对象字符串
      */
@@ -173,10 +181,10 @@ public class ArguslogParamFormatter implements ParamFormatter{
                 Field field = fields.get(i);
                 field.setAccessible(true);
                 sb.append("\"")
-                    .append(field.getName())
-                    .append("\"")
-                    .append(":")
-                    .append(formatValue(field.get(obj)));
+                        .append(field.getName())
+                        .append("\"")
+                        .append(":")
+                        .append(formatValue(field.get(obj)));
                 if (i < fields.size() - 1) sb.append(", ");
             }
             return sb.append("}").toString();
@@ -187,6 +195,7 @@ public class ArguslogParamFormatter implements ParamFormatter{
 
     /**
      * 递归获取类及其父类的所有字段
+     *
      * @param clazz 类
      * @return 字段列表
      */
@@ -202,6 +211,7 @@ public class ArguslogParamFormatter implements ParamFormatter{
 
     /**
      * 判断类是否属于Servlet相关类型（通常不可序列化）
+     *
      * @param clz 要检查的类
      * @return true如果是Servlet相关类型，false否则
      */

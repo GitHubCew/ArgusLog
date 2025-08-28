@@ -1,11 +1,12 @@
 package githubcew.arguslog.web;
 
-import githubcew.arguslog.web.auth.Token;
 import githubcew.arguslog.core.cmd.ExecuteResult;
+import githubcew.arguslog.web.auth.Token;
 import lombok.Data;
 
 /**
  * Argus response
+ *
  * @author chenenwei
  */
 @Data
