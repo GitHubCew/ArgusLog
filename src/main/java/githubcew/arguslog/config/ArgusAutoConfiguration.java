@@ -8,6 +8,7 @@ import githubcew.arguslog.monitor.formater.ArgusMethodParamFormatter;
 import githubcew.arguslog.monitor.formater.MethodParamFormatter;
 import githubcew.arguslog.monitor.outer.ArgusWebSocketOuter;
 import githubcew.arguslog.monitor.outer.Outer;
+import githubcew.arguslog.monitor.trace.ArgusTraceRequestInterceptor;
 import githubcew.arguslog.web.auth.ArgusTokenProvider;
 import githubcew.arguslog.web.auth.TokenProvider;
 import githubcew.arguslog.web.extractor.ArgusRequestExtractor;
@@ -27,6 +28,7 @@ import org.springframework.context.annotation.*;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
@@ -47,7 +49,7 @@ import java.io.IOException;
 @EnableWebSocket
 @Configuration
 @EnableAspectJAutoProxy
-public class ArgusAutoConfiguration implements ImportBeanDefinitionRegistrar, WebSocketConfigurer {
+public class ArgusAutoConfiguration implements ImportBeanDefinitionRegistrar, WebSocketConfigurer, WebMvcConfigurer {
 
     @Qualifier("argusSocketHandler")
     @Autowired
@@ -107,6 +109,13 @@ public class ArgusAutoConfiguration implements ImportBeanDefinitionRegistrar, We
         registrationBean.setDispatcherTypes(javax.servlet.DispatcherType.REQUEST);
 
         return registrationBean;
+    }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(new ArgusTraceRequestInterceptor())
+                .addPathPatterns("/**")
+                .excludePathPatterns("/error", "/actuator/**", "/argus/**");
     }
 
     /**

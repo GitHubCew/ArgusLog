@@ -1,8 +1,10 @@
 package githubcew.arguslog.core.cache;
 
+import githubcew.arguslog.common.util.CommonUtil;
 import githubcew.arguslog.core.account.ArgusUser;
 import githubcew.arguslog.monitor.ArgusMethod;
 import githubcew.arguslog.monitor.MonitorInfo;
+import githubcew.arguslog.monitor.trace.asm.MethodCallInfo;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -21,29 +23,45 @@ public class ArgusCache {
 
     /**
      * 接口方法缓存
+     * key: 接口uri
+     * value: 方法
      */
     private final static Map<String, ArgusMethod> uriMethodCache;
 
     /**
      * 监听方法的用户列表
+     * key: 方法
+     * vaLue: 用户列表
      */
     private final static Map<ArgusMethod, List<String>> methodUsers;
 
     /**
      * 用户监听方法列表
+     * key: 用户token
+     * value: 监听方法列表
      */
     private final static Map<String, List<MonitorInfo>> userMonitorMethods;
 
     /**
      * 用户tokens
+     * key: 用户token
+     * value: 用户信息
      */
     private final static Map<String, ArgusUser> userTokens;
+
+    /**
+     * 用户trace方法
+     * key: 用户token
+     * value:  方法
+     */
+    private final static Map<String, List<ArgusMethod>> userTraceMethods;
 
     static {
         uriMethodCache = new ConcurrentHashMap<>(256);
         userMonitorMethods = new ConcurrentHashMap<>(1);
         methodUsers = new ConcurrentHashMap<>(1);
         userTokens = new ConcurrentHashMap<>(1);
+        userTraceMethods = new ConcurrentHashMap<>(1);
     }
 
     /**
@@ -159,6 +177,16 @@ public class ArgusCache {
         }
     }
 
+    public static void addUserTraceMethod(String user, ArgusMethod method) {
+        if (!userTraceMethods.containsKey(user)) {
+            userTraceMethods.put(user, new ArrayList<>());
+        }
+        if (userHasTraceUri(user, method.getUri())) {
+            return;
+        }
+        userTraceMethods.get(user).add(method);
+    }
+
     /**
      * 是否包含用户
      * @param argusMethod 方法
@@ -216,6 +244,37 @@ public class ArgusCache {
         return methodUsers.keySet().stream().anyMatch(argusMethod -> method.equals(argusMethod.getMethod()));
     }
 
+    public static int countTraceUser () {
+        return userTraceMethods.size();
+    }
+
+    public static List<String> getTraceUsersByMethod(ArgusMethod argusMethod) {
+        if (userTraceMethods.isEmpty()) {
+            return new ArrayList<>();
+        }
+        List<String> users = new ArrayList<>();
+        userTraceMethods.forEach((user, methods) -> {
+            boolean hasMethod = methods.stream().anyMatch(method -> method.getMethod().equals(argusMethod.getMethod()));
+            if (hasMethod) {
+                users.add(user);
+            }
+        });
+        return users;
+    }
+
+    /**
+     * 查询用户追踪接口
+     * @param argusUser 用户
+     * @return 接口列表
+     */
+    public static List<String> getTraceUriByUser(String argusUser) {
+        if (userTraceMethods.isEmpty() || !userTraceMethods.containsKey(argusUser)) {
+            return new ArrayList<>(0);
+        }
+        return userTraceMethods.get(argusUser).stream().map(ArgusMethod::getUri).collect(Collectors.toList());
+    }
+
+
     /**
      * 是否包含用户
      *
@@ -267,6 +326,25 @@ public class ArgusCache {
     /**
      * 移除用户监听方法
      *
+     * @param argusUser   用户
+     * @param argusMethod 方法
+     */
+    public static void userRemoveTraceMethod(String argusUser, ArgusMethod argusMethod) {
+
+        if (userTraceMethods.isEmpty() || !userTraceMethods.containsKey(argusUser)) {
+            return;
+        }
+        // 移除用户监听的方法
+        userTraceMethods.get(argusUser).removeIf(method -> method.getMethod().equals(argusMethod.getMethod()));
+        // 用户监听方法为空，则移除用户
+        if (userTraceMethods.get(argusUser).isEmpty()) {
+            userTraceMethods.remove(argusUser);
+        }
+    }
+
+    /**
+     * 移除用户监听方法
+     *
      * @param argusUser 用户
      */
     public static void userRemoveAllMethod(String argusUser) {
@@ -279,6 +357,13 @@ public class ArgusCache {
             users.removeIf(user -> user.equals(argusUser));
         });
 
+    }
+
+    public static void userRemoveAllTraceMethod (String argusUser) {
+        if (userTraceMethods.isEmpty() || !userTraceMethods.containsKey(argusUser)) {
+            return;
+        }
+        userTraceMethods.get(argusUser).clear();
     }
 
     /**
@@ -313,6 +398,9 @@ public class ArgusCache {
 
                 // 删除用户监听方法
                 userMonitorMethods.keySet().removeIf(u -> u.equals(user.getToken().getToken()));
+
+                // 删除监听trace方法用户
+                userTraceMethods.keySet().removeIf(u -> u.equals(user.getToken().getToken()));
 
                 // 删除凭证
                 userTokens.remove(token);
@@ -503,7 +591,16 @@ public class ArgusCache {
         return sb.toString();
     }
 
-    public static void main(String[] args) {
-        System.out.println(match("/api/User/list", "*user/*"));
+    /**
+     * 用户是否已经监听了uri 调用链
+     * @param token token
+     * @param uri uri
+     * @return 是否监听
+     */
+    public static boolean userHasTraceUri(String token, String uri) {
+        if(userTraceMethods.isEmpty() || !userTraceMethods.containsKey(token)) {
+            return false;
+        }
+        return userTraceMethods.get(token).stream().anyMatch(method -> method.getUri().equals(uri));
     }
 }

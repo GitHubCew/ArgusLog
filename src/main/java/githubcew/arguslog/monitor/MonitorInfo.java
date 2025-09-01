@@ -45,11 +45,6 @@ public class MonitorInfo {
     private boolean exception;
 
     /**
-     * 方法调用链
-     */
-    private boolean callChain;
-
-    /**
      * 构造方法
      */
     public MonitorInfo() {
@@ -63,15 +58,13 @@ public class MonitorInfo {
      * @param result    结果
      * @param time      时间
      * @param exception 异常
-     * @param callChain 方法调用链
      */
-    public MonitorInfo(ArgusMethod method, boolean methodParam, boolean result, boolean time, boolean exception, boolean callChain) {
+    public MonitorInfo(ArgusMethod method, boolean methodParam, boolean result, boolean time, boolean exception) {
         this.method = method;
         this.methodParam = methodParam;
         this.result = result;
         this.time = time;
         this.exception = exception;
-        this.callChain = callChain;
     }
 
 }

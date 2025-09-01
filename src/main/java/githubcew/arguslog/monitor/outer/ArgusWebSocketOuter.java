@@ -3,7 +3,6 @@ package githubcew.arguslog.monitor.outer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import githubcew.arguslog.common.util.ContextUtil;
-import githubcew.arguslog.config.ArgusProperties;
 import githubcew.arguslog.core.account.ArgusUser;
 import githubcew.arguslog.core.cache.ArgusCache;
 import githubcew.arguslog.core.cmd.ExecuteResult;
@@ -11,12 +10,13 @@ import githubcew.arguslog.monitor.MonitorInfo;
 import githubcew.arguslog.monitor.MonitorOutput;
 import githubcew.arguslog.monitor.WebRequestInfo;
 import githubcew.arguslog.web.socket.ArgusSocketHandler;
-import org.springframework.util.CollectionUtils;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 /**
  * WebSocket 输出器
@@ -44,17 +44,14 @@ public class ArgusWebSocketOuter implements Outer {
 
                 OutputWrapper normalWrapper = OutputWrapper.create();
                 OutputWrapper exceptionWrapper = OutputWrapper.create();
-                OutputWrapper callChainWrapper = OutputWrapper.create();
 
                 // 构建输出
                 boolean sendNormal = buildNormalOutput(monitorInfo, monitorOutput, normalWrapper);
                 boolean sendException = buildExceptionOutput(monitorOutput, exceptionWrapper);
-                boolean sendCallChain = buildCallChainOutput(monitorInfo, monitorOutput, callChainWrapper);
 
                 // 发送消息
                 sendIfRequired(socketHandler, argusUser, sendNormal, ExecuteResult.SUCCESS, normalWrapper);
                 sendIfRequired(socketHandler, argusUser, sendException, ExecuteResult.FAILED, exceptionWrapper);
-                sendIfRequired(socketHandler, argusUser, sendCallChain, ExecuteResult.SUCCESS, callChainWrapper);
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -133,42 +130,6 @@ public class ArgusWebSocketOuter implements Outer {
     }
 
     /**
-     * 构建调用链输出
-     *
-     * @param monitorInfo   监听信息
-     * @param monitorOutput 输出内容
-     * @param wrapper       wrapper
-     */
-    private boolean buildCallChainOutput(MonitorInfo monitorInfo, MonitorOutput monitorOutput, OutputWrapper wrapper) {
-        if (!monitorInfo.isCallChain()) {
-            return false;
-        }
-
-        StackTraceElement[] stackTrace = monitorOutput.getCallChain();
-        if (stackTrace == null || stackTrace.length == 0) {
-            return false;
-        }
-
-        ArgusProperties properties = ContextUtil.getBean(ArgusProperties.class);
-        String excludePackages = properties.getCallChainExcludePackage();
-        List<String> excludeList = CollectionUtils.isEmpty(Collections.singleton(excludePackages)) ?
-                new ArrayList<>() : Arrays.asList(excludePackages.split(","));
-
-        String filteredTrace = Arrays.stream(stackTrace)
-                .filter(element -> !element.isNativeMethod() && notExcludePackage(element.getClassName(), excludeList))
-                .map(Object::toString)
-                .reduce((a, b) -> a + OutputWrapper.CONCAT + b)
-                .orElse("");
-
-        if (filteredTrace.isEmpty()) {
-            return false;
-        }
-
-        wrapper.append("callChain => ").append(filteredTrace);
-        return true;
-    }
-
-    /**
      * 发送消息
      *
      * @param handler    handler
@@ -227,16 +188,5 @@ public class ArgusWebSocketOuter implements Outer {
         e.printStackTrace(pw);
         pw.flush();
         sb.append(sw);
-    }
-
-    /**
-     * 检查类名是否在排除包中
-     *
-     * @param className   类名
-     * @param excludeList 排除包列表
-     * @return true/false
-     */
-    public boolean notExcludePackage(String className, List<String> excludeList) {
-        return excludeList.stream().noneMatch(className::startsWith);
     }
 }

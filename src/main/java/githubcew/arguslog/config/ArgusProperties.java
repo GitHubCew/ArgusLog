@@ -3,6 +3,11 @@ package githubcew.arguslog.config;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 /**
  * Argus配置
  *
@@ -32,5 +37,21 @@ public class ArgusProperties {
 
     // 调用链排除包
     private String callChainExcludePackage = "sun.,java.,javax.";
+
+    // 处理的线程数
+    private Integer threadNum = 2;
+
+    // 队列最大等待数量
+    private Integer maxWaitQueueSize = 10;
+
+    // 包含包
+    private Set<String> includePackages;
+
+    // 排除包
+    private Set<String> excludePackages;
+
+    // 默认排除包
+    private final Set<String> defaultExcludePackages =
+            new HashSet<>(Arrays.asList("sun.", "java.", "javax."));
 
 }

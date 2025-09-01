@@ -1,8 +1,10 @@
 package githubcew.arguslog.common.util;
 
 import githubcew.arguslog.core.cmd.ExecuteResult;
+import org.objectweb.asm.Type;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
 
 /**
  * 公共工具
@@ -27,6 +29,15 @@ public class CommonUtil {
                 method.getReturnType().getSimpleName();
     }
 
+    public static String generateAsmMethodDesc(Method method) {
+        return Type.getMethodDescriptor(
+                Type.getType(method.getReturnType()),
+                Arrays.stream(method.getParameterTypes())
+                        .map(Type::getType)
+                        .toArray(Type[]::new)
+        );
+    }
+
     /**
      * 获取参数类型
      *
@@ -48,6 +59,27 @@ public class CommonUtil {
         }
         sb.append(")");
         return sb.toString();
+    }
+
+
+    /**
+     * 将类名中的 '.' 替换为 '/'。
+     *
+     * @param className 类名（点号格式）
+     * @return 斜杠格式的类名
+     */
+    public static String toSlash(String className) {
+        return className.replace('.', '/');
+    }
+
+    /**
+     * 将类名中的 '/' 替换为 '.'。
+     *
+     * @param className 类名（斜杠格式）
+     * @return 点号格式的类名
+     */
+    public static String toDot(String className) {
+        return className.replace('/', '.');
     }
 }
 

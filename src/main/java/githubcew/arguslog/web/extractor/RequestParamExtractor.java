@@ -1,11 +1,5 @@
 package githubcew.arguslog.web.extractor;
 
-/**
- * web请求参数提取
- *
- * @author chenenwei
- */
-
 import githubcew.arguslog.monitor.WebRequestInfo;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -17,10 +11,32 @@ import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
 
 /**
- * web请求参数提取器
+ * web请求参数提取
+ *
+ * @author chenenwei
  */
+
 public class RequestParamExtractor {
 
+    public static final String GET = "GET";
+
+    public static final String POST = "POST";
+
+    public static final String PUT = "PUT";
+
+    public static final String DELETE = "DELETE";
+
+    public static final String PATCH = "PATCH";
+
+    public static final String HEAD = "HEAD";
+
+    public static final String OPTIONS = "OPTIONS";
+
+    public static final String CONTENT_TYPE_JSON = "application/json";
+
+    public static final String CONTENT_TYPE_FORM = "application/x-www-form-urlencoded";
+
+    public static final String CONTENT_TYPE_MULTIPART = "multipart/form-data";
     /**
      * 提取请求参数（支持所有HTTP方法）
      * @param request 请求
@@ -36,18 +52,18 @@ public class RequestParamExtractor {
 
         try {
             // GET、DELETE 等请求通常使用Query参数
-            if ("GET".equals(method) || "DELETE".equals(method) ||
-                    "HEAD".equals(method) || "OPTIONS".equals(method)) {
+            if (GET.equals(method) || DELETE.equals(method) ||
+                    HEAD.equals(method) || OPTIONS.equals(method)) {
                 return extractQueryString(request);
             }
 
             // POST、PUT、PATCH 等请求可能包含body
-            if ("POST".equals(method) || "PUT".equals(method) || "PATCH".equals(method)) {
+            if (POST.equals(method) || PUT.equals(method) || PATCH.equals(method)) {
                 // 检查是否有Content-Type
                 if (contentType != null) {
-                    if (contentType.contains("application/json")) {
+                    if (contentType.contains(CONTENT_TYPE_JSON)) {
                         return extractJsonBodySafely(request);
-                    } else if (contentType.contains("application/x-www-form-urlencoded")) {
+                    } else if (contentType.contains(CONTENT_TYPE_FORM)) {
                         // 表单提交，优先使用getParameter获取
                         String formParams = extractQueryString(request);
                         if (!formParams.isEmpty()) {
@@ -55,7 +71,7 @@ public class RequestParamExtractor {
                         }
                         // 如果getParameter为空，尝试读取body
                         return extractFormBodySafely(request);
-                    } else if (contentType.contains("multipart/form-data")) {
+                    } else if (contentType.contains(CONTENT_TYPE_MULTIPART)) {
                         // 文件上传表单，只提取非文件参数
                         return extractQueryString(request);
                     } else {

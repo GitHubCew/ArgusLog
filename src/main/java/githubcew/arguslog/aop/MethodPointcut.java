@@ -1,5 +1,6 @@
 package githubcew.arguslog.aop;
 
+import githubcew.arguslog.common.util.CommonUtil;
 import githubcew.arguslog.core.cache.ArgusCache;
 import org.springframework.aop.ClassFilter;
 import org.springframework.aop.MethodMatcher;

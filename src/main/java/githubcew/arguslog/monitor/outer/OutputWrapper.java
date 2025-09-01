@@ -81,6 +81,7 @@ public class OutputWrapper {
         return this;
     }
 
+
     /**
      * 添加连接符
      *
@@ -204,6 +205,17 @@ public class OutputWrapper {
      */
     public static String wrapperCopy(List<String> textList, String delimiter) {
         return new OutputWrapper().appendAllCopy(textList, delimiter).build();
+    }
+
+    /**
+     * 包装文本列表复制标签
+     *
+     * @param textList  文本列表
+     * @param delimiter 分隔符
+     * @return 结果
+     */
+    public static OutputWrapper wrapperCopyV2(List<String> textList, String delimiter) {
+        return new OutputWrapper().appendAllCopy(textList, delimiter);
     }
 
     /**

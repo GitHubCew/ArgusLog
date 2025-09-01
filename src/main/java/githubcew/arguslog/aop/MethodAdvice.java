@@ -2,6 +2,7 @@ package githubcew.arguslog.aop;
 
 import githubcew.arguslog.common.util.ContextUtil;
 import githubcew.arguslog.core.cache.ArgusCache;
+import githubcew.arguslog.monitor.MonitorSender;
 import githubcew.arguslog.monitor.MonitorOutput;
 import githubcew.arguslog.monitor.WebRequestInfo;
 import githubcew.arguslog.monitor.formater.MethodParamFormatter;
@@ -9,17 +10,6 @@ import githubcew.arguslog.monitor.outer.Outer;
 import githubcew.arguslog.web.extractor.RequestParamExtractor;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
-import org.springframework.web.util.ContentCachingRequestWrapper;
-
-import javax.servlet.http.HttpServletRequest;
-import java.io.BufferedReader;
-import java.nio.charset.StandardCharsets;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
 
 /**
  * 方法增强
@@ -38,22 +28,20 @@ public class MethodAdvice implements MethodInterceptor {
     @Override
     public Object invoke(MethodInvocation invocation) throws Throwable {
 
-        // 判断是否包含方法
+        // 判断包方法
         boolean hasMethod = ArgusCache.containsMethod(invocation.getMethod());
-        Object returnVal = null;
+
         if (!hasMethod) {
-            returnVal = invocation.proceed();
-            return returnVal;
+            return invocation.proceed();
         }
 
+        Object returnVal = null;
         MonitorOutput monitorOutput = new MonitorOutput();
-
         // 提取web请求参数
         try {
             WebRequestInfo webRequestInfo = RequestParamExtractor.extractRequestInfo();
             monitorOutput.setWebRequestInfo(webRequestInfo);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -67,14 +55,14 @@ public class MethodAdvice implements MethodInterceptor {
             monitorOutput.setMethodParam(format);
             // 调用链信息
             monitorOutput.setCallChain(new RuntimeException().getStackTrace());
-
             start = System.currentTimeMillis();
 
             // 执行原方法
             returnVal = invocation.proceed();
-            monitorOutput.setResult(returnVal);
 
+            monitorOutput.setResult(returnVal);
             end = System.currentTimeMillis();
+
         } catch (Exception e) {
             end = System.currentTimeMillis();
             monitorOutput.setException(e);
@@ -82,10 +70,15 @@ public class MethodAdvice implements MethodInterceptor {
         } finally {
             // 计算耗时
             monitorOutput.setTime(end - start);
-            // 输出content
-            Outer outer = ContextUtil.getBean(Outer.class);
-            outer.out(invocation.getMethod(), monitorOutput);
+            // 使用线程池处理输出
+            MonitorSender monitorSender = ContextUtil.getBean(MonitorSender.class);
+            monitorSender.submit(() -> {
+                // 输出content
+                Outer outer = ContextUtil.getBean(Outer.class);
+                outer.out(invocation.getMethod(), monitorOutput);
+            });
         }
+
         return returnVal;
     }
 }
