@@ -11,7 +11,10 @@ import net.bytebuddy.matcher.ElementMatchers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -259,23 +262,35 @@ public class BuddyProxyManager {
      * 获取类的字节码
      */
     private static byte[] getClassBytes(Class<?> clazz) {
+        String resourceName = clazz.getName().replace('.', '/') + ".class";
+        InputStream is = null;
         try {
-            String resourceName = clazz.getName().replace('.', '/') + ".class";
-            java.io.InputStream is = clazz.getClassLoader().getResourceAsStream(resourceName);
-            if (is != null) {
-                return java.nio.file.Files.readAllBytes(
-                        java.nio.file.Paths.get(
-                                ((java.net.URLClassLoader) clazz.getClassLoader()).findResource(resourceName).toURI()
-                        )
-                );
+            is = clazz.getClassLoader().getResourceAsStream(resourceName);
+            if (is == null) {
+                return new byte[0];
             }
-        } catch (Exception e) {
+
+            // 使用 ByteArrayOutputStream 累积所有字节
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+            byte[] data = new byte[8192]; // 8KB 缓冲区
+            int bytesRead;
+            while ((bytesRead = is.read(data)) != -1) {
+                buffer.write(data, 0, bytesRead);
+            }
+            return buffer.toByteArray();
+
+        } catch (IOException e) {
             e.printStackTrace();
-            if (log.isDebugEnabled()) {
-                log.error("Argus =>  Error getting class bytes: {}", clazz.getName(), e);
+            return new byte[0];
+        } finally {
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
-        return new byte[0];
     }
 
     /**

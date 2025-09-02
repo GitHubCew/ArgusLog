@@ -453,8 +453,8 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
         ArgusCommand trace = new ArgusCommand(
                 "trace",
                 "追踪接口的方法调用链,用于分析方法执行耗时",
-                "trace [-v] <path> [package], -v: 查看已追踪的接口, <path>: 接口路径, [package]: 只显示包下的方法",
-                "trace /api/v1/demo io.githubcew; trace -v"
+                "trace [-v] <path> [include] [exclude], -v: 查看已追踪的接口, <path>: 接口路径, include: 显示包含的包, exclude: 排除包",
+                "trace /api/v1/demo io.githubcew io.exclude; trace -v"
         );
 
         CommandExecutor executor = new CommandExecutor() {
@@ -466,7 +466,7 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
             @Override
             public ExecuteResult execute(ArgusRequest request) {
                 String[] args = request.getRequestCommand().getArgs();
-                if (args.length < 1 || args.length > 2) {
+                if (args.length < 1 || args.length > 3) {
                     return ExecuteResult.failed(ArgusCommand.PARAM_ERROR);
                 }
 
@@ -500,12 +500,19 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
                     if (argusProperties.getExcludePackages() != null) {
                         excludePackages.addAll(argusProperties.getExcludePackages());
                     }
-
-                    if (args.length == 2) {
-                        includePackages.addAll(Arrays.asList(args[1].split(",")));
-                    } else if (argusProperties.getIncludePackages() != null) {
+                    if (argusProperties.getIncludePackages() != null) {
                         includePackages.addAll(argusProperties.getIncludePackages());
                     }
+
+                    // 包含包
+                    if (args.length == 2) {
+                        includePackages.addAll(Arrays.asList(args[1].split(",")));
+                    }
+                    // 排除包
+                   if (args.length == 3) {
+                        excludePackages.addAll(Arrays.asList(args[2].split( ",")));
+                    }
+
 
                     if (includePackages.isEmpty()) {
                         return ExecuteResult.failed("至少需要输入一个过滤的包名");
@@ -524,7 +531,7 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
                     }
 
                     if (methodCallInfos.size() > argusProperties.getMaxEnhancedClassNum()) {
-                        return ExecuteResult.failed("需要增强的类过多,请缩过滤包名的范围");
+                        return ExecuteResult.failed("需要增强的类过多,请缩小包的范围");
                     }
 
                     // 继承方法

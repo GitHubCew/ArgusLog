@@ -558,17 +558,18 @@ public class AsmMethodCallExtractor {
             if (className.contains("/")) {
                 className = className.replace("/", ".");
             }
+            for (String excludePackage : excludePackages) {
+                if (className.startsWith(excludePackage)) {
+                    return false;
+                }
+            }
 
             for (String includedPackage : includePackages) {
                 if (className.startsWith(includedPackage)) {
                     return true;
                 }
             }
-            for (String excludePackage : excludePackages) {
-                if (className.startsWith(excludePackage)) {
-                    return false;
-                }
-            }
+
             return false;
         }
 
@@ -601,11 +602,11 @@ public class AsmMethodCallExtractor {
                 if (name.startsWith("get") && name.length() > 3 && Character.isUpperCase(name.charAt(3))) {
                     return true;
                 }
-                if (name.startsWith("is") && name.length() > 2 && Character.isUpperCase(name.charAt(2))) {
-                    Type returnType = methodType.getReturnType();
-                    return returnType.equals(Type.BOOLEAN_TYPE) ||
-                            "Ljava/lang/Boolean;".equals(returnType.getDescriptor());
-                }
+//                if (name.startsWith("is") && name.length() > 2 && Character.isUpperCase(name.charAt(2))) {
+//                    Type returnType = methodType.getReturnType();
+//                    return returnType.equals(Type.BOOLEAN_TYPE) ||
+//                            "Ljava/lang/Boolean;".equals(returnType.getDescriptor());
+//                }
             }
 
             // -------------------------------
