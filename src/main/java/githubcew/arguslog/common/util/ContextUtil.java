@@ -26,6 +26,11 @@ public class ContextUtil implements ApplicationContextAware {
         ContextUtil.applicationContext = applicationContext;
     }
 
+
+    public static ApplicationContext context() {
+        return applicationContext;
+    }
+
     /**
      * 获取bean
      *
@@ -35,6 +40,16 @@ public class ContextUtil implements ApplicationContextAware {
      */
     public static <T> T getBean(Class<T> beanClass) {
         return applicationContext.getBean(beanClass);
+    }
+
+    /**
+     * 获取bean
+     *
+     * @param beanName beanName
+     * @return bean
+     */
+    public static Object getBean(String beanName) {
+        return applicationContext.getBean(beanName);
     }
 
 }

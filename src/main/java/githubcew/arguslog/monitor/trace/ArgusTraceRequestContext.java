@@ -145,9 +145,9 @@ public class ArgusTraceRequestContext {
             List<Boolean> newParentIsLastList = new ArrayList<>(parentIsLastList);
             newParentIsLastList.add(childIsLast);
             // 显示超过5次则不显示
-            methodCount.putIfAbsent(children.get(i).getSignature(), 0);
+            methodCount.putIfAbsent(children.get(i).getSignature() + depth, 0);
             Integer printCount = methodCount.get(children.get(i).getSignature());
-            if (printCount > 5) {
+            if (printCount > 3) {
                 continue;
             }
             else {
@@ -339,17 +339,7 @@ public class ArgusTraceRequestContext {
                 "Tree:\n" + getFormattedTree();
     }
 
-    /**
-     * 记录方法开始
-     */
-    public static void startMethod(String className, String methodName, Class<?>[] paramTypes) {
-        Method method = null;
-        try {
-            Class<?> aClass = Class.forName(className);
-            method = aClass.getMethod(methodName, paramTypes);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public static void startMethod(Method method) {
         if (Objects.isNull(method)) {
             return;
         }

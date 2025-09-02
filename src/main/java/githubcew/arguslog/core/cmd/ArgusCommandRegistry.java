@@ -6,7 +6,7 @@ import githubcew.arguslog.core.cache.ArgusCache;
 import githubcew.arguslog.monitor.ArgusMethod;
 import githubcew.arguslog.monitor.MonitorInfo;
 import githubcew.arguslog.monitor.outer.OutputWrapper;
-import githubcew.arguslog.monitor.trace.ArgusClassRedefinerManager;
+import githubcew.arguslog.monitor.trace.TraceEnhanceManager;
 import githubcew.arguslog.monitor.trace.asm.AsmMethodCallExtractor;
 import githubcew.arguslog.monitor.trace.asm.MethodCallInfo;
 import githubcew.arguslog.web.ArgusRequest;
@@ -99,7 +99,7 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
      * 构建命令映射
      *
      * @param argusCommand 命令定义
-     * @param executor 命令执行器
+     * @param executor     命令执行器
      * @return 命令映射表
      */
     private Map<ArgusCommand, CommandExecutor> buildCommand(ArgusCommand argusCommand, CommandExecutor executor) {
@@ -494,56 +494,58 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
                         return ExecuteResult.failed("接口不存在");
                     }
 
-                    boolean hasUri = ArgusCache.userHasTraceUri (token.getToken(), uri);
-                    if (!hasUri) {
-                        Set<String> includePackages = new HashSet<>(1);
-                        Set<String> excludePackages = new HashSet<>(argusProperties.getDefaultExcludePackages());
+                    Set<String> includePackages = new HashSet<>(1);
+                    Set<String> excludePackages = new HashSet<>(argusProperties.getDefaultExcludePackages());
 
-                        if (argusProperties.getExcludePackages() != null) {
-                            excludePackages.addAll(argusProperties.getExcludePackages());
-                        }
-
-                        if (args.length == 2) {
-                            includePackages.addAll(Arrays.asList(args[1].split(",")));
-                        } else if (argusProperties.getIncludePackages() != null) {
-                            includePackages.addAll(argusProperties.getIncludePackages());
-                        }
-
-                        if (includePackages.isEmpty()) {
-                            return ExecuteResult.failed("至少需要输入一个过滤的包名");
-                        }
-
-                        ArgusMethod argusMethod = ArgusCache.getUriMethod(uri);
-                        // 生成方法调用信息
-                        Set<MethodCallInfo> methodCallInfos;
-                        try {
-                            methodCallInfos = AsmMethodCallExtractor.extractNestedCustomMethodCalls(
-                                    argusMethod.getMethod(),
-                                    includePackages,
-                                    excludePackages);
-                        } catch (Exception e) {
-                            return ExecuteResult.failed(e.getMessage());
-                        }
-
-                        // 继承方法
-                        Map<String, List<MethodCallInfo>> extendMethods = methodCallInfos.stream()
-                                .filter(MethodCallInfo::isInherited)
-                                .collect(Collectors.groupingBy(MethodCallInfo::getActualDefinedClass));
-
-                        // 非继承方法
-                        Map<String, List<MethodCallInfo>> nonExtendMethods = methodCallInfos.stream()
-                                .filter(call -> !call.isInherited())
-                                .collect(Collectors.groupingBy(MethodCallInfo::getSubCalledClass));
-
-                        // 继承方法重定义类
-                        redefine(argusMethod.getSignature(), extendMethods);
-
-                        // 非继承方法重定义类
-                        redefine(argusMethod.getSignature(), nonExtendMethods);
-
-                        // 添加用户监听trace方法
-                        ArgusCache.addUserTraceMethod(request.getToken().getToken(), argusMethod);
+                    if (argusProperties.getExcludePackages() != null) {
+                        excludePackages.addAll(argusProperties.getExcludePackages());
                     }
+
+                    if (args.length == 2) {
+                        includePackages.addAll(Arrays.asList(args[1].split(",")));
+                    } else if (argusProperties.getIncludePackages() != null) {
+                        includePackages.addAll(argusProperties.getIncludePackages());
+                    }
+
+                    if (includePackages.isEmpty()) {
+                        return ExecuteResult.failed("至少需要输入一个过滤的包名");
+                    }
+
+                    ArgusMethod argusMethod = ArgusCache.getUriMethod(uri);
+                    // 生成方法调用信息
+                    Set<MethodCallInfo> methodCallInfos;
+                    try {
+                        methodCallInfos = AsmMethodCallExtractor.extractNestedCustomMethodCalls(
+                                argusMethod.getMethod(),
+                                includePackages,
+                                excludePackages);
+                    } catch (Exception e) {
+                        return ExecuteResult.failed(e.getMessage());
+                    }
+
+                    if (methodCallInfos.size() > argusProperties.getMaxEnhancedClassNum()) {
+                        return ExecuteResult.failed("需要增强的类过多,请缩过滤包名的范围");
+                    }
+
+                    // 继承方法
+                    Map<String, List<MethodCallInfo>> extendMethods = methodCallInfos.stream()
+                            .filter(MethodCallInfo::isInherited)
+                            .collect(Collectors.groupingBy(MethodCallInfo::getActualDefinedClass));
+
+                    // 非继承方法
+                    Map<String, List<MethodCallInfo>> nonExtendMethods = methodCallInfos.stream()
+                            .filter(call -> !call.isInherited())
+                            .collect(Collectors.groupingBy(MethodCallInfo::getSubCalledClass));
+
+                    // 继承方法重定义类
+                    redefine(argusMethod.getSignature(), extendMethods);
+
+                    // 非继承方法重定义类
+                    redefine(argusMethod.getSignature(), nonExtendMethods);
+
+                    // 添加用户监听trace方法
+                    ArgusCache.addUserTraceMethod(request.getToken().getToken(), argusMethod);
+
                     return ExecuteResult.success(ExecuteResult.OK);
                 }
             }
@@ -582,7 +584,7 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
                 if (args[0].equals("*")) {
                     try {
                         // 回退全部方法调用链追踪
-                        ArgusClassRedefinerManager.revertAllEnhancement();
+                        TraceEnhanceManager.revertAllClasses();
                         // 移除全部监听用户
                         ArgusCache.userRemoveAllTraceMethod(request.getToken().getToken());
                     } catch (Exception e) {
@@ -599,7 +601,7 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
 
                     try {
                         // 回退方法调用链追踪
-                        ArgusClassRedefinerManager.revertEnhancement(uriMethod.getSignature());
+                        TraceEnhanceManager.revertClassWithKey(uriMethod.getSignature());
                         // 移除监听用户
                         ArgusCache.userRemoveTraceMethod(request.getToken().getToken(), uriMethod);
                     } catch (Exception e) {
@@ -618,7 +620,7 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
      * 重定义方法
      *
      * @param methodKey 监听方法唯一标识
-     * @param methods 方法映射表
+     * @param methods   方法映射表
      */
     private void redefine(String methodKey, Map<String, List<MethodCallInfo>> methods) {
         methods.forEach((className, callInfos) -> {
@@ -628,7 +630,7 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
                         .map(MethodCallInfo::getCalledMethod)
                         .collect(Collectors.toList());
 
-                ArgusClassRedefinerManager.enhanceMethods(methodKey, aClass, methodNames);
+                TraceEnhanceManager.enhanceMethods(methodKey, aClass, methodNames);
             } catch (Exception e) {
                 e.printStackTrace();
             }

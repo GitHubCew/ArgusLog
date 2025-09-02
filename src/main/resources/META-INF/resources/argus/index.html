@@ -512,6 +512,12 @@
             background: rgba(0, 255, 200, 0.2);
             box-shadow: 0 0 8px rgba(0, 255, 200, 0.3);
         }
+        .login-message.error {
+            color: #ff5f56 !important; /* 红色文字 */
+            background: rgba(255, 95, 86, 0.1); /* 淡红背景 */
+            border-color: rgba(255, 95, 86, 0.3);
+            text-shadow: 0 0 5px rgba(255, 95, 86, 0.2);
+        }
     </style>
 </head>
 <body>
@@ -667,6 +673,7 @@
             const password = passwordInput.value.trim();
             if (!username || !password) {
                 showLoginMessage('请输入用户名和密码', 'error');
+
                 return;
             }
 

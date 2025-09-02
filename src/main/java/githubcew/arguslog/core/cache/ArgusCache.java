@@ -89,7 +89,6 @@ public class ArgusCache {
             methodUsers.get(method).add(user);
         }
     }
-
     /**
      * 添加用户监测方法
      *

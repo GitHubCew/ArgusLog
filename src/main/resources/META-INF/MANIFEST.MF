@@ -1,9 +1,0 @@
-Manifest-Version: 1.0
-Main-Class: githubcew.arguslog.monitor.trace.ArgusClassRedefiner
-Class-Path: .
-Premain-Class: githubcew.arguslog.monitor.trace.ArgusClassRedefiner
-Can-Redefine-Classes: true
-Can-Retransform-Classes: true
-Can-Set-Native-Method-Prefix: true
-Created-By: chenenwei
-Build-Jdk: 1.8

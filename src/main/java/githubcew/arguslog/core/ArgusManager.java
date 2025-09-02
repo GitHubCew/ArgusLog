@@ -8,6 +8,8 @@ import githubcew.arguslog.core.account.UserProvider;
 import githubcew.arguslog.core.cache.ArgusCache;
 import githubcew.arguslog.core.cmd.CommandManager;
 import githubcew.arguslog.monitor.ArgusMethod;
+import githubcew.arguslog.monitor.trace.jdk.JdkProxyWrapper;
+import githubcew.arguslog.monitor.trace.buddy.BuddyProxyManager;
 import githubcew.arguslog.web.auth.AccountAuthenticator;
 import githubcew.arguslog.web.auth.TokenAuthenticator;
 import githubcew.arguslog.web.auth.TokenProvider;
@@ -103,6 +105,9 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
 
         // 打印Argus启动信息
         printArgusInfo();
+
+        // 初始化 buddy
+        BuddyProxyManager.init();
     }
 
     /**
@@ -119,6 +124,8 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
         // 忽略鉴权命令
         registerIgnoreAuthorizationCommand();
 
+        // 包装jdk代理, 提供动刷新拦截器
+        JdkProxyWrapper.wrapJdkProxies();
     }
 
     /**

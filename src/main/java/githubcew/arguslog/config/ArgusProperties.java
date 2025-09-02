@@ -44,6 +44,9 @@ public class ArgusProperties {
     // 队列最大等待数量
     private Integer maxWaitQueueSize = 10;
 
+    // 最大增强类数
+    private Integer maxEnhancedClassNum = 50;
+
     // 包含包
     private Set<String> includePackages;
 
