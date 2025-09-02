@@ -145,13 +145,14 @@ public class ArgusTraceRequestContext {
             List<Boolean> newParentIsLastList = new ArrayList<>(parentIsLastList);
             newParentIsLastList.add(childIsLast);
             // 显示超过5次则不显示
-            methodCount.putIfAbsent(children.get(i).getSignature() + depth, 0);
-            Integer printCount = methodCount.get(children.get(i).getSignature());
-            if (printCount > 3) {
+            String key = children.get(i).getSignature() + depth;
+            methodCount.putIfAbsent(key, 0);
+            Integer printCount = methodCount.get(key);
+            if (Objects.isNull(printCount) || printCount > 3) {
                 continue;
             }
             else {
-                methodCount.put(children.get(i).getSignature(), printCount + 1);
+                methodCount.put(key, printCount + 1);
             }
             sb.append(buildTreeString(children.get(i), depth + 1, newParentIsLastList, methodCount));
         }
