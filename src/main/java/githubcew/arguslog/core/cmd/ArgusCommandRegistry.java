@@ -510,6 +510,7 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
                     }
                     // 排除包
                    if (args.length == 3) {
+                        includePackages.addAll(Arrays.asList(args[1].split(",")));
                         excludePackages.addAll(Arrays.asList(args[2].split( ",")));
                     }
 
