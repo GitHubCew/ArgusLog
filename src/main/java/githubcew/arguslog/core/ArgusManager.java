@@ -8,8 +8,8 @@ import githubcew.arguslog.core.account.UserProvider;
 import githubcew.arguslog.core.cache.ArgusCache;
 import githubcew.arguslog.core.cmd.CommandManager;
 import githubcew.arguslog.monitor.ArgusMethod;
-import githubcew.arguslog.monitor.trace.jdk.JdkProxyWrapper;
 import githubcew.arguslog.monitor.trace.buddy.BuddyProxyManager;
+import githubcew.arguslog.monitor.trace.jdk.JdkProxyWrapper;
 import githubcew.arguslog.web.auth.AccountAuthenticator;
 import githubcew.arguslog.web.auth.TokenAuthenticator;
 import githubcew.arguslog.web.auth.TokenProvider;
@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Argus
@@ -43,7 +44,7 @@ import java.util.Set;
  */
 @Component
 public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> {
-
+    private final AtomicBoolean executed = new AtomicBoolean(false);
     private static final Logger log = LoggerFactory.getLogger(ArgusManager.class);
 
     private ArgusProperties argusProperties;
@@ -86,28 +87,29 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
 
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
+        if (executed.compareAndSet(false, true)) {
+            this.applicationContext = event.getApplicationContext();
+            this.configurers = new ArrayList<>(applicationContext.getBeansOfType(ArgusConfigurer.class).values());
+            this.commandManager = applicationContext.getBean(CommandManager.class);
+            this.extractor = applicationContext.getBean(Extractor.class);
+            this.userProvider = applicationContext.getBean(UserProvider.class);
+            this.tokenProvider = applicationContext.getBean(TokenProvider.class);
+            this.requestMappingHandlerMapping = applicationContext.getBean("requestMappingHandlerMapping", RequestMappingHandlerMapping.class);
+            this.argusProperties = applicationContext.getBean(ArgusProperties.class);
+            this.accountAuthenticator = applicationContext.getBean(AccountAuthenticator.class);
+            this.tokenAuthenticator = applicationContext.getBean(TokenAuthenticator.class);
+            // 注册bean
+            init();
 
-        this.applicationContext = event.getApplicationContext();
-        this.configurers = new ArrayList<>(applicationContext.getBeansOfType(ArgusConfigurer.class).values());
-        this.commandManager = applicationContext.getBean(CommandManager.class);
-        this.extractor = applicationContext.getBean(Extractor.class);
-        this.userProvider = applicationContext.getBean(UserProvider.class);
-        this.tokenProvider = applicationContext.getBean(TokenProvider.class);
-        this.requestMappingHandlerMapping = applicationContext.getBean("requestMappingHandlerMapping", RequestMappingHandlerMapping.class);
-        this.argusProperties = applicationContext.getBean(ArgusProperties.class);
-        this.accountAuthenticator = applicationContext.getBean(AccountAuthenticator.class);
-        this.tokenAuthenticator = applicationContext.getBean(TokenAuthenticator.class);
-        // 注册bean
-        init();
+            // 扫描接口
+            scan();
 
-        // 扫描接口
-        scan();
+            // 打印Argus启动信息
+            printArgusInfo();
 
-        // 打印Argus启动信息
-        printArgusInfo();
-
-        // 初始化 buddy
-        BuddyProxyManager.init();
+            // 初始化 buddy
+            BuddyProxyManager.init();
+        }
     }
 
     /**
