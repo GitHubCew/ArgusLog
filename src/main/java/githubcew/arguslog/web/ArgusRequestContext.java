@@ -384,6 +384,9 @@ public class ArgusRequestContext {
         }
 
         String requestId = REQUEST_ID.get();
+        if (Objects.isNull(requestId) || requestId.isEmpty()) {
+            return;
+        }
         String methodSignature = CommonUtil.toSlash(method.getDeclaringClass().getName() + "#" + method.getName());
         String parentSignature = getCurrentMethodSignature();
 
