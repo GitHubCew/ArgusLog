@@ -1,4 +1,4 @@
-package githubcew.arguslog.web;
+package githubcew.arguslog.web.filter;
 
 import githubcew.arguslog.common.util.ContextUtil;
 import githubcew.arguslog.common.util.StringUtil;
@@ -10,6 +10,7 @@ import githubcew.arguslog.monitor.ArgusMethod;
 import githubcew.arguslog.monitor.MonitorInfo;
 import githubcew.arguslog.monitor.MonitorSender;
 import githubcew.arguslog.monitor.outer.OutputWrapper;
+import githubcew.arguslog.web.ArgusRequestContext;
 import githubcew.arguslog.web.socket.ArgusSocketHandler;
 
 import javax.servlet.*;

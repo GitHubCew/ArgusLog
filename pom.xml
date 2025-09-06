@@ -142,8 +142,8 @@
 <!--                </executions>-->
 <!--            </plugin>-->
 
-            <!--打包到maven中央仓库插件-->
-            <!-- 强制GPG插件配置 -->
+<!--&lt;!&ndash;            打包到maven中央仓库插件&ndash;&gt;-->
+<!--&lt;!&ndash;             强制GPG插件配置&ndash;&gt;-->
 <!--            <plugin>-->
 <!--                <groupId>org.apache.maven.plugins</groupId>-->
 <!--                <artifactId>maven-gpg-plugin</artifactId>-->

@@ -1,4 +1,4 @@
-package githubcew.arguslog.web;
+package githubcew.arguslog.web.filter;
 
 import org.springframework.web.filter.OncePerRequestFilter;
 import javax.servlet.FilterChain;

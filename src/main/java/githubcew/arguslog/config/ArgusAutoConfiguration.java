@@ -8,8 +8,9 @@ import githubcew.arguslog.monitor.formater.ArgusMethodParamFormatter;
 import githubcew.arguslog.monitor.formater.MethodParamFormatter;
 import githubcew.arguslog.monitor.outer.ArgusWebSocketOuter;
 import githubcew.arguslog.monitor.outer.Outer;
-import githubcew.arguslog.web.ArgusTraceRequestFilter;
-import githubcew.arguslog.web.RequestBodyCachingFilter;
+import githubcew.arguslog.web.filter.ArgusFilter;
+import githubcew.arguslog.web.filter.ArgusTraceRequestFilter;
+import githubcew.arguslog.web.filter.RequestBodyCachingFilter;
 import githubcew.arguslog.web.auth.ArgusTokenProvider;
 import githubcew.arguslog.web.auth.TokenProvider;
 import githubcew.arguslog.web.extractor.ArgusRequestExtractor;
@@ -89,6 +90,23 @@ public class ArgusAutoConfiguration implements ImportBeanDefinitionRegistrar, We
         return registration;
     }
 
+    /**
+     * Argus 过滤器
+     *      处理页面 、token 登录逻辑
+     * @return ArgusFilter
+     */
+    @Bean
+    public FilterRegistrationBean<ArgusFilter> argusFilter () {
+        FilterRegistrationBean<ArgusFilter> registration = new FilterRegistrationBean<>();
+        registration.setFilter(new ArgusFilter());
+        registration.addUrlPatterns("/*");
+        // 在RequestBodyCachingFilter 之后执行
+        registration.setOrder(Ordered.HIGHEST_PRECEDENCE + 20);
+        registration.setDispatcherTypes(DispatcherType.REQUEST);
+        return registration;
+    }
+
+
 
     /**
      * 切点
@@ -164,12 +182,6 @@ public class ArgusAutoConfiguration implements ImportBeanDefinitionRegistrar, We
     @Bean
     public ArgusServlet argusServlet() {
         return new ArgusServlet();
-    }
-
-    //Argus servlet
-    @Bean
-    public ServletRegistrationBean<ArgusServlet> argusLoginServletRegistration(ArgusServlet argusServlet) {
-        return new ServletRegistrationBean<>(argusServlet, "/argus/index.html", "/argus/login", "/argus/validateToken");
     }
 
     /**
