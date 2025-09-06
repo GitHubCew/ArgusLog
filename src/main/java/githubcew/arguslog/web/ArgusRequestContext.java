@@ -91,8 +91,8 @@ public class ArgusRequestContext {
      * 获取开始方法
      * @return 方法
      */
-    public static Method getStartMethod() {
-        return METHOD_SIGNATURE_TO_METHOD.get(REQUEST_ID.get());
+    public static Method getStartMethod(String requestId) {
+        return METHOD_SIGNATURE_TO_METHOD.get(requestId);
 
     }
 
@@ -104,17 +104,25 @@ public class ArgusRequestContext {
         return CALL_TREE_ROOT.get();
     }
 
+//    /**
+//     * 获取格式化的调用树字符串
+//     * @return 格式化后的树字符串
+//     */
+//    public static String getFormattedTree() {
+//        MethodNode root = CALL_TREE_ROOT.get();
+//        if (root == null) {
+//            return "No call tree available";
+//        }
+//        Map<String, Integer> methodCounts = new HashMap<>();
+//        return buildTreeString(root, 0,  new ArrayList<>(), methodCounts);
+//    }
+
     /**
-     * 获取格式化的调用树字符串
-     * @return 格式化后的树字符串
+     * 获取树节点
+     * @return MethodNode
      */
-    public static String getFormattedTree() {
-        MethodNode root = CALL_TREE_ROOT.get();
-        if (root == null) {
-            return "No call tree available";
-        }
-        Map<String, Integer> methodCounts = new HashMap<>();
-        return buildTreeString(root, 0, new ArrayList<>(), methodCounts);
+    public static MethodNode getMethodNode() {
+        return CALL_TREE_ROOT.get();
     }
 
     /**
@@ -126,7 +134,11 @@ public class ArgusRequestContext {
      * @param methodCount 方法调用计数器
      * @return 树形字符串
      */
-    private static String buildTreeString(MethodNode node, int depth, List<Boolean> parentIsLastList,  Map<String, Integer> methodCount) {
+    public static String buildTreeString(MethodNode node,
+                                         int depth,
+                                         int maxDepth,
+                                         List<Boolean> parentIsLastList,
+                                         Map<String, Integer> methodCount) {
         StringBuilder sb = new StringBuilder();
 
         // 构建前缀（竖线和缩进）
@@ -142,6 +154,7 @@ public class ArgusRequestContext {
             sb.append(isLast ? "└── " : "├── ");
         }
 
+
         // 获取带参数的简化方法签名
         String signatureWithParams = getSignatureWithParams(node);
 
@@ -153,6 +166,11 @@ public class ArgusRequestContext {
                 .append("}")
                 .append("ms]")
                 .append("\n");
+
+        // 检查是否达到最大深度，如果是，不再递归
+        if (depth >= maxDepth) {
+            return sb.toString();
+        }
 
         // 递归处理子节点
         List<MethodNode> children = node.getChildren();
@@ -170,7 +188,7 @@ public class ArgusRequestContext {
             else {
                 methodCount.put(key, printCount + 1);
             }
-            sb.append(buildTreeString(children.get(i), depth + 1, newParentIsLastList, methodCount));
+            sb.append(buildTreeString(children.get(i), depth + 1, maxDepth, newParentIsLastList, methodCount));
         }
 
         return sb.toString();
@@ -358,21 +376,21 @@ public class ArgusRequestContext {
         }
     }
 
-    /**
-     * 获取树统计信息
-     *
-     * @return 树
-     */
-    public static String getTreeStatistics() {
-        MethodNode root = CALL_TREE_ROOT.get();
-        if (root == null) {
-            return "";
-        }
-
-        return "Argus Trace => \n" +
-                "Root: " + getSignatureWithParams(root) + "\n" +
-                "Tree:\n" + getFormattedTree();
-    }
+//    /**
+//     * 获取树统计信息
+//     *
+//     * @return 树
+//     */
+//    public static String getTreeStatistics() {
+//        MethodNode root = CALL_TREE_ROOT.get();
+//        if (root == null) {
+//            return "";
+//        }
+//
+//        return "Argus Trace => \n" +
+//                "Root: " + getSignatureWithParams(root) + "\n" +
+//                "Tree:\n" + getFormattedTree();
+//    }
 
     /**
      * 获取开始方法
@@ -382,6 +400,7 @@ public class ArgusRequestContext {
         if (Objects.isNull(method)) {
             return;
         }
+        System.out.println("请求id"+ REQUEST_ID.get() +  "\n方法名称：" + method.getName());
 
         String requestId = REQUEST_ID.get();
         if (Objects.isNull(requestId) || requestId.isEmpty()) {
@@ -425,11 +444,12 @@ public class ArgusRequestContext {
         );
 
         // 构建树结构
-        if (CURRENT_NODE.get() == null) {
+        if (CALL_TREE_ROOT.get() == null) {
+            System.out.println("🎯【ROOT】设置根节点: " + methodSignature);
             // 根节点
             CALL_TREE_ROOT.set(node);
-        } else {
-            // 添加到当前节点的子节点
+        }
+        else if (CURRENT_NODE.get() != null) {
             CURRENT_NODE.get().addChild(node);
         }
 
@@ -440,6 +460,7 @@ public class ArgusRequestContext {
      * 记录方法结束
      */
     public static void endMethod() {
+
         Stack<MethodInvocation> stack = CALL_STACK.get();
         if (!stack.isEmpty()) {
             MethodInvocation invocation = stack.pop();

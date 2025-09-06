@@ -16,10 +16,7 @@ import githubcew.arguslog.web.socket.ArgusSocketHandler;
 import javax.servlet.*;
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Argus trace 拦截器
@@ -49,12 +46,9 @@ public class ArgusTraceRequestFilter implements Filter {
         finally {
 
             try {
-                String callTree = ArgusRequestContext.getTreeStatistics();
-                Method startMethod = ArgusRequestContext.getStartMethod();
-
-                if (!callTree.isEmpty() && startMethod != null) {
-                    submitTraceData(callTree, startMethod);
-                }
+                ArgusRequestContext.MethodNode methodNode = ArgusRequestContext.getMethodNode();
+                Method startMethod = ArgusRequestContext.getStartMethod(requestId);
+                submitTraceData(methodNode, startMethod);
             } catch (Exception e) {
                 // 忽略
             }
@@ -63,14 +57,13 @@ public class ArgusTraceRequestFilter implements Filter {
         }
     }
 
-    /**
-     * 提交 trace 数据给 MonitorSender 异步处理
-     * @param callTree trace 数据
-     * @param method 方法
-     */
-    private void submitTraceData(String callTree, Method method) {
+        private void submitTraceData(ArgusRequestContext.MethodNode rootNode, Method method) {
         MonitorSender monitorSender = ContextUtil.getBean(MonitorSender.class);
         ArgusSocketHandler argusSocketHandler = ContextUtil.getBean(ArgusSocketHandler.class);
+
+        if (Objects.isNull(rootNode)) {
+            return;
+        }
 
         monitorSender.submit(() -> {
             List<String> userTokens = ArgusCache.getTraceUsersByMethod(new ArgusMethod(method));
@@ -81,23 +74,25 @@ public class ArgusTraceRequestFilter implements Filter {
                 }
 
                 MonitorInfo monitorInfo = ArgusCache.getTraceMonitorByUser(user.getToken().getToken(), method);
+                if (Objects.isNull(monitorInfo) || Objects.isNull(monitorInfo.getTrace())) {
+                    continue;
+                }
+
+                Map<String, Integer> methodCounts = new HashMap<>();
+                String callTree = ArgusRequestContext.buildTreeString(rootNode, 0, monitorInfo.getTrace().getMaxDepth(), new ArrayList<>(), methodCounts);
                 StringUtil.ExtractionResult result = StringUtil.extractWithPositions(callTree);
                 List<String> processValues = new ArrayList<>();
 
-                if (monitorInfo != null && monitorInfo.getTrace() != null) {
-                    for (String value : result.getValues()) {
-                        try {
-                            if (Integer.parseInt(value) > monitorInfo.getTrace().getColorThreshold()) {
-                                processValues.add(ColorWrapper.red(value));
-                            } else {
-                                processValues.add(value);
-                            }
-                        } catch (NumberFormatException ignore) {
+                for (String value : result.getValues()) {
+                    try {
+                        if (Integer.parseInt(value) > monitorInfo.getTrace().getColorThreshold()) {
+                            processValues.add(ColorWrapper.red(value));
+                        } else {
                             processValues.add(value);
                         }
+                    } catch (NumberFormatException ignore) {
+                        processValues.add(value);
                     }
-                } else {
-                    processValues.addAll(result.getValues());
                 }
 
                 String processTree = StringUtil.replaceBack(result, processValues);
@@ -108,4 +103,50 @@ public class ArgusTraceRequestFilter implements Filter {
             }
         });
     }
+
+    /**
+     * 提交 trace 数据给 MonitorSender 异步处理
+     * @param callTree trace 数据
+     * @param method 方法
+     */
+//    private void submitTraceData(String callTree, Method method) {
+//        MonitorSender monitorSender = ContextUtil.getBean(MonitorSender.class);
+//        ArgusSocketHandler argusSocketHandler = ContextUtil.getBean(ArgusSocketHandler.class);
+//
+//        monitorSender.submit(() -> {
+//            List<String> userTokens = ArgusCache.getTraceUsersByMethod(new ArgusMethod(method));
+//            for (String token : userTokens) {
+//                ArgusUser user = ArgusCache.getUserToken(token);
+//                if (Objects.isNull(user) || !user.getSession().isOpen()) {
+//                    continue;
+//                }
+//
+//                MonitorInfo monitorInfo = ArgusCache.getTraceMonitorByUser(user.getToken().getToken(), method);
+//                StringUtil.ExtractionResult result = StringUtil.extractWithPositions(callTree);
+//                List<String> processValues = new ArrayList<>();
+//
+//                if (monitorInfo != null && monitorInfo.getTrace() != null) {
+//                    for (String value : result.getValues()) {
+//                        try {
+//                            if (Integer.parseInt(value) > monitorInfo.getTrace().getColorThreshold()) {
+//                                processValues.add(ColorWrapper.red(value));
+//                            } else {
+//                                processValues.add(value);
+//                            }
+//                        } catch (NumberFormatException ignore) {
+//                            processValues.add(value);
+//                        }
+//                    }
+//                } else {
+//                    processValues.addAll(result.getValues());
+//                }
+//
+//                String processTree = StringUtil.replaceBack(result, processValues);
+//                argusSocketHandler.send(
+//                        user.getSession(),
+//                        OutputWrapper.formatOutput(ExecuteResult.success(processTree))
+//                );
+//            }
+//        });
+//    }
 }

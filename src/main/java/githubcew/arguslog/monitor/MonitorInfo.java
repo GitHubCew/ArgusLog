@@ -69,6 +69,11 @@ public class MonitorInfo {
         private long colorThreshold;
 
         /**
+         * 最大深度
+         */
+        private int maxDepth;
+
+        /**
          * 构造方法
          */
         public Trace() {}
@@ -77,8 +82,9 @@ public class MonitorInfo {
          * 构造方法
          * @param colorThreshold 颜色阈值
          */
-        public Trace(long colorThreshold) {
+        public Trace(long colorThreshold, int maxDepth) {
             this.colorThreshold = colorThreshold;
+            this.maxDepth = maxDepth;
         }
     }
 

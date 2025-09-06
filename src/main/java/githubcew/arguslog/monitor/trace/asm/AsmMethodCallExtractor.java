@@ -40,16 +40,24 @@ public class AsmMethodCallExtractor {
      * @param method 方法
      * @param includePackages 过滤包
      * @param excludePackages 排除包
+     * @param errorMsg 失败消息
+     * @param maxDepth 最大深度
      * @return 方法调用信息集合
      * @throws ClassNotFoundException 异常
      */
-    public static Set<MethodCallInfo> extractNestedCustomMethodCalls (Method method, Set<String> includePackages, Set<String> excludePackages) throws ClassNotFoundException {
+    public static Set<MethodCallInfo> extractNestedCustomMethodCalls (Method method,
+                                                                      Set<String> includePackages,
+                                                                      Set<String> excludePackages,
+                                                                      Set<String> errorMsg,
+                                                                      int maxDepth) throws ClassNotFoundException {
 
         return extractNestedCustomMethodCalls(method.getDeclaringClass(),
                 method.getName(),
                 Type.getMethodDescriptor(method),
                 includePackages,
-                excludePackages);
+                excludePackages,
+                errorMsg,
+                maxDepth);
     }
     /**
      * 递归提取指定方法的所有自定义方法调用链（支持接口与继承）。
@@ -60,6 +68,7 @@ public class AsmMethodCallExtractor {
      * @param targetMethodDesc 目标方法描述符（ASM 格式）
      * @param includePackages  需要包含的包名前缀集合（用于过滤调用）
      * @param excludePackages  需要排除的包名前缀集合（用于过滤调用）
+     * @param maxDepth 最大深度
      * @return 所有方法调用信息的集合
      * @throws ClassNotFoundException 如果类无法加载
      */
@@ -67,7 +76,9 @@ public class AsmMethodCallExtractor {
                                                                      String targetMethodName,
                                                                      String targetMethodDesc,
                                                                      Set<String> includePackages,
-                                                                     Set<String> excludePackages) throws ClassNotFoundException {
+                                                                     Set<String> excludePackages,
+                                                                     Set<String> skipClasses,
+                                                                     int maxDepth) throws ClassNotFoundException {
         // 已处理的方法标识集合，防止重复分析
         Set<String> processedMethods = new HashSet<>();
         // 存储所有提取到的方法调用信息
@@ -141,7 +152,7 @@ public class AsmMethodCallExtractor {
                         );
                         // 设置实现类
                         for (MethodCallInfo call : calls) {
-                            Class<?> specificClass = getSpecificClass(call.getCalledClass());
+                            Class<?> specificClass = getSpecificClass(call.getCalledClass(), skipClasses);
                             if (Objects.isNull(specificClass)) {
                                 continue;
                             }
@@ -165,9 +176,13 @@ public class AsmMethodCallExtractor {
                 String calledDesc = caller.getCalledMethodDesc();
                 int nextDepth = caller.getDepth() + 1;
 
+                if (nextDepth > maxDepth) {
+                    break;
+                }
+
                 try {
                     // 获取实际的目标类（支持接口、抽象类、代理）
-                    Class<?> specificClass = getSpecificClass(calledClass);
+                    Class<?> specificClass = getSpecificClass(calledClass, skipClasses);
                     if (Objects.isNull(specificClass)) {
                         continue;
                     }
@@ -190,7 +205,6 @@ public class AsmMethodCallExtractor {
                         reader.accept(classNode, ClassReader.EXPAND_FRAMES);
 
                         // 在类及其父类中查找方法
-
                         MethodNodeWithInheritance methodWithInheritance = findMethodNodeInHierarchy(
                                 specificClass.getClassLoader(),
                                 calledClass,
@@ -217,7 +231,7 @@ public class AsmMethodCallExtractor {
                                 // 由于调用链是层层传递的，我们需要找到对应的调用记录并更新
                                 updateInheritanceInCallChain(allCalls, call, inherited);
 
-                                Class<?> callSpecificClass = getSpecificClass(call.getCalledClass());
+                                Class<?> callSpecificClass = getSpecificClass(call.getCalledClass(), skipClasses);
                                 call.setSubCalledClass(CommonUtil.toSlash(callSpecificClass.getName()));
                             }
                             // 添加到结果中
@@ -403,9 +417,10 @@ public class AsmMethodCallExtractor {
      * 获取实际的目标类（支持接口、抽象类、代理类）。
      *
      * @param calledClass 被调用类名（内部格式）
+     * @param skipClasses 跳过的类名集合
      * @return 实际的目标类，若无法获取则返回 null
      */
-    private static Class<?> getSpecificClass(String calledClass) {
+    private static Class<?> getSpecificClass(String calledClass, Set<String> skipClasses) {
         Class<?> specificClass = null;
         try {
             Object bean = null;
@@ -417,7 +432,10 @@ public class AsmMethodCallExtractor {
                     bean = ContextUtil.getBean(specificClass);
                     specificClass = AopProxyUtils.ultimateTargetClass(bean);
                 } catch (Exception e) {
-                    System.err.println("无法获取实现类，跳过: " + specificClass);
+                    skipClasses.add(specificClass.getName());
+                    if (log.isDebugEnabled()) {
+                        log.debug("无法获取接口或抽象类的实现类：" + specificClass.getName(), e);
+                    }
                 }
             }
 

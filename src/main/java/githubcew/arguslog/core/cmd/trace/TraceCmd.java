@@ -4,6 +4,7 @@ import githubcew.arguslog.common.util.ContextUtil;
 import githubcew.arguslog.config.ArgusProperties;
 import githubcew.arguslog.core.cache.ArgusCache;
 import githubcew.arguslog.core.cmd.BaseCommand;
+import githubcew.arguslog.core.cmd.ColorWrapper;
 import githubcew.arguslog.monitor.ArgusMethod;
 import githubcew.arguslog.monitor.MonitorInfo;
 import githubcew.arguslog.monitor.outer.OutputWrapper;
@@ -62,10 +63,16 @@ public class TraceCmd extends BaseCommand {
     @CommandLine.Option(
             names = {"-t", "--threshold"},
             description = "指定调用链方法耗时阈值，单位ms,默认为300ms",
-            arity = "0",
-            defaultValue = "300"
+            arity = "0"
     )
     private Long threshold;
+
+    @CommandLine.Option(
+            names = {"-d", "--depth"},
+            description = "调用链的最大的深度",
+            arity = "1"
+    )
+    private int maxDepth;
 
     /**
      * 执行逻辑
@@ -84,12 +91,11 @@ public class TraceCmd extends BaseCommand {
             // 监听接口
             else {
                 trace();
-                picocliOutput.out(OK);
             }
         } catch (Exception e) {
             picocliOutput.error(e.getMessage());
             return ERROR_CODE;
-        }
+        };
         return OK_CODE;
     }
 
@@ -124,15 +130,15 @@ public class TraceCmd extends BaseCommand {
 
         ArgusProperties argusProperties = ContextUtil.getBean(ArgusProperties.class);
         Set<String> includePackages = new HashSet<>(1);
-        Set<String> excludePackages = new HashSet<>(argusProperties.getDefaultExcludePackages());
+        Set<String> excludePackages = new HashSet<>(argusProperties.getTraceDefaultExcludePackages());
 
         // 包含包
         if (!Objects.isNull(this.includePackages)) {
             includePackages.addAll(this.includePackages);
         }
         else {
-            if (argusProperties.getIncludePackages() != null) {
-                includePackages.addAll(argusProperties.getIncludePackages());
+            if (argusProperties.getTraceIncludePackages() != null) {
+                includePackages.addAll(argusProperties.getTraceIncludePackages());
             }
         }
 
@@ -141,11 +147,10 @@ public class TraceCmd extends BaseCommand {
             excludePackages.addAll(this.excludePackages);
         }
         else {
-            if (argusProperties.getExcludePackages() != null) {
-                excludePackages.addAll(argusProperties.getExcludePackages());
+            if (argusProperties.getTraceExcludePackages() != null) {
+                excludePackages.addAll(argusProperties.getTraceExcludePackages());
             }
         }
-
 
         if (includePackages.isEmpty()) {
             throw new RuntimeException("至少要指定一个包名");
@@ -154,16 +159,20 @@ public class TraceCmd extends BaseCommand {
         ArgusMethod argusMethod = ArgusCache.getUriMethod(path);
         // 生成方法调用信息
         Set<MethodCallInfo> methodCallInfos = new HashSet<>();
+        Set<String> skipClasses = new HashSet<>();
         try {
             methodCallInfos = AsmMethodCallExtractor.extractNestedCustomMethodCalls(
                     argusMethod.getMethod(),
                     includePackages,
-                    excludePackages);
+                    excludePackages,
+                    skipClasses,
+                    maxDepth);
         } catch (Exception e) {
             picocliOutput.error(e.getMessage());
         }
 
-        if (methodCallInfos.size() > argusProperties.getMaxEnhancedClassNum()) {
+
+        if (methodCallInfos.size() > argusProperties.getTraceMaxEnhancedClassNum()) {
             throw new RuntimeException("调用链方法过多,请缩小包的范围");
         }
 
@@ -187,13 +196,21 @@ public class TraceCmd extends BaseCommand {
 
         // 添加用户监听trace方法
         if (threshold < 0) {
-            threshold = 300L;
+            threshold = argusProperties.getTraceColorThreshold();
+        }
+        // 最大深度
+        if (maxDepth < 1) {
+            maxDepth = argusProperties.getTraceMaxDepth();
         }
         MonitorInfo monitorInfo = new MonitorInfo();
         monitorInfo.setArgusMethod(argusMethod);
-        monitorInfo.setTrace(new MonitorInfo.Trace(threshold));
+        monitorInfo.setTrace(new MonitorInfo.Trace(threshold, maxDepth));
         ArgusCache.addUserTraceMethod(user, monitorInfo);
 
+        picocliOutput.out(OK);
+        if (skipClasses.size() > 0) {
+            picocliOutput.out(ColorWrapper.yellow("\n跳过的类：\n" + String.join("\n", skipClasses)));
+        }
     }
 
     /**
