@@ -48,7 +48,7 @@ public class ArgusFilter implements Filter {
         String uri = httpRequest.getRequestURI();
 
         // 处理 /argus/** 请求
-        if (uri.startsWith("/argus") && !uri.equals("argus-ws")) {
+        if (uri.startsWith("/argus") && !uri.equals("/argus-ws")) {
             try {
                 if (uri.endsWith("/index.html")) {
                     serveIndexHtml(httpRequest, httpResponse);
