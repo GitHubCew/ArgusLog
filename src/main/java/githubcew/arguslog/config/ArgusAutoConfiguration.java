@@ -8,8 +8,8 @@ import githubcew.arguslog.monitor.formater.ArgusMethodParamFormatter;
 import githubcew.arguslog.monitor.formater.MethodParamFormatter;
 import githubcew.arguslog.monitor.outer.ArgusWebSocketOuter;
 import githubcew.arguslog.monitor.outer.Outer;
+import githubcew.arguslog.web.ArgusTraceRequestFilter;
 import githubcew.arguslog.web.RequestBodyCachingFilter;
-import githubcew.arguslog.web.ArgusTraceRequestInterceptor;
 import githubcew.arguslog.web.auth.ArgusTokenProvider;
 import githubcew.arguslog.web.auth.TokenProvider;
 import githubcew.arguslog.web.extractor.ArgusRequestExtractor;
@@ -29,25 +29,21 @@ import org.springframework.context.annotation.*;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.type.AnnotationMetadata;
-import org.springframework.web.filter.OncePerRequestFilter;
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
-import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import javax.servlet.DispatcherType;
 
 /**
  * 自动配置类
  */
+@Order(Ordered.HIGHEST_PRECEDENCE)
 @EnableConfigurationProperties(ArgusProperties.class)
 @EnableWebSocket
 @Configuration
 @EnableAspectJAutoProxy
-public class ArgusAutoConfiguration implements ImportBeanDefinitionRegistrar, WebSocketConfigurer, WebMvcConfigurer {
+public class ArgusAutoConfiguration implements ImportBeanDefinitionRegistrar, WebSocketConfigurer {
 
     @Qualifier("argusSocketHandler")
     @Autowired
@@ -77,12 +73,22 @@ public class ArgusAutoConfiguration implements ImportBeanDefinitionRegistrar, We
         return registrationBean;
     }
 
-    @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new ArgusTraceRequestInterceptor())
-                .addPathPatterns("/**")
-                .excludePathPatterns("/error", "/actuator/**", "/argus/**");
+    /**
+     * 注册trace请求过滤器（要在RequestBodyCachingFilter之后执行）
+     * @see RequestBodyCachingFilter
+     * @return trace请求过滤器
+     */
+    @Bean
+    public FilterRegistrationBean<ArgusTraceRequestFilter> argusTraceRequestFilter() {
+        FilterRegistrationBean<ArgusTraceRequestFilter> registration = new FilterRegistrationBean<>();
+        registration.setFilter(new ArgusTraceRequestFilter());
+        registration.addUrlPatterns("/*");
+        // 在RequestBodyCachingFilter 之后执行
+        registration.setOrder(Ordered.HIGHEST_PRECEDENCE + 10);
+        registration.setDispatcherTypes(DispatcherType.REQUEST);
+        return registration;
     }
+
 
     /**
      * 切点
@@ -150,6 +156,11 @@ public class ArgusAutoConfiguration implements ImportBeanDefinitionRegistrar, We
         return new ArgusTokenProvider(argusProperties.getTokenExpireTime());
     }
 
+
+    /**
+     * Argus Servlet
+     * @return ArgusServlet
+     */
     @Bean
     public ArgusServlet argusServlet() {
         return new ArgusServlet();
@@ -170,19 +181,6 @@ public class ArgusAutoConfiguration implements ImportBeanDefinitionRegistrar, We
     @ConditionalOnMissingBean(Extractor.class)
     public Extractor extractor() {
         return new ArgusRequestExtractor();
-    }
-
-    @Order(0)
-    @Bean
-    public WebMvcConfigurer argusTerminalWebMvcConfigurer() {
-        return new WebMvcConfigurer() {
-            @Override
-            public void addResourceHandlers(ResourceHandlerRegistry registry) {
-                registry.addResourceHandler("/argus/**")
-                        .addResourceLocations("classpath:/META-INF/resources/argus/")
-                        .resourceChain(true);
-            }
-        };
     }
 
     /**

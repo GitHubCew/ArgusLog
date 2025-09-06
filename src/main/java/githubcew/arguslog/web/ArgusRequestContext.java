@@ -160,11 +160,11 @@ public class ArgusRequestContext {
             boolean childIsLast = (i == children.size() - 1);
             List<Boolean> newParentIsLastList = new ArrayList<>(parentIsLastList);
             newParentIsLastList.add(childIsLast);
-            // 显示超过3次则不显示
+            // 显示超过1次则不显示
             String key = children.get(i).getSignature() + depth;
             methodCount.putIfAbsent(key, 0);
             Integer printCount = methodCount.get(key);
-            if (Objects.isNull(printCount) || printCount > 3) {
+            if (Objects.isNull(printCount) || printCount > 0) {
                 continue;
             }
             else {
