@@ -87,6 +87,10 @@ public class ArgusRequestContext {
         return costMap;
     }
 
+    /**
+     * 获取开始方法
+     * @return 方法
+     */
     public static Method getStartMethod() {
         return METHOD_SIGNATURE_TO_METHOD.get(REQUEST_ID.get());
 
@@ -94,13 +98,15 @@ public class ArgusRequestContext {
 
     /**
      * 获取调用树根节点
+     * @return 根节点
      */
     public static MethodNode getCallTree() {
         return CALL_TREE_ROOT.get();
     }
 
     /**
-     * 获取格式化的调用树字符串（匹配您要求的格式）
+     * 获取格式化的调用树字符串
+     * @return 格式化后的树字符串
      */
     public static String getFormattedTree() {
         MethodNode root = CALL_TREE_ROOT.get();
@@ -112,7 +118,13 @@ public class ArgusRequestContext {
     }
 
     /**
-     * 递归构建树形字符串（匹配指定格式）
+     * 递归构建树形字符串
+     *
+     * @param node 当前节点
+     * @param depth 当前节点的深度
+     * @param parentIsLastList 父节点是否是最后一个节点的列表
+     * @param methodCount 方法调用计数器
+     * @return 树形字符串
      */
     private static String buildTreeString(MethodNode node, int depth, List<Boolean> parentIsLastList,  Map<String, Integer> methodCount) {
         StringBuilder sb = new StringBuilder();
@@ -165,8 +177,11 @@ public class ArgusRequestContext {
     }
 
     /**
-     * 获取带参数的简化方法签名（类名.方法名(参数类型)）
+     * 获取带参数的简化方法签名（类名.方法名(参数类型)
      * 如果参数超过64个字符，则截取并在后面添加"..."
+     *
+     * @param node 节点
+     * @return 简化方法签名
      */
     private static String getSignatureWithParams(MethodNode node) {
         String className = getSimpleClassName(node.getSignature());
@@ -187,6 +202,8 @@ public class ArgusRequestContext {
 
     /**
      * 构建参数列表字符串
+     * @param node 节点
+     * @return 参数列表字符串
      */
     private static String buildParamsString(MethodNode node) {
         if (node.getMethod() != null) {
@@ -216,6 +233,10 @@ public class ArgusRequestContext {
 
     /**
      * 截断过长的签名
+     * @param className 类名
+     * @param methodName 方法名
+     * @param paramsString 参数列表字符串
+     * @return 截断后的签名
      */
     private static String truncateSignature(String className, String methodName, String paramsString) {
         // 计算基础部分长度：className.methodName().#invocationIndex
@@ -255,6 +276,8 @@ public class ArgusRequestContext {
 
     /**
      * 从完整签名中提取简单类名
+     * @param signature 完整签名
+     * @return 简单类名
      */
     private static String getSimpleClassName(String signature) {
         if (signature == null) return "";
@@ -281,6 +304,8 @@ public class ArgusRequestContext {
 
     /**
      * 从完整签名中提取方法名
+     * @param signature 完整签名
+     * @return 方法名
      */
     private static String getMethodName(String signature) {
         if (signature == null) return "";
@@ -301,6 +326,9 @@ public class ArgusRequestContext {
 
     /**
      * 简化类型名称
+     *
+     * @param typeName 类型名称
+     * @return 简化后的类型名称
      */
     private static String getSimpleTypeName(String typeName) {
         // 简化常见的类型名称
@@ -331,7 +359,9 @@ public class ArgusRequestContext {
     }
 
     /**
-     * 获取树统计信息（匹配新格式）
+     * 获取树统计信息
+     *
+     * @return 树
      */
     public static String getTreeStatistics() {
         MethodNode root = CALL_TREE_ROOT.get();
@@ -344,6 +374,10 @@ public class ArgusRequestContext {
                 "Tree:\n" + getFormattedTree();
     }
 
+    /**
+     * 获取开始方法
+     * @param method 方法
+     */
     public static void startMethod(Method method) {
         if (Objects.isNull(method)) {
             return;
@@ -419,6 +453,10 @@ public class ArgusRequestContext {
         }
     }
 
+    /**
+     * 生成方法签名
+     * @return 签名
+     */
     private static String getCurrentMethodSignature() {
         Stack<MethodInvocation> stack = CALL_STACK.get();
         return stack.isEmpty() ? null : stack.peek().getMethodSignature();
@@ -426,6 +464,8 @@ public class ArgusRequestContext {
 
     /**
      * 根据方法签名获取Method对象
+     * @param methodSignature 方法签名
+     * @return 方法
      */
     public static Method getMethodBySignature(String methodSignature) {
         return METHOD_SIGNATURE_TO_METHOD.get(methodSignature);
@@ -433,6 +473,8 @@ public class ArgusRequestContext {
 
     /**
      * 根据Method对象获取方法签名
+     * @param method 方法
+     * @return 方法签名
      */
     public static String getSignatureByMethod(Method method) {
         return METHOD_TO_SIGNATURE.get(method);
@@ -440,6 +482,8 @@ public class ArgusRequestContext {
 
     /**
      * 获取所有已记录的方法映射
+     *
+     * @return 方法映射
      */
     public static Map<String, Method> getAllMethodMappings() {
         return new HashMap<>(METHOD_SIGNATURE_TO_METHOD);
@@ -465,6 +509,9 @@ public class ArgusRequestContext {
         REQUEST_ID.remove();
     }
 
+    /**
+     * 方法调用信息
+     */
     @Data
     public static class MethodInvocation {
         private final String methodSignature;
@@ -474,6 +521,14 @@ public class ArgusRequestContext {
         private final Method method;
         private final int invocationIndex;
 
+        /**
+         * 构造方法
+         * @param methodSignature 方法前面
+         * @param parentSignature 父方法签名
+         * @param startTime 开始时间
+         * @param method 方法
+         * @param invocationIndex 调用位置
+         */
         public MethodInvocation(String methodSignature, String parentSignature,
                                 long startTime, Method method, int invocationIndex) {
             this.methodSignature = methodSignature;
@@ -483,11 +538,18 @@ public class ArgusRequestContext {
             this.invocationIndex = invocationIndex;
         }
 
+        /**
+         * 获取方法耗时
+         * @return 方法耗时
+         */
         public long getDuration() {
             return endTime - startTime;
         }
     }
 
+    /**
+     * 方法节点
+     */
     @Data
     public static class MethodNode {
         private String signature;
@@ -499,6 +561,15 @@ public class ArgusRequestContext {
         private MethodNode parent;
         private List<MethodNode> children = new ArrayList<>();
 
+        /**
+         * 构造方法
+         * @param signature 签名
+         * @param duration 耗时
+         * @param startTime 开始时间
+         * @param endTime 结束时间
+         * @param method 方法
+         * @param invocationIndex 调用位置
+         */
         public MethodNode(String signature, long duration, long startTime,
                           long endTime, Method method, int invocationIndex) {
             this.signature = signature;
@@ -511,6 +582,7 @@ public class ArgusRequestContext {
 
         /**
          * 添加子节点
+         * @param child 子节点
          */
         public void addChild(MethodNode child) {
             child.setParent(this);
@@ -519,6 +591,7 @@ public class ArgusRequestContext {
 
         /**
          * 获取总耗时（包含子节点）
+         * @return 耗时
          */
         public long getTotalDuration() {
             return duration + children.stream()
@@ -528,6 +601,7 @@ public class ArgusRequestContext {
 
         /**
          * 获取调用路径
+         * @return 调用路径
          */
         public String getCallPath() {
             return signature + "#" + invocationIndex +
@@ -539,6 +613,7 @@ public class ArgusRequestContext {
 
         /**
          * 获取带参数的签名显示
+         * @return 带参数的签名显示
          */
         public String getSignatureWithParams() {
             return ArgusRequestContext.getSignatureWithParams(this);
@@ -547,6 +622,9 @@ public class ArgusRequestContext {
 
     /**
      * 构建树形字符串表示
+     * @param node 节点
+     * @param depth 深度
+     * @return 树形字符串表示
      */
     private static String buildTreeString(MethodNode node, int depth) {
         StringBuilder sb = new StringBuilder();
@@ -591,7 +669,10 @@ public class ArgusRequestContext {
     }
 
     /**
-     * 将调用树转换为MethodCallInfo集合（用于兼容现有代码）
+     * 将调用树转换为MethodCallInfo集合
+     *
+     * 调用信息集合
+     * @return 调用信息集合
      */
     public static Set<MethodCallInfo> convertTreeToCallInfos() {
         MethodNode root = CALL_TREE_ROOT.get();
@@ -604,6 +685,13 @@ public class ArgusRequestContext {
         return callInfos;
     }
 
+    /**
+     * 转换节点为调用信息
+     * @param node 节点
+     * @param parent 父节点
+     * @param callInfos 调用信息
+     * @param depth 深度
+     */
     private static void convertNodeToCallInfo(MethodNode node, MethodNode parent,
                                               Set<MethodCallInfo> callInfos, int depth) {
         // 解析签名获取类名和方法名

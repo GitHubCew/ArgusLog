@@ -35,6 +35,14 @@ public class AsmMethodCallExtractor {
     private AsmMethodCallExtractor() {
     }
 
+    /**
+     * 提取用户方法
+     * @param method 方法
+     * @param includePackages 过滤包
+     * @param excludePackages 排除包
+     * @return 方法调用信息集合
+     * @throws ClassNotFoundException 异常
+     */
     public static Set<MethodCallInfo> extractNestedCustomMethodCalls (Method method, Set<String> includePackages, Set<String> excludePackages) throws ClassNotFoundException {
 
         return extractNestedCustomMethodCalls(method.getDeclaringClass(),
@@ -51,6 +59,7 @@ public class AsmMethodCallExtractor {
      * @param targetMethodName 目标方法名
      * @param targetMethodDesc 目标方法描述符（ASM 格式）
      * @param includePackages  需要包含的包名前缀集合（用于过滤调用）
+     * @param excludePackages  需要排除的包名前缀集合（用于过滤调用）
      * @return 所有方法调用信息的集合
      * @throws ClassNotFoundException 如果类无法加载
      */
@@ -231,6 +240,12 @@ public class AsmMethodCallExtractor {
         return allCalls;
     }
 
+    /**
+     * 更新调用链中的继承信息
+     * @param allCalls 调用链
+     * @param currentCall 当前调用
+     * @param inherited 是否是继承
+     */
     private static void updateInheritanceInCallChain(Set<MethodCallInfo> allCalls,
                                                      MethodCallInfo currentCall,
                                                      boolean inherited) {
@@ -275,15 +290,6 @@ public class AsmMethodCallExtractor {
      *
      * @param methodNode 方法节点
      * @return 行号，未找到返回 -1
-     */
-    /**
-     * 获取方法的第一行行号（从 LineNumberTable 中提取）
-     *
-     * @param methodNode 方法节点
-     * @return 行号，未找到返回 -1
-     */
-    /**
-     * 通过 ASM 获取方法的声明行号（取 LineNumberTable 中最小行号）
      */
     public static int getMethodDeclarationLine(MethodNode methodNode) {
         if (methodNode.instructions == null) return -1;
@@ -483,7 +489,12 @@ public class AsmMethodCallExtractor {
         }
 
         /**
-         * 访问方法调用指令（如 invokevirtual, invokeinterface 等）。
+         * 访问方法调用指令（如 invokevirtual, invokeinterface 等）
+         * @param opcode opcode
+         * @param owner owner
+         * @param name name
+         * @param descriptor descriptor
+         * @param isInterface isInterface
          */
         @SneakyThrows
         @Override
@@ -509,7 +520,9 @@ public class AsmMethodCallExtractor {
         }
 
         /**
-         * 访问行号指令，用于记录调用发生的源码行。
+         * 访问行号指令，用于记录调用发生的源码行
+         * @param line 行号
+         * @param start 开始位置
          */
         @Override
         public void visitLineNumber(int line, org.objectweb.asm.Label start) {
@@ -519,6 +532,10 @@ public class AsmMethodCallExtractor {
 
         /**
          * 访问 invokedynamic 指令，处理 Lambda、方法引用等动态调用。
+         * @param name 方法名
+         * @param descriptor 方法描述
+         * @param bootstrapMethodHandle 引导方法句柄
+         * @param bootstrapMethodArguments 方法参数
          */
         @Override
         public void visitInvokeDynamicInsn(String name, String descriptor,
@@ -643,6 +660,11 @@ public class AsmMethodCallExtractor {
             return false;
         }
 
+        /**
+         * 是否是标准setter
+         * @param name 名称
+         * @return 结果
+         */
         private static boolean isStandardSetter(String name) {
             if (!name.startsWith("set") || name.length() <= 3) return false;
             if (!Character.isUpperCase(name.charAt(3))) return false;
@@ -662,11 +684,20 @@ public class AsmMethodCallExtractor {
         }
     }
 
+    /**
+     * 方法节点
+     */
     private static class MethodNodeWithInheritance {
         MethodNode methodNode;
         boolean inherited;
         String definedInClass; // 方法实际定义的类
 
+        /**
+         * 构造方法
+         * @param methodNode 方法名称
+         * @param inherited 继承信息
+         * @param definedInClass 方法定义的实际类
+         */
         MethodNodeWithInheritance(MethodNode methodNode, boolean inherited, String definedInClass) {
             this.methodNode = methodNode;
             this.inherited = inherited;

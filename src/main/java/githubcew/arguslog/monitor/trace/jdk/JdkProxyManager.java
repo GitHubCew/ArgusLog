@@ -32,6 +32,7 @@ public class JdkProxyManager {
      * @param key key
      * @param proxyClass 代理类
      * @param handlerType 拦截器
+     * @param <T> 类型
      */
     public static <T> void proxyMethod(String key, Class<T> proxyClass, Class<? extends JdkProxyInvocationHandler> handlerType) {
         try {
@@ -136,6 +137,8 @@ public class JdkProxyManager {
 
     /**
      * 恢复原始代理对象
+     * @param proxy 代理对象
+     * @param <T> 类型
      */
     private static  <T> void restoreOriginal(T proxy) {
         InvocationHandler handler = Proxy.getInvocationHandler(proxy);
@@ -150,11 +153,8 @@ public class JdkProxyManager {
      * 创建代理
      *
      * @param target     目标对象
-     * @param interfaces 接口
+     * @param handler 处理器
      * @return 代理对象
-     */
-    /**
-     * 创建 JDK 动态代理（自动获取目标对象所有接口）
      */
     private static Object createProxy(Object target, InvocationHandler handler) {
         ClassLoader loader = target.getClass().getClassLoader();

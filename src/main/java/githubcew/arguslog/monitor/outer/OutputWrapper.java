@@ -56,6 +56,7 @@ public class OutputWrapper {
      * 创建实例
      *
      * @param builder builder
+     * @return this
      */
     public static OutputWrapper from(StringBuilder builder) {
         return new OutputWrapper(builder);

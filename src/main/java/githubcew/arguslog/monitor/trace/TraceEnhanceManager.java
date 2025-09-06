@@ -18,6 +18,7 @@ public class TraceEnhanceManager {
     /**
      * 增强方法
      *
+     * @param key key
      * @param targetClass 类型
      * @param methodNames  方法名
      */

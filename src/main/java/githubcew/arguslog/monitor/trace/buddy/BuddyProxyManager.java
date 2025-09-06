@@ -66,6 +66,7 @@ public class BuddyProxyManager {
     /**
      * 为指定类的增加方法
      *
+     * @param key key
      * @param targetClass 类
      * @param advice      拦截器
      */
@@ -76,6 +77,7 @@ public class BuddyProxyManager {
     /**
      * 增强方法
      *
+     * @param key key
      * @param targetClass 类型
      * @param methodName  方法名
      * @param advice      拦截器
@@ -88,6 +90,7 @@ public class BuddyProxyManager {
     /**
      * 增强方法
      *
+     * @param key key
      * @param targetClass 类型
      * @param methodNames 方法名
      * @param advice      拦截器
@@ -103,8 +106,10 @@ public class BuddyProxyManager {
     /**
      * 增强方法
      *
-     * @param targetClass 类
-     * @param advice      拦截器
+     * @param key key
+     * @param targetClass  目标类
+     * @param methodMatcher 方法匹配器
+     * @param advice 拦截器
      */
     private static void enhanceMethods(String key,
                                        Class<?> targetClass,
@@ -297,6 +302,7 @@ public class BuddyProxyManager {
      * 检查类是否已被修改
      *
      * @param targetClass 类
+     * @return 结果
      */
     public static boolean isClassModified(Class<?> targetClass) {
         return modifiedClasses.containsKey(targetClass.getName());

@@ -59,7 +59,8 @@ public class ArgusAutoConfiguration implements ImportBeanDefinitionRegistrar, We
     /**
      * 注册请求体缓存过滤器。
      * 设置最高优先级，确保在其他过滤器（如 Shiro, Spring Security）之前执行。
-     * @return FilterRegistrationBean<RequestBodyCachingFilter>
+     * @return RequestBodyCachingFilter
+     * @see RequestBodyCachingFilter
      */
     @Bean
     public FilterRegistrationBean<RequestBodyCachingFilter> requestBodyCacheFilter() {

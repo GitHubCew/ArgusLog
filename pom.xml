@@ -12,8 +12,8 @@
 
     <name>ArgusLog</name>
     <description>
-        ArgusLog 是一个基于SpringBoot + Websocket 开发的接口监测web端命令行工具, 主要用于开发或者线上问题定位、性能优化分析 ，
-        支持针对一个或多个接口的的入参、返回值、耗时、异常、调用链进行监测， 可以解决一些复杂场景下接口监测的问题。
+        ArgusLog 是一个接口监测web端命令行工具, 主要用于开发或者线上问题定位、性能优化分析 ，
+        支持针对一个或多个接口的的入参、返回值、耗时、异常、调用链(方法树、各方法耗时)进行监测， 用于解决一些复杂场景下接口监测的问题。
     </description>
 
     <groupId>io.github.githubcew</groupId>

@@ -63,6 +63,11 @@ public class MethodCallInfo {
      * @param calledClass 被调用类
      * @param calledMethod 被调用方法
      * @param calledMethodDesc 被调用方法签名描述
+     * @param isInherited 是否是继承方法
+     * @param actualDefinedClass 方法实际定义的类
+     * @param subCalledClass 被调的子类
+     * @param lineNumber 行号
+     * @param depth 深度
      */
     public MethodCallInfo(String callerClass, String callerMethod,
                           String calledClass, String calledMethod,

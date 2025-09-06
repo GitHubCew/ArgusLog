@@ -20,6 +20,10 @@ public class MonitorSender implements InitializingBean, DisposableBean {
     private final ArgusProperties argusProperties;
     private final ThreadPoolExecutor scheduler;
 
+    /**
+     * 构造方法
+     * @param argusProperties argus 配置
+     */
     @Autowired
     public MonitorSender(ArgusProperties argusProperties) {
         this.argusProperties = argusProperties;
@@ -35,6 +39,7 @@ public class MonitorSender implements InitializingBean, DisposableBean {
 
     /**
      * 提交监控任务
+     * @param task 任务
      */
     public void submit(Runnable task) {
         scheduler.execute(task);
@@ -42,6 +47,9 @@ public class MonitorSender implements InitializingBean, DisposableBean {
 
     /**
      * 提交有返回值的监控任务
+     * @param task 任务
+     * @param <T> 类型
+     * @return  Future
      */
     public <T> Future<T> submit(Callable<T> task) {
         return scheduler.submit(task);
@@ -49,6 +57,7 @@ public class MonitorSender implements InitializingBean, DisposableBean {
 
     /**
      * 获取线程池状态信息
+     * @return  String
      */
     public String getPoolStatus() {
         return String.format("活跃线程: %d, 队列大小: %d, 完成任务: %d",
@@ -57,6 +66,10 @@ public class MonitorSender implements InitializingBean, DisposableBean {
                 scheduler.getCompletedTaskCount());
     }
 
+    /**
+     * 容器销毁
+     * @throws Exception 异常
+     */
     @Override
     public void destroy() throws Exception {
         // 优雅关闭线程池
@@ -71,6 +84,10 @@ public class MonitorSender implements InitializingBean, DisposableBean {
         }
     }
 
+    /**
+     * bean属性设置
+     * @throws Exception 异常
+     */
     @Override
     public void afterPropertiesSet() throws Exception {
         System.out.println("MonitorExecutor 初始化完成，线程池配置: " +
