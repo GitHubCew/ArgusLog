@@ -15,7 +15,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -70,17 +69,30 @@ public class ArgusWebSocketOuter implements Outer {
 
         boolean hasContent = monitorInfo.isIp() || monitorInfo.isHeader()
                 || monitorInfo.isParam() || monitorInfo.isMethodParam()
-                || monitorInfo.isResult() || monitorInfo.isTime();
+                || monitorInfo.isResult() || monitorInfo.isTime()
+                || monitorInfo.isUrl() || monitorInfo.isApi()
+                || monitorInfo.isMethod() || monitorInfo.isType()
+                ;
         if (!hasContent) {
             return false;
         }
 
         WebRequestInfo webRequestInfo = monitorOutput.getWebRequestInfo();
-        wrapper.append("url => ").startCopy().append(webRequestInfo.getUrl()).endCopy().concat();
-        wrapper.append("api => ").startCopy().append(monitorInfo.getMethod().getUri()).endCopy().concat();
-        wrapper.append("method => ").append(monitorInfo.getMethod().getSignature()).concat();
-        wrapper.append("type => ").append(webRequestInfo.getMethod()).concat();
-        wrapper.append("ip => ").startCopy().append(webRequestInfo.getIp()).endCopy().concat();
+        if (monitorInfo.isUrl() || monitorInfo.isApi()) {
+            wrapper.append("url => ").startCopy().append(webRequestInfo.getUrl()).endCopy().concat();
+        }
+        if (monitorInfo.isApi()) {
+            wrapper.append("api => ").startCopy().append(monitorInfo.getArgusMethod().getUri()).endCopy().concat();
+        }
+        if (monitorInfo.isMethod()) {
+            wrapper.append("method => ").append(monitorInfo.getArgusMethod().getSignature()).concat();
+        }
+        if (monitorInfo.isType()) {
+            wrapper.append("type => ").append(webRequestInfo.getMethod()).concat();
+        }
+        if (monitorInfo.isIp()) {
+            wrapper.append("ip => ").startCopy().append(webRequestInfo.getIp()).endCopy().concat();
+        }
         // 请求头
         if (monitorInfo.isHeader()) {
             wrapper.append("header => ").append(webRequestInfo.getHeaders()).concat();

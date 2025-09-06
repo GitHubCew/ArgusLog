@@ -1,6 +1,6 @@
 package githubcew.arguslog.monitor.trace.jdk;
 
-import githubcew.arguslog.monitor.trace.ArgusTraceRequestContext;
+import githubcew.arguslog.web.ArgusRequestContext;
 
 import java.lang.reflect.Method;
 
@@ -16,7 +16,7 @@ public class JdkProxyTracingAdvice extends JdkProxyInvocationHandler {
 
         try {
             // 方法开始
-            ArgusTraceRequestContext.startMethod(method);
+            ArgusRequestContext.startMethod(method);
         } catch (Exception e) {
             //
         }
@@ -26,7 +26,7 @@ public class JdkProxyTracingAdvice extends JdkProxyInvocationHandler {
 
         } finally {
             // 方法结束
-            ArgusTraceRequestContext.endMethod();
+            ArgusRequestContext.endMethod();
         }
     }
 }

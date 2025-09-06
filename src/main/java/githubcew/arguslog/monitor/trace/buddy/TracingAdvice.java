@@ -1,6 +1,6 @@
 package githubcew.arguslog.monitor.trace.buddy;
 
-import githubcew.arguslog.monitor.trace.ArgusTraceRequestContext;
+import githubcew.arguslog.web.ArgusRequestContext;
 import net.bytebuddy.asm.Advice;
 
 import java.lang.reflect.Method;
@@ -19,7 +19,7 @@ public class TracingAdvice {
      */
     @Advice.OnMethodEnter
     public static void onEnter(@Advice.Origin Method method) {
-        ArgusTraceRequestContext.startMethod(method);
+        ArgusRequestContext.startMethod(method);
     }
 
     /**
@@ -27,6 +27,6 @@ public class TracingAdvice {
      */
     @Advice.OnMethodExit(onThrowable = Throwable.class)
     public static void onExit() {
-        ArgusTraceRequestContext.endMethod();
+        ArgusRequestContext.endMethod();
     }
 }

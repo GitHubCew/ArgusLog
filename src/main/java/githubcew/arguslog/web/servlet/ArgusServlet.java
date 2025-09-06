@@ -1,6 +1,7 @@
 package githubcew.arguslog.web.servlet;
 
 import githubcew.arguslog.common.util.ContextUtil;
+import githubcew.arguslog.config.ArgusProperties;
 import githubcew.arguslog.core.ArgusManager;
 import githubcew.arguslog.core.account.Account;
 import githubcew.arguslog.core.cache.ArgusCache;
@@ -8,6 +9,7 @@ import githubcew.arguslog.web.ArgusRequest;
 import githubcew.arguslog.web.ArgusResponse;
 import githubcew.arguslog.web.auth.AccountAuthenticator;
 import githubcew.arguslog.web.auth.Token;
+import githubcew.arguslog.web.auth.TokenProvider;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.util.StreamUtils;
 
@@ -25,6 +27,12 @@ import java.nio.charset.StandardCharsets;
  */
 public class ArgusServlet extends HttpServlet {
 
+    /**
+     * doGet
+     * @param request 请求
+     * @param response 响应
+     * @throws IOException 异常
+     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
@@ -57,6 +65,12 @@ public class ArgusServlet extends HttpServlet {
         }
     }
 
+    /**
+     *  doGet
+     * @param request 请求
+     * @param response 响应
+     * @throws IOException 异常
+     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
@@ -64,11 +78,6 @@ public class ArgusServlet extends HttpServlet {
         if (request.getRequestURI().endsWith("/argus/login")) {
             String username = request.getHeader("username");
             String password = request.getHeader("password");
-
-            if (username == null || password == null || username.isEmpty() || password.isEmpty()) {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                return;
-            }
 
             ArgusManager argusManager = ContextUtil.getBean(ArgusManager.class);
             AccountAuthenticator accountAuthenticator = argusManager.getAccountAuthenticator();

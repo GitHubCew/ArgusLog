@@ -6,6 +6,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.util.ContentCachingRequestWrapper;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequestWrapper;
 import java.io.BufferedReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
@@ -139,12 +140,13 @@ public class RequestParamExtractor {
         }
 
         try {
+            ContentCachingRequestWrapper wrappedRequest = findContentCachingRequestWrapper(request);
+            if (wrappedRequest != null) {
+
             // 如果请求已经被包装过（有缓存）
-            if (request instanceof ContentCachingRequestWrapper) {
-                ContentCachingRequestWrapper wrappedRequest = (ContentCachingRequestWrapper) request;
                 if (!builder.toString().isEmpty()) {
                     builder.append("; ");
-                    return builder + "\n" +  new String(wrappedRequest.getContentAsByteArray(), StandardCharsets.UTF_8);
+                    return builder + "\n" + new String(wrappedRequest.getContentAsByteArray(), StandardCharsets.UTF_8);
 
                 }
                 return new String(wrappedRequest.getContentAsByteArray(), StandardCharsets.UTF_8);
@@ -286,5 +288,28 @@ public class RequestParamExtractor {
             ip = request.getRemoteAddr();
         }
         return ip;
+    }
+
+    /**
+     * 从可能被多层包装的请求中，查找并返回 ContentCachingRequestWrapper
+     * @param request 可能被包装的 HttpServletRequest
+     * @return 找到的 ContentCachingRequestWrapper，如果找不到则返回 null
+     */
+    public static ContentCachingRequestWrapper findContentCachingRequestWrapper(HttpServletRequest request) {
+        HttpServletRequest currentRequest = request;
+        // 循环遍历包装链
+        while (currentRequest != null) {
+            if (currentRequest instanceof ContentCachingRequestWrapper) {
+                return (ContentCachingRequestWrapper) currentRequest;
+            }
+            // 检查是否是 Servlet API 标准的包装器
+            if (currentRequest instanceof HttpServletRequestWrapper) {
+                currentRequest = (HttpServletRequest) ((HttpServletRequestWrapper) currentRequest).getRequest();
+            } else {
+                // 如果当前对象不是 HttpServletRequestWrapper，则无法继续解包
+                break;
+            }
+        }
+        return null;
     }
 }

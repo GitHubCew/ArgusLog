@@ -1,6 +1,7 @@
 package githubcew.arguslog;
 
 import githubcew.arguslog.core.ArgusManager;
+import githubcew.arguslog.core.cmd.ArgusCommandProcessor;
 import githubcew.arguslog.core.cmd.ExecuteResult;
 import githubcew.arguslog.monitor.outer.OutputWrapper;
 import githubcew.arguslog.web.ArgusRequest;
@@ -19,6 +20,10 @@ public class ArgusStarter {
 
     private final ArgusManager argusManager;
 
+    /**
+     * 构造方法
+     * @param argusManager argusManager
+     */
     @Autowired
     public ArgusStarter(ArgusManager argusManager) {
         this.argusManager = argusManager;

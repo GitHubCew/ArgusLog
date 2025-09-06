@@ -31,7 +31,6 @@ public class ArgusMethod {
      * 接口uri
      */
     private String uri;
-
     /**
      * 构造方法
      */

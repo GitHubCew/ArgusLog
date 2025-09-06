@@ -328,7 +328,7 @@
         }
 
         .response {
-            color: #e0e0e0;
+            color: #b5b5b5;
         }
 
         .warn {
@@ -344,7 +344,7 @@
             background: rgba(20, 20, 20, 0.95);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
-            border-top: 1px solid rgba(60, 200, 150, 0.3);
+            border-top: 1px solid rgba(45, 217, 155, 0.3);
             display: flex;
             justify-content: space-between;
             font-size: 14px;
@@ -671,11 +671,11 @@
         function handleLogin() {
             const username = usernameInput.value.trim();
             const password = passwordInput.value.trim();
-            if (!username || !password) {
-                showLoginMessage('请输入用户名和密码', 'error');
-
-                return;
-            }
+            // if (!username || !password) {
+            //     showLoginMessage('请输入用户名和密码', 'error');
+            //
+            //     return;
+            // }
 
             loginText.textContent = '登录中...';
             loginSpinner.style.display = 'inline-block';
@@ -758,10 +758,13 @@
                     addOutput("输入 'help' 查看命令列表。", 'info');
                 };
 
-                // 在 handleSuccessOutput 函数中确保按钮和文本都能复制
+                // 处理成功消息
                 function handleSuccessOutput(data) {
+                    const commandHistory = document.getElementById('commandHistory');
+
+                    // 创建内容行
                     const outputDiv = document.createElement('div');
-                    outputDiv.className = 'output response';
+                    outputDiv.className = 'output response content';
                     outputDiv.style.whiteSpace = 'pre-wrap';
                     outputDiv.style.wordBreak = 'break-all';
                     outputDiv.style.fontFamily = 'Fira Code, monospace';
@@ -775,23 +778,18 @@
                     while (index < data.length) {
                         const startIdx = data.indexOf(START_TAG, index);
                         if (startIdx === -1) break;
-
                         if (startIdx > lastIndex) {
                             const text = data.slice(lastIndex, startIdx);
                             outputDiv.appendChild(document.createTextNode(text));
                         }
-
                         const endIdx = data.indexOf(END_TAG, startIdx + START_TAG.length);
                         if (endIdx === -1) {
                             outputDiv.appendChild(document.createTextNode(data.slice(startIdx)));
                             break;
                         }
-
                         const innerContent = data.slice(startIdx + START_TAG.length, endIdx);
                         const hasValidContent = innerContent.trim() !== '';
-
                         if (hasValidContent) {
-                            // 创建可复制的文本元素
                             const copyText = document.createElement('span');
                             copyText.textContent = innerContent;
                             copyText.style.cssText = `
@@ -810,7 +808,6 @@
                 position: relative;
             `;
 
-                            // 创建提示文本元素
                             const tooltip = document.createElement('span');
                             tooltip.textContent = '点击即可复制';
                             tooltip.style.cssText = `
@@ -828,41 +825,30 @@
                 top: 0;
                 left: 0;
             `;
+                            document.body.appendChild(tooltip);
 
-                            // 鼠标移动事件 - 实时更新提示位置
                             copyText.addEventListener('mousemove', (e) => {
-                                // 将提示定位到鼠标右侧10px的位置
                                 tooltip.style.top = (e.clientY - 10) + 'px';
                                 tooltip.style.left = (e.clientX + 15) + 'px';
                             });
-
-                            // 鼠标悬停事件
                             copyText.addEventListener('mouseenter', (e) => {
                                 copyText.style.background = 'rgba(0, 255, 200, 0.2)';
                                 copyText.style.boxShadow = '0 0 8px rgba(0, 255, 200, 0.3)';
-                                // 初始定位
                                 tooltip.style.top = (e.clientY - 10) + 'px';
                                 tooltip.style.left = (e.clientX + 15) + 'px';
                                 tooltip.style.opacity = '1';
                             });
-
                             copyText.addEventListener('mouseleave', () => {
                                 copyText.style.background = 'rgba(0, 255, 200, 0.1)';
                                 copyText.style.boxShadow = 'none';
                                 tooltip.style.opacity = '0';
                             });
-
-                            // 点击复制事件
                             copyText.addEventListener('click', (e) => {
                                 e.stopPropagation();
-                                e.preventDefault();
-
                                 navigator.clipboard.writeText(innerContent).then(() => {
-                                    // 临时显示复制成功提示
                                     const originalText = tooltip.textContent;
                                     tooltip.textContent = '✓ 已复制';
                                     tooltip.style.opacity = '1';
-
                                     setTimeout(() => {
                                         tooltip.textContent = originalText;
                                         tooltip.style.opacity = '0';
@@ -872,7 +858,6 @@
                                     const originalText = tooltip.textContent;
                                     tooltip.textContent = '✗ 复制失败';
                                     tooltip.style.opacity = '1';
-
                                     setTimeout(() => {
                                         tooltip.textContent = originalText;
                                         tooltip.style.opacity = '0';
@@ -880,54 +865,96 @@
                                 });
                             });
 
-                            // 将提示文本添加到body中，避免被父元素裁剪
-                            document.body.appendChild(tooltip);
                             outputDiv.appendChild(copyText);
                         }
-
                         lastIndex = endIdx + END_TAG.length;
                         index = lastIndex;
                     }
 
                     if (lastIndex < data.length) {
                         const remaining = data.slice(lastIndex);
-                        outputDiv.appendChild(document.createTextNode(remaining));
+                        const coloredText = parseColorTags(remaining);
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = coloredText;
+                        while (tempDiv.firstChild) {
+                            outputDiv.appendChild(tempDiv.firstChild);
+                        }
                     }
 
                     commandHistory.appendChild(outputDiv);
                     scrollToBottom();
                 }
 
+                // 处理消息
                 websocket.onmessage = (event) => {
                     try {
                         const message = event.data;
-
                         // 仅处理含 #ouputconcat# 的消息
                         if (!message.includes('#ouputconcat#')) {
                             addOutput(message);
                             return;
                         }
-
                         // 提取 code 和 data
                         const codeMatch = message.match(/^code=(\d+)#ouputconcat#data=(.*)/s);
                         if (!codeMatch) {
                             addOutput('协议错误：无法解析消息', 'error');
                             return;
                         }
-
                         const code = parseInt(codeMatch[1], 10);
                         const data = codeMatch[2];
 
+                        // 获取当前时间 HH:MM:SS
+                        const now = new Date();
+                        const timeStr = now.getHours().toString().padStart(2, '0') +
+                            ':' + now.getMinutes().toString().padStart(2, '0') +
+                            ':' + now.getSeconds().toString().padStart(2, '0');
+
                         if (code === 1) {
+                            // 成功响应：时间 + 内容（换行）
+                            const timeDiv = document.createElement('div');
+                            timeDiv.className = 'output response time-stamp';
+                            timeDiv.style.color = '#00b8ff';
+                            timeDiv.style.opacity = '0.9';
+                            timeDiv.style.fontWeight = '500';
+                            timeDiv.style.marginBottom = '4px';
+                            timeDiv.style.userSelect = 'none';
+                            timeDiv.textContent = timeStr;
+                            commandHistory.appendChild(timeDiv);
+
+                            // 调用原有的 handleSuccessOutput 处理内容
                             handleSuccessOutput(data);
                         } else {
-                            addOutput(data, 'error');
+                            // 错误响应：时间 + 错误内容（换行）
+                            const timeDiv = document.createElement('div');
+                            timeDiv.className = 'output error time-stamp';
+                            timeDiv.style.color = '#ff5f56'; // 红色
+                            timeDiv.style.opacity = '0.9';
+                            timeDiv.style.fontWeight = '500';
+                            timeDiv.style.marginBottom = '4px';
+                            timeDiv.style.userSelect = 'none';
+                            timeDiv.textContent = timeStr;
+                            commandHistory.appendChild(timeDiv);
+
+                            // 创建错误内容行
+                            const errorDiv = document.createElement('div');
+                            errorDiv.className = 'output error content';
+                            errorDiv.style.whiteSpace = 'pre-wrap';
+                            errorDiv.style.wordBreak = 'break-all';
+                            errorDiv.style.fontFamily = 'Fira Code, monospace';
+                            errorDiv.style.lineHeight = '1.5';
+                            errorDiv.style.color = '#ff5f56'; // 红色文本
+
+                            // 直接设置错误文本
+                            errorDiv.textContent = data;
+
+                            commandHistory.appendChild(errorDiv);
+                            scrollToBottom();
                         }
                     } catch (e) {
-                        addOutput('解析消息失败: ' + e.message, 'error');
+                        // 连这个都错了，直接用基础函数输出
+                        addOutput(`解析消息失败: ${e.message}`, 'error');
                     }
                 };
-
                 websocket.onclose = (event) => {
                     isConnected = false;
                     statusIndicator.classList.remove('connecting', 'connected');
@@ -1047,6 +1074,36 @@
             div.textContent = text;
             commandHistory.appendChild(div);
             scrollToBottom();
+        }
+
+        function parseColorTags(text) {
+            if (!text || typeof text !== 'string') return text;
+
+            return text.replace(/\[#([0-9A-Fa-f]{6})\]([^\[]*?)\[\/\]/g, (match, color, content) => {
+                return `<span style="
+            color: #${color};
+            font-weight: 600;
+            text-shadow: none;
+            box-shadow: none;
+            border: none;
+            background: none;
+            padding: 0;
+            margin: 0;
+        ">${escapeHtml(content)}</span>`;
+            });
+        }
+        // 辅助函数：将 hex 转为 rgb
+        function hexToRgb(hex) {
+            const r = parseInt(hex.slice(0, 2), 16);
+            const g = parseInt(hex.slice(2, 4), 16);
+            const b = parseInt(hex.slice(4, 6), 16);
+            return `${r}, ${g}, ${b}`;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
 
         function addCommandInputLine() {

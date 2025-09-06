@@ -1,5 +1,7 @@
 package githubcew.arguslog.web.auth;
 
+import githubcew.arguslog.common.util.ContextUtil;
+import githubcew.arguslog.config.ArgusProperties;
 import githubcew.arguslog.core.account.Account;
 import githubcew.arguslog.core.account.ArgusUser;
 import githubcew.arguslog.core.account.UserProvider;
@@ -46,11 +48,23 @@ public class AccountAuthenticator implements Authenticator {
      */
     @Override
     public boolean authenticate(ArgusRequest request, ArgusResponse response) {
-        String username = request.getAccount().getUsername();
-        String password = request.getAccount().getPassword();
 
-        Account account = userProvider.provide(username);
-        boolean isAuth = account.getUsername().equals(username) && account.getPassword().equals(password);
+        ArgusProperties argusProperties = ContextUtil.getBean(ArgusProperties.class);
+        // 判断是否需要认证
+        boolean isAuth = false;
+        Account account = new Account();
+        if (argusProperties.isEnableAuth()) {
+            String username = request.getAccount().getUsername();
+            String password = request.getAccount().getPassword();
+
+            account = userProvider.provide(username);
+            isAuth = account.getUsername().equals(username) && account.getPassword().equals(password);
+        }
+        // 如果配置不需要认证
+        else {
+            isAuth = true;
+        }
+
         if (isAuth) {
             Token token = tokenProvider.provide();
             response.setToken(token);

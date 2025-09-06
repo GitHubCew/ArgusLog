@@ -1,10 +1,13 @@
-package githubcew.arguslog.monitor.trace;
+package githubcew.arguslog.web;
 
 import githubcew.arguslog.common.util.ContextUtil;
+import githubcew.arguslog.common.util.StringUtil;
 import githubcew.arguslog.core.account.ArgusUser;
 import githubcew.arguslog.core.cache.ArgusCache;
+import githubcew.arguslog.core.cmd.ColorWrapper;
 import githubcew.arguslog.core.cmd.ExecuteResult;
 import githubcew.arguslog.monitor.ArgusMethod;
+import githubcew.arguslog.monitor.MonitorInfo;
 import githubcew.arguslog.monitor.MonitorSender;
 import githubcew.arguslog.monitor.outer.OutputWrapper;
 import githubcew.arguslog.web.socket.ArgusSocketHandler;
@@ -22,21 +25,38 @@ import java.util.*;
  */
 public class ArgusTraceRequestInterceptor implements HandlerInterceptor {
 
+    /**
+     * 拦截请求
+     * @param request 请求
+     * @param response 响应
+     * @param handler 处理器
+     * @return 是否通过
+     * @throws Exception 异常
+     */
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         String requestId = UUID.randomUUID().toString();
-        ArgusTraceRequestContext.startRequest(requestId);
+        ArgusRequestContext.startRequest(requestId);
         return true;
     }
 
+    /**
+     * 请求完成后执行逻辑
+     * @param request 请求
+     * @param response 响应
+     * @param handler 处理器
+     * @param ex 异常对象
+     * @throws Exception 异常
+     */
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
 
-        String callTree = ArgusTraceRequestContext.getTreeStatistics();
+        String callTree = ArgusRequestContext.getTreeStatistics();
         if (callTree.isEmpty()) {
             return;
         }
-        Method method = ArgusTraceRequestContext.getStartMethod();
+
+        Method method = ArgusRequestContext.getStartMethod();
         MonitorSender monitorSender = ContextUtil.getBean(MonitorSender.class);
         ArgusSocketHandler argusSocketHandler = ContextUtil.getBean(ArgusSocketHandler.class);
 
@@ -47,8 +67,23 @@ public class ArgusTraceRequestInterceptor implements HandlerInterceptor {
                 ArgusUser user = ArgusCache.getUserToken(token);
                 if (Objects.isNull(user) || !user.getSession().isOpen()) {
                     continue;
+                };
+                MonitorInfo monitorInfo = ArgusCache.getTraceMonitorByUser(user.getToken().getToken(), method);
+                StringUtil.ExtractionResult result = StringUtil.extractWithPositions(callTree);
+                List<String> processValues = new ArrayList<>(result.getValues().size());
+                if (!Objects.isNull(monitorInfo) && !Objects.isNull(monitorInfo.getTrace())) {
+                    for (String value : result.getValues()) {
+                        if (Integer.parseInt(value) > monitorInfo.getTrace().getColorThreshold()) {
+                            processValues.add(ColorWrapper.red(value));
+                        }
+                        else {
+                            processValues.add(value);
+                        }
+                    }
                 }
-                argusSocketHandler.send(user.getSession(), OutputWrapper.formatOutput(ExecuteResult.success(callTree)));
+                String processTree = StringUtil.replaceBack(result, processValues);
+
+                argusSocketHandler.send(user.getSession(), OutputWrapper.formatOutput(ExecuteResult.success(processTree)));
             }
         });
     }

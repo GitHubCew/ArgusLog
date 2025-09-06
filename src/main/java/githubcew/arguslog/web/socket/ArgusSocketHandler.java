@@ -5,6 +5,7 @@ import githubcew.arguslog.core.account.ArgusUser;
 import githubcew.arguslog.core.cache.ArgusCache;
 import githubcew.arguslog.core.cmd.ExecuteResult;
 import githubcew.arguslog.monitor.outer.OutputWrapper;
+import githubcew.arguslog.web.ArgusUserContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
@@ -45,6 +46,8 @@ public class ArgusSocketHandler extends TextWebSocketHandler {
         if (!Objects.isNull(argusUser)) {
             argusUser.setSession(session);
             ArgusCache.addUserToken(token, argusUser);
+            // 设置用户
+            ArgusUserContext.setCurrentUser(argusUser);
         }
     }
 
@@ -57,6 +60,8 @@ public class ArgusSocketHandler extends TextWebSocketHandler {
      */
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
+
+        ArgusUserContext.clearCurrentUser();
     }
 
     /**
@@ -68,6 +73,14 @@ public class ArgusSocketHandler extends TextWebSocketHandler {
      */
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
+        String token = (String) session.getAttributes().get("argus-token");
+        ArgusUser argusUser = ArgusCache.getUserToken(token);
+        if (!Objects.isNull(argusUser)) {
+            argusUser.setSession(session);
+            ArgusCache.addUserToken(token, argusUser);
+            // 设置用户
+            ArgusUserContext.setCurrentUser(argusUser);
+        }
         try {
             String result = argusStarter.start(session, message.getPayload());
             send(session, result);

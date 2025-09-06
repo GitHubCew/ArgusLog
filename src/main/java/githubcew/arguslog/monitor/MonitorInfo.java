@@ -13,7 +13,7 @@ public class MonitorInfo {
     /**
      * 方法
      */
-    private ArgusMethod method;
+    private ArgusMethod argusMethod;
     /**
      * 请求头
      */
@@ -39,32 +39,47 @@ public class MonitorInfo {
      * 时间
      */
     private boolean time;
-    /**
-     * 异常
-     */
-    private boolean exception;
 
     /**
-     * 构造方法
+     * 请求路径
      */
-    public MonitorInfo() {
-    }
+    private boolean url;
+    /**
+     * 请求接口路径
+     */
+    private boolean api;
 
     /**
-     * 构造方法
-     *
-     * @param method    方法
-     * @param methodParam     参数
-     * @param result    结果
-     * @param time      时间
-     * @param exception 异常
+     * 请求方法类型
      */
-    public MonitorInfo(ArgusMethod method, boolean methodParam, boolean result, boolean time, boolean exception) {
-        this.method = method;
-        this.methodParam = methodParam;
-        this.result = result;
-        this.time = time;
-        this.exception = exception;
+    private boolean type;
+
+    /**
+     * 实际请求接口方法
+     */
+    private boolean method;
+
+    private Trace trace;
+
+    @Data
+    public static class Trace {
+        /**
+         * 耗时阈值
+         */
+        private long colorThreshold;
+
+        /**
+         * 构造方法
+         */
+        public Trace() {}
+
+        /**
+         * 构造方法
+         * @param colorThreshold 颜色阈值
+         */
+        public Trace(long colorThreshold) {
+            this.colorThreshold = colorThreshold;
+        }
     }
 
 }

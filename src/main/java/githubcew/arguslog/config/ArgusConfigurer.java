@@ -17,13 +17,4 @@ public interface ArgusConfigurer {
     default void registerCommand(CommandManager commandManager) {
     }
 
-    /**
-     * 注册不需要认证的命令
-     *
-     * @param commandManager 命令管理器
-     */
-    default void registerUnauthorizedCommands(CommandManager commandManager) {
-
-    }
-
 }

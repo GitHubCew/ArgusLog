@@ -1,4 +1,4 @@
-package githubcew.arguslog.monitor.trace;
+package githubcew.arguslog.web;
 
 import githubcew.arguslog.common.util.CommonUtil;
 import githubcew.arguslog.monitor.trace.asm.MethodCallInfo;
@@ -10,11 +10,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
- * Trace 上下文
+ * argus web请求上下文
  *
  * @author chenenwei
  */
-public class ArgusTraceRequestContext {
+public class ArgusRequestContext {
 
     /**
      * 请求方法
@@ -58,6 +58,7 @@ public class ArgusTraceRequestContext {
      */
     private static final ThreadLocal<Map<String, Integer>> INVOCATION_COUNTER =
             ThreadLocal.withInitial(ConcurrentHashMap::new);
+
 
     /**
      * 开始请求
@@ -132,9 +133,12 @@ public class ArgusTraceRequestContext {
         // 获取带参数的简化方法签名
         String signatureWithParams = getSignatureWithParams(node);
 
+        String duration = String.valueOf(node.getDuration());
         sb.append(signatureWithParams)
                 .append(" [")
-                .append(node.getDuration())
+                .append("#{")
+                .append(duration)
+                .append("}")
                 .append("ms]")
                 .append("\n");
 
@@ -144,7 +148,7 @@ public class ArgusTraceRequestContext {
             boolean childIsLast = (i == children.size() - 1);
             List<Boolean> newParentIsLastList = new ArrayList<>(parentIsLastList);
             newParentIsLastList.add(childIsLast);
-            // 显示超过5次则不显示
+            // 显示超过3次则不显示
             String key = children.get(i).getSignature() + depth;
             methodCount.putIfAbsent(key, 0);
             Integer printCount = methodCount.get(key);
@@ -537,7 +541,7 @@ public class ArgusTraceRequestContext {
          * 获取带参数的签名显示
          */
         public String getSignatureWithParams() {
-            return ArgusTraceRequestContext.getSignatureWithParams(this);
+            return ArgusRequestContext.getSignatureWithParams(this);
         }
     }
 

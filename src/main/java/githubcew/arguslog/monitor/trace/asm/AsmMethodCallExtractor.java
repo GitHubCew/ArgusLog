@@ -558,8 +558,14 @@ public class AsmMethodCallExtractor {
             if (className.contains("/")) {
                 className = className.replace("/", ".");
             }
+            // 在排除包excludePackages中且不在包includePackages中的过滤掉
             for (String excludePackage : excludePackages) {
                 if (className.startsWith(excludePackage)) {
+                    for (String includePackage : includePackages) {
+                        if (className.startsWith(includePackage)) {
+                            return true;
+                        }
+                    }
                     return false;
                 }
             }

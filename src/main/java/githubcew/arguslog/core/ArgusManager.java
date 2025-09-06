@@ -8,8 +8,8 @@ import githubcew.arguslog.core.account.UserProvider;
 import githubcew.arguslog.core.cache.ArgusCache;
 import githubcew.arguslog.core.cmd.CommandManager;
 import githubcew.arguslog.monitor.ArgusMethod;
-import githubcew.arguslog.monitor.trace.jdk.JdkProxyWrapper;
 import githubcew.arguslog.monitor.trace.buddy.BuddyProxyManager;
+import githubcew.arguslog.monitor.trace.jdk.JdkProxyWrapper;
 import githubcew.arguslog.web.auth.AccountAuthenticator;
 import githubcew.arguslog.web.auth.TokenAuthenticator;
 import githubcew.arguslog.web.auth.TokenProvider;
@@ -45,6 +45,9 @@ import java.util.Set;
 public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> {
 
     private static final Logger log = LoggerFactory.getLogger(ArgusManager.class);
+
+    // 初始化锁
+    private static volatile boolean initialized = false;
 
     private ArgusProperties argusProperties;
     private Extractor extractor;
@@ -87,27 +90,42 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
 
-        this.applicationContext = event.getApplicationContext();
-        this.configurers = new ArrayList<>(applicationContext.getBeansOfType(ArgusConfigurer.class).values());
-        this.commandManager = applicationContext.getBean(CommandManager.class);
-        this.extractor = applicationContext.getBean(Extractor.class);
-        this.userProvider = applicationContext.getBean(UserProvider.class);
-        this.tokenProvider = applicationContext.getBean(TokenProvider.class);
-        this.requestMappingHandlerMapping = applicationContext.getBean("requestMappingHandlerMapping", RequestMappingHandlerMapping.class);
-        this.argusProperties = applicationContext.getBean(ArgusProperties.class);
-        this.accountAuthenticator = applicationContext.getBean(AccountAuthenticator.class);
-        this.tokenAuthenticator = applicationContext.getBean(TokenAuthenticator.class);
-        // 注册bean
-        init();
+        // 确保只执行一次
+        if (initialized) {
+            return;
+        }
 
-        // 扫描接口
-        scan();
+        synchronized (ArgusManager.class) {
+            if (initialized) {
+                return;
+            }
 
-        // 打印Argus启动信息
-        printArgusInfo();
+            this.applicationContext = event.getApplicationContext();
+            this.configurers = new ArrayList<>(applicationContext.getBeansOfType(ArgusConfigurer.class).values());
+            this.commandManager = applicationContext.getBean(CommandManager.class);
+            this.extractor = applicationContext.getBean(Extractor.class);
+            this.userProvider = applicationContext.getBean(UserProvider.class);
+            this.tokenProvider = applicationContext.getBean(TokenProvider.class);
+            this.requestMappingHandlerMapping = applicationContext.getBean("requestMappingHandlerMapping", RequestMappingHandlerMapping.class);
+            this.argusProperties = applicationContext.getBean(ArgusProperties.class);
+            this.accountAuthenticator = applicationContext.getBean(AccountAuthenticator.class);
+            this.tokenAuthenticator = applicationContext.getBean(TokenAuthenticator.class);
+            // 注册bean
+            init();
 
-        // 初始化 buddy
-        BuddyProxyManager.init();
+            // 扫描接口
+            scan();
+
+            // 初始化 buddy
+            BuddyProxyManager.init();
+
+            initialized = true;
+
+            // 打印Argus启动信息
+            printArgusInfo();
+
+            log.info("【Argus => ArgusManager initialized successfully...】");
+        }
     }
 
     /**
@@ -121,10 +139,7 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
         // 注册命令
         registerCommand();
 
-        // 忽略鉴权命令
-        registerIgnoreAuthorizationCommand();
-
-        // 包装jdk代理, 提供动刷新拦截器
+        // 包装jdk代理, 提供动态刷新拦截器
         JdkProxyWrapper.wrapJdkProxies();
     }
 
@@ -135,16 +150,6 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
 
         for (ArgusConfigurer configurer : configurers) {
             configurer.registerCommand(this.commandManager);
-        }
-    }
-
-    /**
-     * 注册不需要认证命令
-     */
-    private void registerIgnoreAuthorizationCommand() {
-
-        for (ArgusConfigurer configurer : configurers) {
-            configurer.registerUnauthorizedCommands(this.commandManager);
         }
     }
 

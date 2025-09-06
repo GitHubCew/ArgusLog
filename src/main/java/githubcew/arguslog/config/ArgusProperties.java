@@ -57,4 +57,6 @@ public class ArgusProperties {
     private final Set<String> defaultExcludePackages =
             new HashSet<>(Arrays.asList("sun.", "java.", "javax."));
 
+    // 开启认证
+    private boolean enableAuth = true;
 }
