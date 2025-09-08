@@ -58,8 +58,6 @@ public class ShowCmd extends BaseCommand {
      */
     private List<String> getConfig() {
         ArgusProperties argusProperties = ContextUtil.getBean(ArgusProperties.class);
-//        ArgusProperties argusProperties = new ArgusProperties();
-//        argusProperties.setTraceIncludePackages(new HashSet<>(Arrays.asList("com.example1", "com.example2", "com.example3")));
         List<String> lines = new ArrayList<>();
 
         final int TOTAL_WIDTH = 100;
@@ -386,11 +384,5 @@ public class ShowCmd extends BaseCommand {
         return IntStream.range(0, count)
                 .mapToObj(i -> str)
                 .collect(Collectors.joining());
-    }
-
-    public static void main(String[] args) {
-        ShowCmd showCmd = new ShowCmd();
-        List<String> config = showCmd.getConfig();
-        System.out.println((String.join("\n", config)));
     }
 }
