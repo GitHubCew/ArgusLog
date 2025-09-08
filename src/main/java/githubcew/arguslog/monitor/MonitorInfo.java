@@ -87,6 +87,8 @@ public class MonitorInfo {
         /**
          * 构造方法
          * @param colorThreshold 颜色阈值
+         * @param maxDepth 最大深度
+         * @param color 颜色
          */
         public Trace(long colorThreshold, int maxDepth, ArgusProperties.TraceColor color) {
             this.colorThreshold = colorThreshold;

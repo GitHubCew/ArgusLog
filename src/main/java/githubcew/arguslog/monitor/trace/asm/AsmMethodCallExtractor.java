@@ -68,6 +68,7 @@ public class AsmMethodCallExtractor {
      * @param targetMethodDesc 目标方法描述符（ASM 格式）
      * @param includePackages  需要包含的包名前缀集合（用于过滤调用）
      * @param excludePackages  需要排除的包名前缀集合（用于过滤调用）
+     * @param skipClasses  跳过的类集合
      * @param maxDepth 最大深度
      * @return 所有方法调用信息的集合
      * @throws ClassNotFoundException 如果类无法加载

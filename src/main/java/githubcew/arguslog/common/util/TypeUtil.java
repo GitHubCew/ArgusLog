@@ -12,7 +12,7 @@ public class TypeUtil {
 
     /**
      * 判断字段是否是指定的泛型类型
-     * 例如：isParameterizedType(field, Set.class, String.class) → 判断是否为 Set<String>
+     * 例如：isParameterizedType(field, Set.class, String.class) → 判断是否为 Set
      *
      * @param field 字段
      * @param rawType 原始类型，如 Set.class、List.class、Map.class
@@ -59,7 +59,10 @@ public class TypeUtil {
 
     /**
      * 判断字段是否是某个原始类型（忽略泛型）
-     * 例如：isRawType(field, Set.class) → true if Set<T>
+     * 例如：isRawType(field, Set.class) → true if Set
+     * @param field 字段
+     * @param rawType 类型
+     * @return 是否匹配
      */
     public static boolean isRawType(Field field, Class<?> rawType) {
         try {
@@ -76,21 +79,27 @@ public class TypeUtil {
     }
 
     /**
-     * 判断字段是否是 Collection<String>
+     * 判断字段是否是 Collection
+     * @param field 字段
+     * @return 是否匹配
      */
     public static boolean isListOfString(Field field) {
         return isParameterizedType(field, List.class, String.class);
     }
 
     /**
-     * 判断字段是否是 Set<String>
+     * 判断字段是否是 Set
+     * @param field 字段
+     * @return 是否匹配
      */
     public static boolean isSetOfString(Field field) {
         return isParameterizedType(field, Set.class, String.class);
     }
 
     /**
-     * 判断字段是否是 Map<String, String>
+     * 判断字段是否是 Map
+     * @param field 字段
+     * @return 是否匹配
      */
     public static boolean isMapOfStringString(Field field) {
         return isParameterizedType(field, Map.class, String.class, String.class);
