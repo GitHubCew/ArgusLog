@@ -389,8 +389,6 @@ public class ArgusRequestContext {
         if (Objects.isNull(method)) {
             return;
         }
-        System.out.println("请求id"+ REQUEST_ID.get() +  "\n方法名称：" + method.getName());
-
         String requestId = REQUEST_ID.get();
         if (Objects.isNull(requestId) || requestId.isEmpty()) {
             return;
@@ -434,7 +432,6 @@ public class ArgusRequestContext {
 
         // 构建树结构
         if (CALL_TREE_ROOT.get() == null) {
-            System.out.println("🎯【ROOT】设置根节点: " + methodSignature);
             // 根节点
             CALL_TREE_ROOT.set(node);
         }
