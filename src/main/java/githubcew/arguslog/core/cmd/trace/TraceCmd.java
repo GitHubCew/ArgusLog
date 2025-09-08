@@ -125,7 +125,8 @@ public class TraceCmd extends BaseCommand {
         if (Objects.isNull(path)) {
             throw new RuntimeException(ERROR_PATH_EMPTY);
         }
-        if (!ArgusCache.hasUri(path)) {
+        ArgusMethod method = ArgusCache.getUriMethod(path);
+        if (Objects.isNull(method)) {
             throw new RuntimeException(ERROR_PATH_NOT_FOUND);
         }
 
@@ -206,12 +207,12 @@ public class TraceCmd extends BaseCommand {
 
         MonitorInfo monitorInfo = new MonitorInfo();
         monitorInfo.setArgusMethod(argusMethod);
-        monitorInfo.setTrace(new MonitorInfo.Trace(threshold, maxDepth, argusProperties.getTraceColor(), methodCallInfos));
+        monitorInfo.setTrace(new MonitorInfo.Trace(threshold, maxDepth, method.getMethod(),  methodCallInfos));
         ArgusCache.addUserTraceMethod(user, monitorInfo);
 
         picocliOutput.out(OK);
         if (skipClasses.size() > 0) {
-            picocliOutput.out(ColorWrapper.yellow("\n跳过的类：\n" + String.join("\n", skipClasses)));
+            picocliOutput.out(ColorWrapper.yellow("\n无法处理的类：\n" + String.join("\n", skipClasses)));
         }
     }
 

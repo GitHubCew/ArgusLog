@@ -1,17 +1,14 @@
 package githubcew.arguslog.web.filter;
 
+import githubcew.arguslog.common.util.CommonUtil;
 import githubcew.arguslog.common.util.ContextUtil;
-import githubcew.arguslog.common.util.StringUtil;
-import githubcew.arguslog.config.ArgusProperties;
 import githubcew.arguslog.core.account.ArgusUser;
 import githubcew.arguslog.core.cache.ArgusCache;
-import githubcew.arguslog.core.cmd.ColorWrapper;
 import githubcew.arguslog.core.cmd.ExecuteResult;
 import githubcew.arguslog.monitor.ArgusMethod;
 import githubcew.arguslog.monitor.MonitorInfo;
 import githubcew.arguslog.monitor.MonitorSender;
 import githubcew.arguslog.monitor.outer.OutputWrapper;
-import githubcew.arguslog.monitor.trace.asm.MethodCallInfo;
 import githubcew.arguslog.web.ArgusRequestContext;
 import githubcew.arguslog.web.socket.ArgusSocketHandler;
 
@@ -19,7 +16,6 @@ import javax.servlet.*;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Argus trace 拦截器
@@ -30,10 +26,11 @@ public class ArgusTraceRequestFilter implements Filter {
 
     /**
      * 过滤器入口
-     * @param request 请求
+     *
+     * @param request  请求
      * @param response 响应
-     * @param chain 链
-     * @throws IOException 异常
+     * @param chain    链
+     * @throws IOException      异常
      * @throws ServletException 异常
      */
     @Override
@@ -45,13 +42,12 @@ public class ArgusTraceRequestFilter implements Filter {
 
         try {
             chain.doFilter(request, response);
-        }
-        finally {
+        } finally {
 
             try {
                 ArgusRequestContext.MethodNode methodNode = ArgusRequestContext.getMethodNode();
                 Method startMethod = ArgusRequestContext.getStartMethod(requestId);
-                submitTraceData(methodNode, startMethod);
+                submitTraceTask(methodNode, startMethod);
             } catch (Exception e) {
                 // 忽略
             }
@@ -60,7 +56,12 @@ public class ArgusTraceRequestFilter implements Filter {
         }
     }
 
-        private void submitTraceData(ArgusRequestContext.MethodNode rootNode, Method method) {
+    /**
+     * 提交调用链输出任务
+     * @param rootNode 根节点
+     * @param method 开始方法
+     */
+    private void submitTraceTask(ArgusRequestContext.MethodNode rootNode, Method method) {
         MonitorSender monitorSender = ContextUtil.getBean(MonitorSender.class);
         ArgusSocketHandler argusSocketHandler = ContextUtil.getBean(ArgusSocketHandler.class);
 
@@ -81,13 +82,16 @@ public class ArgusTraceRequestFilter implements Filter {
                     continue;
                 }
 
-
-                Map<String, Integer> methodCounts = new HashMap<>();
-                String tree = ArgusRequestContext.buildTreeString(rootNode, 0, monitorInfo.getTrace(), new ArrayList<>(), methodCounts);
-
+                String uri = ArgusCache.getMethodUri(new ArgusMethod(method));
+                String tree = ArgusRequestContext.buildTreeString(rootNode, 0, monitorInfo.getTrace(), new ArrayList<>(), new HashMap<>());
+                String methodSignature = CommonUtil.generateSignature(method);
+                String output = "uri => " + OutputWrapper.wrapperCopy(uri)
+                        + "\nmethod => " + methodSignature
+                        + "\ntracing => "
+                        + "\n" + tree;
                 argusSocketHandler.send(
                         user.getSession(),
-                        OutputWrapper.formatOutput(ExecuteResult.success(tree))
+                        OutputWrapper.formatOutput(ExecuteResult.success(output))
                 );
             }
         });

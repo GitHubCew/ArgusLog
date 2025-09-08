@@ -570,6 +570,17 @@ public class ArgusCache {
     }
 
     /**
+     * 获取所有监听开始的方法
+     * @return 方法列表
+     */
+    public static List<Method> getTraceStartMethods () {
+        return userTraceMethods.values()
+                .stream()
+                .flatMap(methods -> methods.stream().map(monitor -> monitor.getArgusMethod().getMethod()))
+                .collect(Collectors.toList());
+    }
+
+    /**
      * 根据用户和URI获取追踪监测信息
      *
      * @param user 用户token

@@ -1,6 +1,8 @@
 package githubcew.arguslog.monitor;
 
 import githubcew.arguslog.config.ArgusProperties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,8 +19,11 @@ import java.util.concurrent.*;
 @Component
 public class MonitorSender implements InitializingBean, DisposableBean {
 
+    private static final Logger log = LoggerFactory.getLogger(MonitorSender.class);
+
     private final ArgusProperties argusProperties;
     private final ThreadPoolExecutor scheduler;
+
 
     /**
      * 构造方法
@@ -28,7 +33,7 @@ public class MonitorSender implements InitializingBean, DisposableBean {
     public MonitorSender(ArgusProperties argusProperties) {
         this.argusProperties = argusProperties;
         this.scheduler = new ThreadPoolExecutor(
-                argusProperties.getThreadNum(),
+                argusProperties.getThreadCorNum(),
                 argusProperties.getThreadNum(),
                 60L,
                 TimeUnit.SECONDS,
@@ -90,8 +95,11 @@ public class MonitorSender implements InitializingBean, DisposableBean {
      */
     @Override
     public void afterPropertiesSet() throws Exception {
-        System.out.println("MonitorExecutor 初始化完成，线程池配置: " +
-                "核心线程数=" + argusProperties.getThreadNum() +
-                ", 队列大小=" + argusProperties.getMaxWaitQueueSize());
+        if (log.isDebugEnabled()) {
+            log.debug("MonitorExecutor 初始化完成，线程池配置: " +
+                    "核心线程数=" + argusProperties.getThreadCorNum() +
+                    ", 最大线程数=" + argusProperties.getThreadNum() +
+                    ", 队列大小=" + argusProperties.getMaxWaitQueueSize());
+        }
     }
 }

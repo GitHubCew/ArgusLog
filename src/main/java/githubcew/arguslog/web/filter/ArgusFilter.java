@@ -8,6 +8,7 @@ import githubcew.arguslog.web.ArgusRequest;
 import githubcew.arguslog.web.ArgusResponse;
 import githubcew.arguslog.web.auth.AccountAuthenticator;
 import githubcew.arguslog.web.auth.Token;
+import org.apache.catalina.connector.RequestFacade;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
@@ -45,8 +46,7 @@ public class ArgusFilter implements Filter {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-        String uri = httpRequest.getRequestURI();
-
+        String uri = httpRequest.getRequestURI().replace(((HttpServletRequest) request).getContextPath(), "");
         // 处理 /argus/** 请求
         if (uri.startsWith("/argus") && !uri.equals("/argus-ws")) {
             try {

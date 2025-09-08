@@ -46,8 +46,12 @@ public class ArgusProperties {
     @ArgusProperty(description = "token过期时间(秒)")
     private long tokenExpireTime = 60 * 30;
 
-    // 任务线程数
-    @ArgusProperty(description = "任务线程数")
+    // 任务核心线程数
+    @ArgusProperty(description = "任务核心线程数")
+    private int threadCorNum = 1;
+
+    // 任务非核心线程数
+    @ArgusProperty(description = "任务非核心线程数")
     private int threadNum = 3;
 
     // 任务队列最大等待数量
@@ -55,7 +59,7 @@ public class ArgusProperties {
     private int maxWaitQueueSize = 20;
 
     // 最大增强类数
-    @ArgusProperty(description = "最大增强类数", modifyInRunning = true)
+    @ArgusProperty(description = "最大增强类数量", modifyInRunning = true)
     private int traceMaxEnhancedClassNum = 500;
 
     // 包含包
@@ -78,15 +82,4 @@ public class ArgusProperties {
     @ArgusProperty(description = "调用链方法耗时阈值(ms)", modifyInRunning = true)
     private long traceColorThreshold = 300;
 
-    // 调用链方法耗时超过时显示的颜色
-    @ArgusProperty(description = "调用链方法耗时超过时显示的颜色", displayInShow = false)
-    private TraceColor traceColor = TraceColor.RED;
-
-    // 颜色类
-    public static enum TraceColor {
-        RED,
-        YELLOW,
-        GREEN,
-        BLUE,
-    }
 }
