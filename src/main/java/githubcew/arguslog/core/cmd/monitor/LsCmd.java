@@ -77,8 +77,8 @@ public class LsCmd extends BaseCommand {
             dataList = ArgusCache.getUserMonitorUris(user, path);
         }
         long total = dataList.size();
-        if (dataList.size() > 100) {
-            dataList = dataList.subList(0, 100);
+        if (dataList.size() > 50) {
+            dataList = dataList.subList(0, 50);
         }
 
         OutputWrapper outputWrapper = OutputWrapper.wrapperCopyV2(dataList, OutputWrapper.LINE_SEPARATOR);

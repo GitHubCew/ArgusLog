@@ -62,10 +62,11 @@ public class TraceCmd extends BaseCommand {
 
     @CommandLine.Option(
             names = {"-t", "--threshold"},
-            description = "指定调用链方法耗时阈值，单位ms,默认为300ms",
-            arity = "0"
+            description = "指定调用链方法耗时阈值，单位ms",
+            arity = "1"
+
     )
-    private Long threshold;
+    private long threshold;
 
     @CommandLine.Option(
             names = {"-d", "--depth"},
@@ -106,8 +107,8 @@ public class TraceCmd extends BaseCommand {
         String currentUsername = ArgusUserContext.getCurrentUsername();
         List<String> dataList = ArgusCache.getTraceUriByUser(currentUsername);
         long total = dataList.size();
-        if (dataList.size() > 100) {
-            dataList = dataList.subList(0, 100);
+        if (dataList.size() > 50) {
+            dataList = dataList.subList(0, 50);
         }
 
         OutputWrapper outputWrapper = OutputWrapper.wrapperCopyV2(dataList, OutputWrapper.LINE_SEPARATOR);
@@ -194,8 +195,8 @@ public class TraceCmd extends BaseCommand {
 
         String user = ArgusUserContext.getCurrentUsername();
 
-        // 添加用户监听trace方法
-        if (threshold < 0) {
+        // 方法耗时颜色阈值
+        if (threshold < 1) {
             threshold = argusProperties.getTraceColorThreshold();
         }
         // 最大深度
@@ -204,7 +205,7 @@ public class TraceCmd extends BaseCommand {
         }
         MonitorInfo monitorInfo = new MonitorInfo();
         monitorInfo.setArgusMethod(argusMethod);
-        monitorInfo.setTrace(new MonitorInfo.Trace(threshold, maxDepth));
+        monitorInfo.setTrace(new MonitorInfo.Trace(threshold, maxDepth, argusProperties.getTraceColor()));
         ArgusCache.addUserTraceMethod(user, monitorInfo);
 
         picocliOutput.out(OK);

@@ -183,7 +183,7 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
      */
     private void printArgusInfo() {
 
-        if (this.argusProperties.getPrintBanner()) {
+        if (this.argusProperties.isPrintBanner()) {
             // 打印 argus banner
             try (InputStream inputStream = new ClassPathResource("META-INF/resources/argus/banner.txt").getInputStream();
                  BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
@@ -197,7 +197,7 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
             }
         }
         // 打印用户信息
-        if (this.argusProperties.getPrintUserInfo()) {
+        if (this.argusProperties.isPrintUserInfo()) {
 
             if (userProvider instanceof ArgusUserProvider) {
                 log.info("【Argus => username: {}, password: {}】",

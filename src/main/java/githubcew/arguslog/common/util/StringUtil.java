@@ -183,4 +183,17 @@ public class StringUtil {
         List<String> processedValues = processor.apply(extractionResult.getValues());
         return replaceBack(extractionResult, processedValues);
     }
+
+    /**
+     * 判断是否是boolean字符串
+     * @param str 字符串
+     * @return 结果
+     */
+    public static boolean isBooleanValue(String str) {
+        if (str == null) {
+            return false;
+        }
+        String lower = str.toLowerCase().trim();
+        return "true".equals(lower) || "false".equals(lower);
+    }
 }

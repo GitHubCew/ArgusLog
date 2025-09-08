@@ -104,19 +104,6 @@ public class ArgusRequestContext {
         return CALL_TREE_ROOT.get();
     }
 
-//    /**
-//     * 获取格式化的调用树字符串
-//     * @return 格式化后的树字符串
-//     */
-//    public static String getFormattedTree() {
-//        MethodNode root = CALL_TREE_ROOT.get();
-//        if (root == null) {
-//            return "No call tree available";
-//        }
-//        Map<String, Integer> methodCounts = new HashMap<>();
-//        return buildTreeString(root, 0,  new ArrayList<>(), methodCounts);
-//    }
-
     /**
      * 获取树节点
      * @return MethodNode

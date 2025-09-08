@@ -2,6 +2,7 @@ package githubcew.arguslog.web.filter;
 
 import githubcew.arguslog.common.util.ContextUtil;
 import githubcew.arguslog.common.util.StringUtil;
+import githubcew.arguslog.config.ArgusProperties;
 import githubcew.arguslog.core.account.ArgusUser;
 import githubcew.arguslog.core.cache.ArgusCache;
 import githubcew.arguslog.core.cmd.ColorWrapper;
@@ -82,11 +83,24 @@ public class ArgusTraceRequestFilter implements Filter {
                 String callTree = ArgusRequestContext.buildTreeString(rootNode, 0, monitorInfo.getTrace().getMaxDepth(), new ArrayList<>(), methodCounts);
                 StringUtil.ExtractionResult result = StringUtil.extractWithPositions(callTree);
                 List<String> processValues = new ArrayList<>();
-
+                ArgusProperties.TraceColor color = monitorInfo.getTrace().getColor();
                 for (String value : result.getValues()) {
                     try {
                         if (Integer.parseInt(value) > monitorInfo.getTrace().getColorThreshold()) {
-                            processValues.add(ColorWrapper.red(value));
+
+                            if (color == ArgusProperties.TraceColor.RED) {
+                                value = ColorWrapper.red(value);
+                            }
+                            else if (color == ArgusProperties.TraceColor.YELLOW) {
+                                value = ColorWrapper.yellow(value);
+                            }
+                            else if (color == ArgusProperties.TraceColor.GREEN) {
+                                value = ColorWrapper.green(value);
+                            }
+                            else if (color == ArgusProperties.TraceColor.BLUE) {
+                                value = ColorWrapper.blue(value);
+                            }
+                            processValues.add(value);
                         } else {
                             processValues.add(value);
                         }

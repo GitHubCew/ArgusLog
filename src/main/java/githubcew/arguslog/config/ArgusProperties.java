@@ -1,5 +1,6 @@
 package githubcew.arguslog.config;
 
+import githubcew.arguslog.core.anno.ArgusProperty;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
@@ -18,48 +19,75 @@ import java.util.Set;
 public class ArgusProperties {
 
     // 开启认证
+    @ArgusProperty(description = "认证状态", modifyInRunning = true)
     private boolean enableAuth = true;
 
     // 默认用户名
+    @ArgusProperty(description = "用户名", displayInShow = false)
     private String username = "argus";
 
     // 默认用户密码
+    @ArgusProperty(description = "用户密码", displayInShow = false)
     private String password = "argus";
 
     // token 刷新时间（秒）
-    private Long tokenFlushTime = 60L;
+    @ArgusProperty(description = "token 刷新时间（秒）")
+    private long tokenFlushTime = 60L;
 
     // 打印用户信息
-    private Boolean printUserInfo = true;
+    @ArgusProperty(description = "启动时打印用户信息")
+    private boolean printUserInfo = true;
 
     // 打印argus banner
-    private Boolean printBanner = true;
+    @ArgusProperty(description = "启动时打印banner信息")
+    private boolean printBanner = true;
 
     // token过期时间 （30分钟）
-    private Long tokenExpireTime = 1000 * 60 * 30L;
+    @ArgusProperty(description = "token过期时间(秒)")
+    private long tokenExpireTime = 60 * 30;
 
-    // 处理的线程数
-    private Integer threadNum = 3;
+    // 任务线程数
+    @ArgusProperty(description = "任务线程数")
+    private int threadNum = 3;
 
-    // 队列最大等待数量
-    private Integer maxWaitQueueSize = 20;
+    // 任务队列最大等待数量
+    @ArgusProperty(description = "任务队列最大等待数量")
+    private int maxWaitQueueSize = 20;
 
     // 最大增强类数
-    private Integer traceMaxEnhancedClassNum = 100;
+    @ArgusProperty(description = "最大增强类数", modifyInRunning = true)
+    private int traceMaxEnhancedClassNum = 100;
 
     // 包含包
+    @ArgusProperty(description = "包含包", modifyInRunning = true)
     private Set<String> traceIncludePackages;
 
     // 排除包
+    @ArgusProperty(description = "排除包", modifyInRunning = true)
     private Set<String> traceExcludePackages;
 
     // 默认排除包
+    @ArgusProperty(description = "默认排除包", displayInShow = false)
     private final Set<String> traceDefaultExcludePackages =
             new HashSet<>(Arrays.asList("sun.", "java.", "javax."));
 
-    // 最大深度
+    // 调用链最大深度
+    @ArgusProperty(description = "调用链最大深度", modifyInRunning = true)
     private int traceMaxDepth = 6;
 
-    // 调用链颜色阈值(ms)
+    // 调用链方法耗时阈值(ms)
+    @ArgusProperty(description = "调用链方法耗时阈值(ms)", modifyInRunning = true)
     private long traceColorThreshold = 300;
+
+    // 调用链方法耗时超过时显示的颜色
+    @ArgusProperty(description = "调用链方法耗时超过时显示的颜色", displayInShow = false)
+    private TraceColor traceColor = TraceColor.RED;
+
+    // 颜色类
+    public static enum TraceColor {
+        RED,
+        YELLOW,
+        GREEN,
+        BLUE,
+    }
 }
