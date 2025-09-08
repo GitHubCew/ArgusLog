@@ -83,7 +83,7 @@ public class AsmMethodCallExtractor {
         // 已处理的方法标识集合，防止重复分析
         Set<String> processedMethods = new HashSet<>();
         // 存储所有提取到的方法调用信息
-        Set<MethodCallInfo> allCalls = new HashSet<>();
+        Set<MethodCallInfo> allCalls = new LinkedHashSet<>();
         // 使用队列实现广度优先分析
         Queue<MethodCallInfo> workQueue = new LinkedList<>();
 

@@ -1,8 +1,11 @@
 package githubcew.arguslog.web;
 
 import githubcew.arguslog.common.util.CommonUtil;
+import githubcew.arguslog.core.cmd.ColorWrapper;
+import githubcew.arguslog.monitor.MonitorInfo;
 import githubcew.arguslog.monitor.trace.asm.MethodCallInfo;
 import lombok.Data;
+import org.objectweb.asm.Type;
 
 import java.lang.reflect.Method;
 import java.util.*;
@@ -118,14 +121,14 @@ public class ArgusRequestContext {
      *
      * @param node 当前节点
      * @param depth 当前节点的深度
-     * @param maxDepth 最大深度
+     * @param trace trace信息
      * @param parentIsLastList 父节点是否是最后一个节点的列表
      * @param methodCount 方法调用计数器
      * @return 树形字符串
      */
     public static String buildTreeString(MethodNode node,
                                          int depth,
-                                         int maxDepth,
+                                         MonitorInfo.Trace trace,
                                          List<Boolean> parentIsLastList,
                                          Map<String, Integer> methodCount) {
         StringBuilder sb = new StringBuilder();
@@ -147,17 +150,25 @@ public class ArgusRequestContext {
         // 获取带参数的简化方法签名
         String signatureWithParams = getSignatureWithParams(node);
 
-        String duration = String.valueOf(node.getDuration());
-        sb.append(signatureWithParams)
-                .append(" [")
-                .append("#{")
-                .append(duration)
-                .append("}")
-                .append("ms]")
-                .append("\n");
+        // 获取行号
+        String lineNumber = getLineNumber(node.getMethod(), depth, trace.getMethodCalls());
+
+        sb.append(signatureWithParams);
+        // 行号
+        if (!lineNumber.isEmpty()) {
+            sb.append("#").append(lineNumber);
+        }
+        sb.append(" [");
+        if (node.getDuration() >= trace.getColorThreshold()) {
+            sb.append(ColorWrapper.red(String.valueOf(node.getDuration())));
+        } else {
+            sb.append(node.getDuration());
+        }
+        sb.append("ms]");
+        sb.append("\n");
 
         // 检查是否达到最大深度，如果是，不再递归
-        if (depth >= maxDepth) {
+        if (depth >= trace.getMaxDepth()) {
             return sb.toString();
         }
 
@@ -177,7 +188,7 @@ public class ArgusRequestContext {
             else {
                 methodCount.put(key, printCount + 1);
             }
-            sb.append(buildTreeString(children.get(i), depth + 1, maxDepth, newParentIsLastList, methodCount));
+            sb.append(buildTreeString(children.get(i), depth + 1, trace, newParentIsLastList, methodCount));
         }
 
         return sb.toString();
@@ -197,14 +208,38 @@ public class ArgusRequestContext {
         // 构建参数列表字符串
         String paramsString = buildParamsString(node);
 
-        // 检查总长度是否超过限制
-        String fullSignature = className + "." + methodName + "(" + paramsString + ")";
 
-        if (fullSignature.length() > 64) {
-            return truncateSignature(className, methodName, paramsString);
+        // 参数超过64时，前面参数保留完成
+        if (paramsString.length() > 64) {
+            int endIndex = paramsString.indexOf(",", 64);
+            if (endIndex != -1) {
+                paramsString = paramsString.substring(0, endIndex) + "...";
+            }
         }
 
-        return fullSignature;
+        return className + "." + methodName + "(" + paramsString + ")";
+    }
+
+
+    /**
+     * 获取行号
+     * @param method 方法
+     * @param depth 深度
+     * @param methodCalls 方法调用信息
+     * @return 行号
+     */
+    public static String getLineNumber(Method method, int depth,  Set<MethodCallInfo> methodCalls) {
+
+        String className = method.getDeclaringClass().getName().replace(".", "/");
+        String methodName = method.getName();
+        String methodDesc = Type.getMethodDescriptor(method);
+        // 现在统一深度找
+        Optional<MethodCallInfo> first = methodCalls.stream().filter(call ->
+                (call.getSubCalledClass().equals(className) || call.getCalledClass().equals(className)) // 兼容jdk代理的类名，和调用接口名一致
+                && call.getCalledMethod().equals(methodName)
+                && call.getCalledMethodDesc().equals(methodDesc)
+                && call.getDepth() == depth).findFirst();
+        return first.map(methodCallInfo -> String.valueOf(methodCallInfo.getLineNumber())).orElse("");
     }
 
     /**

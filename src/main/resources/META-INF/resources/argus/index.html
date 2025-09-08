@@ -1079,7 +1079,7 @@
         function parseColorTags(text) {
             if (!text || typeof text !== 'string') return text;
 
-            return text.replace(/\[#([0-9A-Fa-f]{6})\]([^\[]*?)\[\/\]/g, (match, color, content) => {
+            return text.replace(/\[#([0-9A-Fa-f]{6})\](.*?)\[\/\]/g, (match, color, content) => {
                 return `<span style="
             color: #${color};
             font-weight: 600;
@@ -1091,13 +1091,6 @@
             margin: 0;
         ">${escapeHtml(content)}</span>`;
             });
-        }
-        // 辅助函数：将 hex 转为 rgb
-        function hexToRgb(hex) {
-            const r = parseInt(hex.slice(0, 2), 16);
-            const g = parseInt(hex.slice(2, 4), 16);
-            const b = parseInt(hex.slice(4, 6), 16);
-            return `${r}, ${g}, ${b}`;
         }
 
         function escapeHtml(text) {

@@ -157,9 +157,18 @@ public class TraceCmd extends BaseCommand {
             throw new RuntimeException("至少要指定一个包名");
         }
 
+        // 方法耗时颜色阈值
+        if (threshold < 1) {
+            threshold = argusProperties.getTraceColorThreshold();
+        }
+        // 最大深度
+        if (maxDepth < 1) {
+            maxDepth = argusProperties.getTraceMaxDepth();
+        }
+
         ArgusMethod argusMethod = ArgusCache.getUriMethod(path);
         // 生成方法调用信息
-        Set<MethodCallInfo> methodCallInfos = new HashSet<>();
+        Set<MethodCallInfo> methodCallInfos = new LinkedHashSet<>();
         Set<String> skipClasses = new HashSet<>();
         try {
             methodCallInfos = AsmMethodCallExtractor.extractNestedCustomMethodCalls(
@@ -195,17 +204,9 @@ public class TraceCmd extends BaseCommand {
 
         String user = ArgusUserContext.getCurrentUsername();
 
-        // 方法耗时颜色阈值
-        if (threshold < 1) {
-            threshold = argusProperties.getTraceColorThreshold();
-        }
-        // 最大深度
-        if (maxDepth < 1) {
-            maxDepth = argusProperties.getTraceMaxDepth();
-        }
         MonitorInfo monitorInfo = new MonitorInfo();
         monitorInfo.setArgusMethod(argusMethod);
-        monitorInfo.setTrace(new MonitorInfo.Trace(threshold, maxDepth, argusProperties.getTraceColor()));
+        monitorInfo.setTrace(new MonitorInfo.Trace(threshold, maxDepth, argusProperties.getTraceColor(), methodCallInfos));
         ArgusCache.addUserTraceMethod(user, monitorInfo);
 
         picocliOutput.out(OK);

@@ -56,7 +56,7 @@ public class ArgusProperties {
 
     // 最大增强类数
     @ArgusProperty(description = "最大增强类数", modifyInRunning = true)
-    private int traceMaxEnhancedClassNum = 100;
+    private int traceMaxEnhancedClassNum = 500;
 
     // 包含包
     @ArgusProperty(description = "包含包", modifyInRunning = true)
@@ -67,9 +67,8 @@ public class ArgusProperties {
     private Set<String> traceExcludePackages;
 
     // 默认排除包
-    @ArgusProperty(description = "默认排除包", displayInShow = false)
-    private final Set<String> traceDefaultExcludePackages =
-            new HashSet<>(Arrays.asList("sun.", "java.", "javax."));
+    @ArgusProperty(description = "默认排除包")
+    private final Set<String> traceDefaultExcludePackages = new HashSet<>(Arrays.asList("sun.", "java.", "javax."));
 
     // 调用链最大深度
     @ArgusProperty(description = "调用链最大深度", modifyInRunning = true)

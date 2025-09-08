@@ -1,7 +1,10 @@
 package githubcew.arguslog.monitor;
 
 import githubcew.arguslog.config.ArgusProperties;
+import githubcew.arguslog.monitor.trace.asm.MethodCallInfo;
 import lombok.Data;
+
+import java.util.Set;
 
 /**
  * 方法监测信息类
@@ -80,6 +83,11 @@ public class MonitorInfo {
         private ArgusProperties.TraceColor color;
 
         /**
+         * 方法调用信息
+         */
+        private Set<MethodCallInfo> methodCalls;
+
+        /**
          * 构造方法
          */
         public Trace() {}
@@ -89,11 +97,13 @@ public class MonitorInfo {
          * @param colorThreshold 颜色阈值
          * @param maxDepth 最大深度
          * @param color 颜色
+         * @param methodCalls 方法调用信息
          */
-        public Trace(long colorThreshold, int maxDepth, ArgusProperties.TraceColor color) {
+        public Trace(long colorThreshold, int maxDepth, ArgusProperties.TraceColor color, Set<MethodCallInfo> methodCalls) {
             this.colorThreshold = colorThreshold;
             this.maxDepth = maxDepth;
             this.color = color;
+            this.methodCalls = methodCalls;
         }
     }
 
