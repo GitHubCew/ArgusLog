@@ -647,13 +647,12 @@
                     showTerminal();
                     connectWebSocket();
 
-                    // ✅ 新增：恢复 token 显示
                     const tokenInfo = document.getElementById('tokenInfo');
                     const tokenExpiryElement = document.getElementById('tokenExpiry');
                     tokenInfo.style.display = 'flex';
                     updateTokenExpiryDisplay(expiryTime);  // 注意：传入的是绝对时间戳
 
-                    // 可选：恢复用户名
+                    // 恢复用户名
                     const storedUsername = localStorage.getItem('argus-username');
                     if (storedUsername) {
                         currentUser = storedUsername;
@@ -671,11 +670,6 @@
         function handleLogin() {
             const username = usernameInput.value.trim();
             const password = passwordInput.value.trim();
-            // if (!username || !password) {
-            //     showLoginMessage('请输入用户名和密码', 'error');
-            //
-            //     return;
-            // }
 
             loginText.textContent = '登录中...';
             loginSpinner.style.display = 'inline-block';
@@ -756,7 +750,7 @@
                     statusText.textContent = '已连接';
                     addOutput("已连接 argus", 'success');
                     addOutput("输入 'help' 查看命令列表。", 'info');
-                    // ✅ 新增：连接成功后，创建新的输入行
+                    // 连接成功后，创建新的输入行
                     addCommandInputLine();
                 };
 
@@ -953,7 +947,6 @@
                             scrollToBottom();
                         }
                     } catch (e) {
-                        // 连这个都错了，直接用基础函数输出
                         addOutput(`解析消息失败: ${e.message}`, 'error');
                     } finally {
                         addCommandInputLine();
@@ -973,7 +966,7 @@
                         addOutput('连接 argus 异常断开，正在重试...', 'error');
                         attemptReconnect();
                     }
-                    // ✅ 新增：连接断开后，创建新的输入行
+                    // 连接断开后，创建新的输入行
                     addCommandInputLine();
                 };
 
@@ -1007,7 +1000,7 @@
             }
             try {
                 websocket.send(command);
-                // ✅ 新增：发送成功后，立即移除当前输入行
+                // 发送成功后，立即移除当前输入行
                 const currentInput = document.getElementById('commandInput');
                 if (currentInput && currentInput.closest('.command-line')) {
                     currentInput.closest('.command-line').remove();
@@ -1148,8 +1141,6 @@
                         commandIndex = commands.length;
                         addOutput(`argus@${currentUser}% ${command}`, 'command');
                         handleCommand(command);
-                        // input.value = ''; // 这行可以移除，因为整个输入框会被替换
-                        // addCommandInputLine(); // 这行移到 handleCommand 里统一处理
                     }
                 } else if (e.key === 'ArrowUp') {
                     e.preventDefault();
@@ -1176,22 +1167,19 @@
             switch (command.toLowerCase()) {
                 case 'clear':
                     commandHistory.innerHTML = '';
-                    // ✅ 移除 addCommandInputLine(); 等待用户下一次输入时由服务器消息触发
                     break;
                 case 'connect':
                     if (!isConnected) connectWebSocket();
                     else addOutput('已连接', 'error');
-                    // ✅ 移除 addCommandInputLine();
                     break;
                 case 'exit':
                     if (websocket) websocket.close();
-                    // ✅ 移除 addCommandInputLine();
                     break;
                 case 'logout':
                     setTimeout(logout, 1000);
                     break;
                 default:
-                    sendCommand(command); // sendCommand 内部会移除当前输入行
+                    sendCommand(command);
                     break;
             }
         }
