@@ -50,7 +50,6 @@ public class SetCmd extends BaseCommand {
     @Override
     protected Integer execute() throws Exception {
         checkAndSet();
-        picocliOutput.out(OK);
         return OK_CODE;
     }
 

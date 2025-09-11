@@ -10,6 +10,8 @@ public class PicocliOutput {
     private final PrintWriter out;
     private final PrintWriter err;
 
+    public boolean hasNormalOutput;
+
     /**
      * 获取输出
      * @return PrintWriter
@@ -41,6 +43,7 @@ public class PicocliOutput {
      * @param msg 消息
      */
     public void out(String msg) {
+        this.hasNormalOutput = true;
         out.println(msg);
         out.flush();
     }

@@ -756,6 +756,8 @@
                     statusText.textContent = '已连接';
                     addOutput("已连接 argus", 'success');
                     addOutput("输入 'help' 查看命令列表。", 'info');
+                    // ✅ 新增：连接成功后，创建新的输入行
+                    addCommandInputLine();
                 };
 
                 // 处理成功消息
@@ -953,6 +955,8 @@
                     } catch (e) {
                         // 连这个都错了，直接用基础函数输出
                         addOutput(`解析消息失败: ${e.message}`, 'error');
+                    } finally {
+                        addCommandInputLine();
                     }
                 };
                 websocket.onclose = (event) => {
@@ -969,6 +973,8 @@
                         addOutput('连接 argus 异常断开，正在重试...', 'error');
                         attemptReconnect();
                     }
+                    // ✅ 新增：连接断开后，创建新的输入行
+                    addCommandInputLine();
                 };
 
                 websocket.onerror = (err) => {
@@ -1001,6 +1007,11 @@
             }
             try {
                 websocket.send(command);
+                // ✅ 新增：发送成功后，立即移除当前输入行
+                const currentInput = document.getElementById('commandInput');
+                if (currentInput && currentInput.closest('.command-line')) {
+                    currentInput.closest('.command-line').remove();
+                }
                 return true;
             } catch (error) {
                 addOutput(error.message, 'error');
@@ -1113,7 +1124,6 @@
             if (oldInput && oldInput.closest('.command-line')) {
                 oldInput.closest('.command-line').remove();
             }
-
             const line = document.createElement('div');
             line.className = 'command-line';
             line.innerHTML = `
@@ -1127,7 +1137,6 @@
                 </div>
             `;
             container.appendChild(line);
-
             const input = document.getElementById('commandInput');
 
             input.addEventListener('keydown', function(e) {
@@ -1139,8 +1148,8 @@
                         commandIndex = commands.length;
                         addOutput(`argus@${currentUser}% ${command}`, 'command');
                         handleCommand(command);
-                        input.value = '';
-                        addCommandInputLine();
+                        // input.value = ''; // 这行可以移除，因为整个输入框会被替换
+                        // addCommandInputLine(); // 这行移到 handleCommand 里统一处理
                     }
                 } else if (e.key === 'ArrowUp') {
                     e.preventDefault();
@@ -1159,7 +1168,6 @@
                     }
                 }
             });
-
             input.focus();
             scrollToBottom();
         }
@@ -1168,20 +1176,23 @@
             switch (command.toLowerCase()) {
                 case 'clear':
                     commandHistory.innerHTML = '';
-                    addCommandInputLine();
+                    // ✅ 移除 addCommandInputLine(); 等待用户下一次输入时由服务器消息触发
                     break;
                 case 'connect':
                     if (!isConnected) connectWebSocket();
                     else addOutput('已连接', 'error');
+                    // ✅ 移除 addCommandInputLine();
                     break;
                 case 'exit':
                     if (websocket) websocket.close();
+                    // ✅ 移除 addCommandInputLine();
                     break;
                 case 'logout':
                     setTimeout(logout, 1000);
                     break;
                 default:
-                    sendCommand(command);
+                    sendCommand(command); // sendCommand 内部会移除当前输入行
+                    break;
             }
         }
     });

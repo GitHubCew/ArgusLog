@@ -43,16 +43,10 @@ public class RevertCmd extends BaseCommand {
     @Override
     protected Integer execute() throws Exception {
 
-        try {
-            if (all) {
-                revertAll();
-            } else {
-                revert();
-            }
-            picocliOutput.out(OK);
-        } catch (Exception e) {
-            picocliOutput.error(e.getMessage());
-            return ERROR_CODE;
+        if (all) {
+            revertAll();
+        } else {
+            revert();
         }
         return OK_CODE;
     }
@@ -89,6 +83,4 @@ public class RevertCmd extends BaseCommand {
         // 移除全部监听用户
         ArgusCache.userRemoveAllTraceMethod(ArgusUserContext.getCurrentUsername());
     }
-
-
 }

@@ -83,20 +83,15 @@ public class TraceCmd extends BaseCommand {
     @Override
     protected Integer execute() throws Exception {
 
-        try {
-            // 查看已监听的接口
-            if (monitor) {
-                picocliOutput.out(view());
-                return OK_CODE;
-            }
-            // 监听接口
-            else {
-                trace();
-            }
-        } catch (Exception e) {
-            picocliOutput.error(e.getMessage());
-            return ERROR_CODE;
-        };
+        // 查看已监听的接口
+        if (monitor) {
+            picocliOutput.out(view());
+            return OK_CODE;
+        }
+        // 监听接口
+        else {
+            trace();
+        }
         return OK_CODE;
     }
 
@@ -179,7 +174,7 @@ public class TraceCmd extends BaseCommand {
                     skipClasses,
                     maxDepth);
         } catch (Exception e) {
-            picocliOutput.error(e.getMessage());
+            throw new RuntimeException(e.getMessage());
         }
 
 
@@ -210,7 +205,6 @@ public class TraceCmd extends BaseCommand {
         monitorInfo.setTrace(new MonitorInfo.Trace(threshold, maxDepth, method.getMethod(),  methodCallInfos));
         ArgusCache.addUserTraceMethod(user, monitorInfo);
 
-        picocliOutput.out(OK);
         if (skipClasses.size() > 0) {
             picocliOutput.out(ColorWrapper.yellow("\n无法处理的类：\n" + String.join("\n", skipClasses)));
         }

@@ -42,8 +42,7 @@ public class ShowCmd extends BaseCommand {
             picocliOutput.out(String.join("\n", getConfig()));
         }
         else {
-            picocliOutput.error("Variable not found! available：\n" + Arrays.asList("config"));
-            return ERROR_CODE;
+            throw new RuntimeException("Variable not found! available：\n" + Arrays.asList("config"));
         }
         return OK_CODE;
     }

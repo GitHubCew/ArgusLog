@@ -41,25 +41,19 @@ public class LsCmd extends BaseCommand {
      */
     @Override
     protected Integer execute() throws Exception {
-        try {
-
-            // 监听的接口
-            String output;
-            if (monitor) {
-                output = output(ArgusUserContext.getCurrentUsername(), path);
-            }
-            // 接口
-            else {
-                if (Objects.isNull(path)) {
-                    path = "*";
-                }
-                output = output(null, path);
-            }
-            picocliOutput.out(String.join(OutputWrapper.LINE_SEPARATOR, output));
-        }catch (Exception e) {
-            picocliOutput.error(e.getMessage());
-            return ERROR_CODE;
+        // 监听的接口
+        String output;
+        if (monitor) {
+            output = output(ArgusUserContext.getCurrentUsername(), path);
         }
+        // 接口
+        else {
+            if (Objects.isNull(path)) {
+                path = "*";
+            }
+            output = output(null, path);
+        }
+        picocliOutput.out(String.join(OutputWrapper.LINE_SEPARATOR, output));
         return OK_CODE;
     }
 
@@ -77,8 +71,8 @@ public class LsCmd extends BaseCommand {
             dataList = ArgusCache.getUserMonitorUris(user, path);
         }
         long total = dataList.size();
-        if (dataList.size() > 50) {
-            dataList = dataList.subList(0, 50);
+        if (dataList.size() > 30) {
+            dataList = dataList.subList(0, 30);
         }
 
         OutputWrapper outputWrapper = OutputWrapper.wrapperCopyV2(dataList, OutputWrapper.LINE_SEPARATOR);

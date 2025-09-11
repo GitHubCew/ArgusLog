@@ -3,7 +3,7 @@ package githubcew.arguslog.core.anno;
 import java.lang.annotation.*;
 
 /**
- * 属性信息
+ * 配置属性信息
  *
  * @author chenenwei
  */
@@ -25,7 +25,7 @@ public @interface ArgusProperty {
     boolean modifyInRunning() default false;
 
     /**
-     * 实现显示子show命令中
+     * 是否显示在show命令中
      * @return 结果
      */
     boolean displayInShow() default true;

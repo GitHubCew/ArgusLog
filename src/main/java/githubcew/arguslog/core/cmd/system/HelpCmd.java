@@ -68,43 +68,13 @@ public class HelpCmd extends BaseCommand {
             if (Objects.nonNull(specificCommand)) {
                 BaseCommand specificCommandInstance = specificCommand.newInstance();
                 new CommandLine(specificCommandInstance).usage(picocliOutput.getOut());
+                picocliOutput.hasNormalOutput = true;
             }
             else {
-                picocliOutput.error(ERROR_COMMAND_NOT_FOUND);
-                return ERROR_CODE;
+                throw new RuntimeException(ERROR_COMMAND_NOT_FOUND);
             }
         }
 
-//        CommandLine commandLine = new CommandLine(new ArgusCmd());
-//        Map<String, CommandLine> subcommands = commandLine.getSubcommands();
-//        if (Objects.isNull(command) || command.isEmpty()) {
-//            picocliOutput.out("Argus 可用命令：\n");
-//
-//            int targetWidth = 32; // 视觉对齐目标（英文字符宽度）
-//
-//            subcommands.forEach((name, cmd) -> {
-//                String description = String.join(" ", cmd.getCommandSpec().usageMessage().description());
-//
-//                int nameDisplayWidth = displayWidth(name);
-//                int padding = Math.max(1, targetWidth - nameDisplayWidth);
-//                String paddedName = name + repeat(" ", padding);
-//
-//                picocliOutput.out("   " + paddedName + description);
-//            });
-//
-//            picocliOutput.out("\n可使用 'help <命令>' 查看详细帮助");
-//        }
-//
-//        else {
-//            CommandLine subcommand = subcommands.get(command);
-//            if (Objects.nonNull(subcommand)) {
-//                subcommand.usage(picocliOutput.getOut());
-//            }
-//            else {
-//                picocliOutput.error("Command not found!");
-//                return -1;
-//            }
-//        }
         return OK_CODE;
     }
 

@@ -44,24 +44,18 @@ public class RemoveCmd extends BaseCommand {
     @Override
     protected Integer execute() throws Exception {
 
-        try {
-            if (all) {
-                path = "*";
-            }
-            else {
-                if (Objects.isNull(path) || path.isEmpty()) {
-                    throw new RuntimeException(ERROR_PATH_EMPTY);
-                }
-                if (path.equals("*")) {
-                    throw new RuntimeException(ERROR_PATH_NOT_FOUND);
-                }
-            }
-            ArgusCache.removeMonitorMethodWithPattern(ArgusUserContext.getCurrentUsername(), path);
-            picocliOutput.out(OK);
-        } catch (Exception e) {
-            picocliOutput.error(e.getMessage());
-            return ERROR_CODE;
+        if (all) {
+            path = "*";
         }
+        else {
+            if (Objects.isNull(path) || path.isEmpty()) {
+                throw new RuntimeException(ERROR_PATH_EMPTY);
+            }
+            if (path.equals("*")) {
+                throw new RuntimeException(ERROR_PATH_NOT_FOUND);
+            }
+        }
+        ArgusCache.removeMonitorMethodWithPattern(ArgusUserContext.getCurrentUsername(), path);
         return OK_CODE;
     }
 }

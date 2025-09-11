@@ -31,11 +31,6 @@ public abstract class BaseCommand implements Callable<Integer> {
 
     protected PicocliOutput picocliOutput;
 
-    // 添加设置输出流的方法
-    public void setOutput(PrintWriter out, PrintWriter err) {
-        this.picocliOutput = new PicocliOutput(out, err);
-    }
-
     /**
      * 执行逻辑
      * @return 结果
@@ -47,7 +42,10 @@ public abstract class BaseCommand implements Callable<Integer> {
         }
         Integer result = 0;
         try {
-            result= execute();
+            result = execute();
+            if (!picocliOutput.hasNormalOutput) {
+                picocliOutput.out(OK);
+            }
         } catch (Exception e) {
             picocliOutput.error(e.getMessage());
             return ERROR_CODE;

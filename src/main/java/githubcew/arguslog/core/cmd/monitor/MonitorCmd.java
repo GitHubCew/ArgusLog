@@ -66,45 +66,40 @@ public class MonitorCmd extends BaseCommand {
     @Override
     protected Integer execute() throws Exception {
 
-        try {
-            MonitorInfo monitorInfo = new MonitorInfo();
-            // 监听全部接口
-            if (all) {
-                // 如果接口路径参数不为空, 则处理为 targets
-                if (!Objects.isNull(path) && Objects.isNull(targets)) {
-                    targets = new ArrayList<>();
-                }
-                if(!Objects.isNull(path)){
-                    targets.add(path);
-                }
-                path = "*";
-            } else {
-                if (Objects.isNull(path) || path.isEmpty()) {
-                    throw new RuntimeException(ERROR_PATH_EMPTY);
-                }
-                if (path.equals("*")) {
-                    throw new RuntimeException(ERROR_PATH_NOT_FOUND);
-                }
+        Thread.sleep(2000);
+        MonitorInfo monitorInfo = new MonitorInfo();
+        // 监听全部接口
+        if (all) {
+            // 如果接口路径参数不为空, 则处理为 targets
+            if (!Objects.isNull(path) && Objects.isNull(targets)) {
+                targets = new ArrayList<>();
             }
-            if (allTarget && Objects.isNull(targets)) {
-                monitorAll(monitorInfo);
+            if(!Objects.isNull(path)){
+                targets.add(path);
             }
-            else {
-                if (!Objects.isNull(targets) && !targets.isEmpty()) {
-                    monitorTargets(monitorInfo);
-                } else {
-                    monitorDefault(monitorInfo);
-                }
+            path = "*";
+        } else {
+            if (Objects.isNull(path) || path.isEmpty()) {
+                throw new RuntimeException(ERROR_PATH_EMPTY);
             }
-
-            // 监听接口
-            ArgusCache.addMonitorInfo(ArgusUserContext.getCurrentUsername(), monitorInfo, path);
-            picocliOutput.out(OK);
-            return OK_CODE;
-        } catch (Exception e) {
-            picocliOutput.error(e.getMessage());
-            return ERROR_CODE;
+            if (path.equals("*")) {
+                throw new RuntimeException(ERROR_PATH_NOT_FOUND);
+            }
         }
+        if (allTarget && Objects.isNull(targets)) {
+            monitorAll(monitorInfo);
+        }
+        else {
+            if (!Objects.isNull(targets) && !targets.isEmpty()) {
+                monitorTargets(monitorInfo);
+            } else {
+                monitorDefault(monitorInfo);
+            }
+        }
+
+        // 监听接口
+        ArgusCache.addMonitorInfo(ArgusUserContext.getCurrentUsername(), monitorInfo, path);
+        return OK_CODE;
     }
 
     /**
