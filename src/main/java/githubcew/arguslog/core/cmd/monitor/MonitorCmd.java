@@ -66,7 +66,6 @@ public class MonitorCmd extends BaseCommand {
     @Override
     protected Integer execute() throws Exception {
 
-        Thread.sleep(2000);
         MonitorInfo monitorInfo = new MonitorInfo();
         // 监听全部接口
         if (all) {
