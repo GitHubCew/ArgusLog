@@ -123,7 +123,7 @@ public Result<ActivityWalkRouteActivityInfoVO> info(@RequestParam("id") Long id)
 
 1 连接和监听接口
 
-首先我们访问localhost:80/context/argus/index.html 进入arguslog终端，输入命令：
+首先我们访问 http://localhost:80/context/argus/index.html 进入arguslog终端，输入命令：
 
 ```shell
 # 输入connect命令连接 WebSocket 服务器
@@ -137,15 +137,36 @@ argus 已连接
 2 结果输出
 ```shell 
 
-
 # 输如monitor命令监测后，需要等待或者手动调用接口/activityWalkRouteActivity/info
 # 例如：curl http://localhost:8080/activityWalkRouteActivity/info?id=495
-
 
 # 接口监测结果输出
 param ==> "id":495   # 方法参数
 time  ==> 151 # 方法耗时
 
-
 ```
 
+
+## 扩展
+### 自定义命令
+1.继承BaseCommand类 创建自定义命令类,使用注解@CommandLine.Command 标记命令名称
+重写命令执行方法  public Integer execute()
+```
+  @Override
+    public Integer execute() throws Exception {
+        // todo 业务逻辑
+    }
+```
+2.注册自定义命令 使用 CommandManager类的register进行注册
+ ```
+    commandManager.register("help", HelpCmd.class);
+ ```
+
+### 自定义认证 
+1.实现接口类Authenticator,实现 authenticate(ArgusRequest request, ArgusResponse argusResponse) 方法
+ ```
+    @Override
+        public boolean authenticate(ArgusRequest request, ArgusResponse argusResponse) {
+            // 自定义认证方式
+        }
+ ```
