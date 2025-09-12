@@ -888,6 +888,7 @@
                         // 仅处理含 #ouputconcat# 的消息
                         if (!message.includes('#ouputconcat#')) {
                             addOutput(message);
+                            addCommandInputLine();
                             return;
                         }
                         // 提取 code 和 data
@@ -919,6 +920,7 @@
 
                             // 调用原有的 handleSuccessOutput 处理内容
                             handleSuccessOutput(data);
+                            addCommandInputLine();
                         } else {
                             // 错误响应：时间 + 错误内容（换行）
                             const timeDiv = document.createElement('div');
@@ -945,11 +947,10 @@
 
                             commandHistory.appendChild(errorDiv);
                             scrollToBottom();
+                            addCommandInputLine();
                         }
                     } catch (e) {
                         addOutput(`解析消息失败: ${e.message}`, 'error');
-                    } finally {
-                        addCommandInputLine();
                     }
                 };
                 websocket.onclose = (event) => {
@@ -996,6 +997,8 @@
         function sendCommand(command) {
             if (!websocket || websocket.readyState !== WebSocket.OPEN) {
                 addOutput('未连接，请先使用 connect 连接', 'error');
+                // 本地反馈：创建新输入行
+                addCommandInputLine();
                 return false;
             }
             try {
@@ -1008,6 +1011,8 @@
                 return true;
             } catch (error) {
                 addOutput(error.message, 'error');
+                // 创建新输入行
+                addCommandInputLine();
                 return false;
             }
         }
@@ -1046,6 +1051,19 @@
         function showTerminal() {
             loginContainer.style.display = 'none';
             terminalOutput.style.display = 'flex';
+            if (!currentUser) {
+                const storedUsername = localStorage.getItem('argus-username');
+                if (storedUsername) {
+                    currentUser = storedUsername;
+                    // 同时更新界面上已存在的提示符（如果有的话）
+                    const userHost = document.querySelector('.user-host');
+                    if (userHost) {
+                        userHost.textContent = `argus@${currentUser}`;
+                    }
+                }
+            }
+
+            // 现在创建输入行，currentUser 已经是正确的值
             addCommandInputLine();
         }
 
@@ -1117,11 +1135,16 @@
             if (oldInput && oldInput.closest('.command-line')) {
                 oldInput.closest('.command-line').remove();
             }
+            // 从 localStorage 获取用户名
+            let displayUsername = currentUser; // 先尝试用全局变量
+            if (!displayUsername) {
+                displayUsername = localStorage.getItem('argus-username') || 'guest'; // 如果全局变量为空，从 localStorage 读取，再不行就用 'guest'
+            }
             const line = document.createElement('div');
             line.className = 'command-line';
             line.innerHTML = `
                 <span class="prompt">
-                    <span class="user-host">argus@${currentUser}</span> %
+                    <span class="user-host">argus@${displayUsername}</span> %
                 </span>
                 <div class="input-line">
                     <div class="command-input-wrapper">
@@ -1131,7 +1154,6 @@
             `;
             container.appendChild(line);
             const input = document.getElementById('commandInput');
-
             input.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter') {
                     e.preventDefault();
@@ -1139,7 +1161,15 @@
                     if (command) {
                         commands.push(command);
                         commandIndex = commands.length;
-                        addOutput(`argus@${currentUser}% ${command}`, 'command');
+                        // 只有当命令不是 'clear' 时，才输出命令历史
+                        if (command.toLowerCase() !== 'clear') {
+                            // 在这里也使用动态获取的用户名
+                            let cmdDisplayUser = currentUser;
+                            if (!cmdDisplayUser) {
+                                cmdDisplayUser = localStorage.getItem('argus-username') || 'guest';
+                            }
+                            addOutput(`argus@${cmdDisplayUser}% ${command}`, 'command');
+                        }
                         handleCommand(command);
                     }
                 } else if (e.key === 'ArrowUp') {
@@ -1167,13 +1197,16 @@
             switch (command.toLowerCase()) {
                 case 'clear':
                     commandHistory.innerHTML = '';
+                    addCommandInputLine();
                     break;
                 case 'connect':
                     if (!isConnected) connectWebSocket();
                     else addOutput('已连接', 'error');
+                    addCommandInputLine();
                     break;
                 case 'exit':
                     if (websocket) websocket.close();
+                    addCommandInputLine();
                     break;
                 case 'logout':
                     setTimeout(logout, 1000);
