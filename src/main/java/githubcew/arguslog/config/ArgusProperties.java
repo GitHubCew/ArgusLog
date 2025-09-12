@@ -48,7 +48,7 @@ public class ArgusProperties {
 
     // 任务核心线程数
     @ArgusProperty(description = "任务核心线程数")
-    private int threadCorNum = 1;
+    private int threadCoreNum = 1;
 
     // 任务非核心线程数
     @ArgusProperty(description = "任务非核心线程数")
