@@ -841,24 +841,60 @@
                             });
                             copyText.addEventListener('click', (e) => {
                                 e.stopPropagation();
-                                navigator.clipboard.writeText(innerContent).then(() => {
+                                // 定义一个辅助函数，用于显示提示信息
+                                const showTooltipMessage = (message) => {
                                     const originalText = tooltip.textContent;
-                                    tooltip.textContent = '✓ 已复制';
+                                    tooltip.textContent = message;
                                     tooltip.style.opacity = '1';
                                     setTimeout(() => {
                                         tooltip.textContent = originalText;
                                         tooltip.style.opacity = '0';
                                     }, 1500);
-                                }).catch(err => {
-                                    console.error('复制失败:', err);
-                                    const originalText = tooltip.textContent;
-                                    tooltip.textContent = '✗ 复制失败';
-                                    tooltip.style.opacity = '1';
-                                    setTimeout(() => {
-                                        tooltip.textContent = originalText;
-                                        tooltip.style.opacity = '0';
-                                    }, 1500);
-                                });
+                                };
+
+                                // 首先尝试使用现代 Clipboard API
+                                if (navigator.clipboard && navigator.clipboard.writeText) {
+                                    navigator.clipboard.writeText(innerContent).then(() => {
+                                        showTooltipMessage('✓ 已复制');
+                                    }).catch((err) => {
+                                        console.warn('Clipboard API 失败，尝试降级方案:', err);
+                                        fallbackCopyToClipboard();
+                                    });
+                                } else {
+                                    // 如果浏览器不支持 Clipboard API，直接使用降级方案
+                                    fallbackCopyToClipboard();
+                                }
+
+                                // 降级方案：使用 document.execCommand
+                                function fallbackCopyToClipboard() {
+                                    // 创建一个临时的 textarea 元素
+                                    const textarea = document.createElement('textarea');
+                                    textarea.value = innerContent;
+                                    // 隐藏它，避免影响布局
+                                    textarea.style.position = 'fixed';
+                                    textarea.style.top = '0';
+                                    textarea.style.left = '0';
+                                    textarea.style.opacity = '0';
+                                    document.body.appendChild(textarea);
+                                    // 选中内容
+                                    textarea.select();
+                                    textarea.setSelectionRange(0, 99999); // 兼容移动设备
+                                    try {
+                                        // 执行复制命令
+                                        const successful = document.execCommand('copy');
+                                        if (successful) {
+                                            showTooltipMessage('✓ 已复制');
+                                        } else {
+                                            throw new Error('execCommand 复制失败');
+                                        }
+                                    } catch (err) {
+                                        console.error('降级复制方案也失败:', err);
+                                        showTooltipMessage('✗ 复制失败');
+                                    } finally {
+                                        // 清理临时元素
+                                        document.body.removeChild(textarea);
+                                    }
+                                }
                             });
 
                             outputDiv.appendChild(copyText);
