@@ -693,6 +693,7 @@
                             const expiry = parseInt(expireTime);
                             localStorage.setItem('argus-token', token);
                             localStorage.setItem('argus-token-expiry', expiry.toString());
+                            localStorage.setItem('argus-username', username);
                             startTokenTimer(expiry - new Date().getTime());
                             currentUser = username;
                             if (userHost) userHost.textContent = `argus@${currentUser}`;
@@ -1108,6 +1109,7 @@
             authToken = null;
             localStorage.removeItem('argus-token');
             localStorage.removeItem('argus-token-expiry');
+            localStorage.removeItem('argus-username');
             if (tokenTimer) clearTimeout(tokenTimer);
             if (tokenInterval) clearInterval(tokenInterval);
             loginContainer.style.display = 'flex';
@@ -1174,7 +1176,7 @@
             // 从 localStorage 获取用户名
             let displayUsername = currentUser; // 先尝试用全局变量
             if (!displayUsername) {
-                displayUsername = localStorage.getItem('argus-username') || 'guest'; // 如果全局变量为空，从 localStorage 读取，再不行就用 'guest'
+                displayUsername = localStorage.getItem('argus-username') || ''; // 如果全局变量为空，从 localStorage 读取，再不行就用 'guest'
             }
             const line = document.createElement('div');
             line.className = 'command-line';

@@ -190,8 +190,6 @@
                 <configuration>
                     <archive>
                         <manifestEntries>
-                            <Premain-Class>githubcew.arguslog.monitor.trace.MethodTracingAgent</Premain-Class>
-                            <Agent-Class>githubcew.arguslog.monitor.trace.MethodTracingAgent</Agent-Class>
                             <Can-Redefine-Classes>true</Can-Redefine-Classes>
                             <Can-Retransform-Classes>true</Can-Retransform-Classes>
                             <Created-By>ByteBuddy</Created-By>

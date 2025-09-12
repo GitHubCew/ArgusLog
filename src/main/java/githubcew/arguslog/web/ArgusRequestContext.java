@@ -4,7 +4,6 @@ import githubcew.arguslog.common.util.CommonUtil;
 import githubcew.arguslog.core.cache.ArgusCache;
 import githubcew.arguslog.core.cmd.ColorWrapper;
 import githubcew.arguslog.monitor.MonitorInfo;
-import githubcew.arguslog.monitor.outer.OutputWrapper;
 import githubcew.arguslog.monitor.trace.asm.MethodCallInfo;
 import lombok.Data;
 import org.objectweb.asm.Type;
