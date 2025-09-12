@@ -44,7 +44,7 @@ public class ArgusProperties {
 
     // token过期时间 （1小时）
     @ArgusProperty(description = "token过期时间(秒)")
-    private long tokenExpireTime = 60 * 60;
+    private long tokenExpireTime = 3600L;
 
     // 任务核心线程数
     @ArgusProperty(description = "任务核心线程数")
