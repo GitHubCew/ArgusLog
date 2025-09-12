@@ -14,6 +14,9 @@ public class CommandManager {
     private final Map<String, Class<? extends BaseCommand>> commands = Collections.synchronizedMap(new LinkedHashMap<>(10));
 
     public void register (String command, Class<? extends BaseCommand> handler) {
+        if (commands.containsKey(command)) {
+            throw new RuntimeException("Command \"" + command + "\" already exists!");
+        }
         commands.put(command, handler);
     }
 

@@ -1,6 +1,5 @@
 package githubcew.arguslog.common.util;
 
-import githubcew.arguslog.core.cmd.ExecuteResult;
 import org.objectweb.asm.Type;
 
 import java.lang.reflect.Method;

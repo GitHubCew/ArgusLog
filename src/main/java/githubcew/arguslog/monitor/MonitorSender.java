@@ -33,7 +33,7 @@ public class MonitorSender implements InitializingBean, DisposableBean {
     public MonitorSender(ArgusProperties argusProperties) {
         this.argusProperties = argusProperties;
         this.scheduler = new ThreadPoolExecutor(
-                argusProperties.getThreadCorNum(),
+                argusProperties.getThreadCoreNum(),
                 argusProperties.getThreadNum(),
                 60L,
                 TimeUnit.SECONDS,
@@ -97,7 +97,7 @@ public class MonitorSender implements InitializingBean, DisposableBean {
     public void afterPropertiesSet() throws Exception {
         if (log.isDebugEnabled()) {
             log.debug("MonitorExecutor 初始化完成，线程池配置: " +
-                    "核心线程数=" + argusProperties.getThreadCorNum() +
+                    "核心线程数=" + argusProperties.getThreadCoreNum() +
                     ", 最大线程数=" + argusProperties.getThreadNum() +
                     ", 队列大小=" + argusProperties.getMaxWaitQueueSize());
         }

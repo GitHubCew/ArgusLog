@@ -42,13 +42,13 @@ public class ArgusProperties {
     @ArgusProperty(description = "启动时打印banner信息")
     private boolean printBanner = true;
 
-    // token过期时间 （30分钟）
+    // token过期时间 （1小时）
     @ArgusProperty(description = "token过期时间(秒)")
-    private long tokenExpireTime = 60 * 30;
+    private long tokenExpireTime = 3600L;
 
     // 任务核心线程数
     @ArgusProperty(description = "任务核心线程数")
-    private int threadCorNum = 1;
+    private int threadCoreNum = 1;
 
     // 任务非核心线程数
     @ArgusProperty(description = "任务非核心线程数")
