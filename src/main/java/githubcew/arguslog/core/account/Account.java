@@ -26,10 +26,10 @@ public class Account {
     /**
      * 其他扩展信息
      */
-    private Object extent;
+    private Object extend;
 
     /**
-     * 扩展方法
+     * 构造方法
      */
     public Account() {}
 
@@ -49,12 +49,12 @@ public class Account {
      * @param username 用户名
      * @param password 密码
      * @param salt 盐值
-     * @param extent 其他扩展信息
+     * @param extend 其他扩展信息
      */
-    public Account(String username, String password, String salt, Object extent) {
+    public Account(String username, String password, String salt, Object extend) {
         this.username = username;
         this.password = password;
         this.salt = salt;
-        this.extent = extent;
+        this.extend = extend;
     }
 }
