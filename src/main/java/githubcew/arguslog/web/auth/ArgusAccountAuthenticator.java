@@ -48,7 +48,7 @@ public class ArgusAccountAuthenticator implements Authenticator {
             }
         }
 
-        // 构建返回的tokne
+        // 构建返回token
         Token token = tokenProvider.provide();
         response.setToken(token);
         response.setExecuteResult(ExecuteResult.success(ExecuteResult.OK));
