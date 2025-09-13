@@ -128,13 +128,11 @@ public class ArgusAutoConfiguration implements ImportBeanDefinitionRegistrar, We
         return new MethodAdvice();
     }
 
-    @ConditionalOnMissingBean(MethodParamFormatter.class)
     @Bean
     public MethodParamFormatter paramFormatter() {
         return new ArgusMethodParamFormatter();
     }
 
-    @ConditionalOnMissingBean(Outer.class)
     @Bean
     public Outer outer() {
         return new ArgusWebSocketOuter();
@@ -190,7 +188,6 @@ public class ArgusAutoConfiguration implements ImportBeanDefinitionRegistrar, We
      * @return 请求解析器
      */
     @Bean
-    @ConditionalOnMissingBean(Extractor.class)
     public Extractor extractor() {
         return new ArgusRequestExtractor();
     }
