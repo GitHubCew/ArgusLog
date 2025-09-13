@@ -11,8 +11,7 @@ import java.util.Objects;
  * @author chenenwei
  */
 
-@Component
-public class TokenAuthenticator implements Authenticator {
+public class ArgusTokenAuthenticator implements Authenticator {
 
     @Override
     public boolean authenticate(ArgusRequest request, ArgusResponse argusResponse) {

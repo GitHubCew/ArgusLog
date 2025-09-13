@@ -26,15 +26,4 @@ public interface Authenticator {
      * @return 是否支持
      */
     boolean supports(ArgusRequest request);
-
-    /**
-     * 立即返回
-     *
-     * @return 是否立即返回
-     */
-    default boolean returnImmediately() {
-        return false;
-    }
-
-    ;
 }

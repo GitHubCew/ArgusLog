@@ -8,6 +8,8 @@ import githubcew.arguslog.monitor.formater.ArgusMethodParamFormatter;
 import githubcew.arguslog.monitor.formater.MethodParamFormatter;
 import githubcew.arguslog.monitor.outer.ArgusWebSocketOuter;
 import githubcew.arguslog.monitor.outer.Outer;
+import githubcew.arguslog.web.auth.ArgusAccountAuthenticator;
+import githubcew.arguslog.web.auth.ArgusTokenAuthenticator;
 import githubcew.arguslog.web.filter.ArgusFilter;
 import githubcew.arguslog.web.filter.ArgusTraceRequestFilter;
 import githubcew.arguslog.web.filter.RequestBodyCachingFilter;
@@ -35,6 +37,9 @@ import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
 import javax.servlet.DispatcherType;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
 
 /**
  * 自动配置类
@@ -128,6 +133,20 @@ public class ArgusAutoConfiguration implements ImportBeanDefinitionRegistrar, We
         return new MethodAdvice();
     }
 
+    /**
+     * 公私钥生成
+     * @return 公私钥
+     * @throws NoSuchAlgorithmException 异常
+     */
+    @Bean
+    public KeyPair argusKeyPair() throws NoSuchAlgorithmException {
+
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+        keyPairGenerator.initialize(2048);
+
+        return keyPairGenerator.generateKeyPair();
+    }
+
     @Bean
     public MethodParamFormatter paramFormatter() {
         return new ArgusMethodParamFormatter();
@@ -172,7 +191,22 @@ public class ArgusAutoConfiguration implements ImportBeanDefinitionRegistrar, We
         return new ArgusTokenProvider(argusProperties.getTokenExpireTime());
     }
 
+    /**
+     * 用户认证器
+     * @return 用户认证器
+     */
+    @Bean
+    @ConditionalOnMissingBean(ArgusAccountAuthenticator.class)
+    public ArgusAccountAuthenticator argusAccountAuthenticator() {return new ArgusAccountAuthenticator(); }
 
+    /**
+     * token认证器
+     * @return token认证器
+     */
+    @Bean
+    public ArgusTokenAuthenticator argusTokenAuthenticator() {
+        return new ArgusTokenAuthenticator();
+    }
     /**
      * Argus Servlet
      * @return ArgusServlet

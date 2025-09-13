@@ -1,15 +1,13 @@
 package githubcew.arguslog.web.servlet;
 
 import githubcew.arguslog.common.util.ContextUtil;
-import githubcew.arguslog.config.ArgusProperties;
 import githubcew.arguslog.core.ArgusManager;
 import githubcew.arguslog.core.account.Account;
 import githubcew.arguslog.core.cache.ArgusCache;
 import githubcew.arguslog.web.ArgusRequest;
 import githubcew.arguslog.web.ArgusResponse;
-import githubcew.arguslog.web.auth.AccountAuthenticator;
+import githubcew.arguslog.web.auth.ArgusAccountAuthenticator;
 import githubcew.arguslog.web.auth.Token;
-import githubcew.arguslog.web.auth.TokenProvider;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.util.StreamUtils;
 
@@ -80,17 +78,17 @@ public class ArgusServlet extends HttpServlet {
             String password = request.getHeader("password");
 
             ArgusManager argusManager = ContextUtil.getBean(ArgusManager.class);
-            AccountAuthenticator accountAuthenticator = argusManager.getAccountAuthenticator();
+            ArgusAccountAuthenticator argusAccountAuthenticator = argusManager.getAccountAuthenticator();
             ArgusRequest argusRequest = new ArgusRequest();
             argusRequest.setAccount(new Account(username, password));
 
-            if (!accountAuthenticator.supports(argusRequest)) {
+            if (!argusAccountAuthenticator.supports(argusRequest)) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 return;
             }
 
             ArgusResponse argusResponse = new ArgusResponse();
-            boolean authenticate = accountAuthenticator.authenticate(argusRequest, argusResponse);
+            boolean authenticate = argusAccountAuthenticator.authenticate(argusRequest, argusResponse);
 
             if (authenticate) {
                 Token token = argusResponse.getToken();

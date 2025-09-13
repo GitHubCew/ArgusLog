@@ -10,8 +10,8 @@ import githubcew.arguslog.core.cmd.CommandManager;
 import githubcew.arguslog.monitor.ArgusMethod;
 import githubcew.arguslog.monitor.trace.buddy.BuddyProxyManager;
 import githubcew.arguslog.monitor.trace.jdk.JdkProxyWrapper;
-import githubcew.arguslog.web.auth.AccountAuthenticator;
-import githubcew.arguslog.web.auth.TokenAuthenticator;
+import githubcew.arguslog.web.auth.ArgusAccountAuthenticator;
+import githubcew.arguslog.web.auth.ArgusTokenAuthenticator;
 import githubcew.arguslog.web.auth.TokenProvider;
 import githubcew.arguslog.web.extractor.Extractor;
 import org.slf4j.Logger;
@@ -56,8 +56,8 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
     private List<ArgusConfigurer> configurers = new ArrayList<>();
     private CommandManager commandManager;
     private ApplicationContext applicationContext;
-    private AccountAuthenticator accountAuthenticator;
-    private TokenAuthenticator tokenAuthenticator;
+    private ArgusAccountAuthenticator argusAccountAuthenticator;
+    private ArgusTokenAuthenticator argusTokenAuthenticator;
 
 
     private RequestMappingHandlerMapping requestMappingHandlerMapping;
@@ -79,12 +79,12 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
         return commandManager;
     }
 
-    public AccountAuthenticator getAccountAuthenticator() {
-        return accountAuthenticator;
+    public ArgusAccountAuthenticator getAccountAuthenticator() {
+        return argusAccountAuthenticator;
     }
 
-    public TokenAuthenticator getTokenAuthenticator() {
-        return tokenAuthenticator;
+    public ArgusTokenAuthenticator getTokenAuthenticator() {
+        return argusTokenAuthenticator;
     }
 
     @Override
@@ -108,8 +108,8 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
             this.tokenProvider = applicationContext.getBean(TokenProvider.class);
             this.requestMappingHandlerMapping = applicationContext.getBean("requestMappingHandlerMapping", RequestMappingHandlerMapping.class);
             this.argusProperties = applicationContext.getBean(ArgusProperties.class);
-            this.accountAuthenticator = applicationContext.getBean(AccountAuthenticator.class);
-            this.tokenAuthenticator = applicationContext.getBean(TokenAuthenticator.class);
+            this.argusAccountAuthenticator = applicationContext.getBean(ArgusAccountAuthenticator.class);
+            this.argusTokenAuthenticator = applicationContext.getBean(ArgusTokenAuthenticator.class);
             // 注册bean
             init();
 

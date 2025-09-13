@@ -1,20 +1,17 @@
 package githubcew.arguslog.web.filter;
 
 import githubcew.arguslog.common.util.ContextUtil;
+import githubcew.arguslog.common.util.RSAUtil;
 import githubcew.arguslog.core.ArgusManager;
 import githubcew.arguslog.core.account.Account;
 import githubcew.arguslog.core.cache.ArgusCache;
 import githubcew.arguslog.web.ArgusRequest;
 import githubcew.arguslog.web.ArgusResponse;
-import githubcew.arguslog.web.auth.AccountAuthenticator;
+import githubcew.arguslog.web.auth.ArgusAccountAuthenticator;
 import githubcew.arguslog.web.auth.Token;
-import org.apache.catalina.connector.RequestFacade;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.stereotype.Component;
 import org.springframework.util.StreamUtils;
 
 import javax.servlet.*;
@@ -23,6 +20,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyPair;
+import java.util.Base64;
 
 /**
  * Augus 过滤器
@@ -56,7 +55,10 @@ public class ArgusFilter implements Filter {
                     validateToken(httpRequest, httpResponse);
                 } else if (uri.endsWith("/login")) {
                     handleLogin(httpRequest, httpResponse);
-                } else {
+                } else if (uri.endsWith("/getPublicKey")) {
+                    getPublicKey(httpRequest, httpResponse);
+                }
+                else {
                     httpResponse.setStatus(HttpServletResponse.SC_NOT_FOUND);
                 }
             } catch (Exception e) {
@@ -110,6 +112,17 @@ public class ArgusFilter implements Filter {
     }
 
     /**
+     * 获取公钥
+     * @param request 请求
+     * @param response 响应
+     */
+    private void getPublicKey(HttpServletRequest request, HttpServletResponse response) {
+        KeyPair keyPair = ContextUtil.getBean("argusKeyPair", KeyPair.class);
+        // 返回公钥
+        response.setHeader("argus-public-key", Base64.getEncoder().encodeToString(keyPair.getPublic().getEncoded()));
+    }
+
+    /**
      * 处理argus登录
      * @param request 请求
      * @param response 响应
@@ -118,18 +131,21 @@ public class ArgusFilter implements Filter {
         String username = request.getHeader("username");
         String password = request.getHeader("password");
 
-        ArgusManager argusManager = ContextUtil.getBean(ArgusManager.class);
-        AccountAuthenticator accountAuthenticator = argusManager.getAccountAuthenticator();
-        ArgusRequest argusRequest = new ArgusRequest();
-        argusRequest.setAccount(new Account(username, password));
+        KeyPair keyPair = ContextUtil.getBean("argusKeyPair", KeyPair.class);
+        String decryptPassword = RSAUtil.decryptWithPrivateKey(password, keyPair.getPrivate());
 
-        if (!accountAuthenticator.supports(argusRequest)) {
+        ArgusManager argusManager = ContextUtil.getBean(ArgusManager.class);
+        ArgusAccountAuthenticator argusAccountAuthenticator = argusManager.getAccountAuthenticator();
+        ArgusRequest argusRequest = new ArgusRequest();
+        argusRequest.setAccount(new Account(username, decryptPassword));
+
+        if (!argusAccountAuthenticator.supports(argusRequest)) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }
 
         ArgusResponse argusResponse = new ArgusResponse();
-        boolean authenticate = accountAuthenticator.authenticate(argusRequest, argusResponse);
+        boolean authenticate = argusAccountAuthenticator.authenticate(argusRequest, argusResponse);
 
         if (authenticate) {
             Token token = argusResponse.getToken();

@@ -593,6 +593,7 @@
     let reconnectAttempts = 0;
     const MAX_RECONNECT_ATTEMPTS = 5;
     const BASE_RECONNECT_DELAY = 2000;
+    let cachedPublicKey = null; // 用于缓存已解析的公钥对象
 
     function getContextPath() {
         const fullPath = window.location.pathname;
@@ -630,10 +631,20 @@
 
         checkExistingToken();
 
-        loginBtn.addEventListener('click', handleLogin);
-        passwordInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') handleLogin();
-        });
+        // 确保公钥加载完成后再绑定事件
+        fetchAndStorePublicKey()
+            .then(() => {
+                // 公钥加载成功后，再绑定登录事件
+                loginBtn.addEventListener('click', handleLogin);
+                passwordInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') handleLogin();
+                });
+            })
+            .catch(err => {
+                showLoginMessage('公钥获取失败', 'error');
+                // 禁用登录按钮
+                loginBtn.disabled = true;
+            });
 
         function checkExistingToken() {
             const token = localStorage.getItem('argus-token');
@@ -667,9 +678,110 @@
             }
         }
 
-        function handleLogin() {
+
+        function fetchAndStorePublicKey() {
+            return fetch(getContextPath() + '/argus/getPublicKey', {
+                method: 'GET'
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`获取公钥失败: ${response.status}`);
+                    }
+
+                    // 从响应头获取Base64公钥
+                    const publicKeyBase64 = response.headers.get('argus-public-key');
+                    if (!publicKeyBase64) {
+                        throw new Error('响应头中未找到公钥');
+                    }
+                    // 导入公钥
+                    return importPublicKey(publicKeyBase64);
+                })
+                .then(key => {
+                    cachedPublicKey = key;
+                    return key;
+                })
+                .catch(error => {
+                    console.error('获取公钥失败:', error);
+                    throw error;
+                });
+        }
+
+        async function importPublicKey(base64Key) {
+            try {
+
+                // 清理可能的空白字符
+                const cleanBase64 = base64Key.replace(/\s+/g, '');
+
+                // Base64解码
+                const binaryString = atob(cleanBase64);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                // 使用RSA-OAEP算法（现代标准）
+                const cryptoKey = await window.crypto.subtle.importKey(
+                    "spki",
+                    bytes,
+                    {
+                        name: "RSA-OAEP",
+                        hash: { name: "SHA-256" }
+                    },
+                    true,
+                    ["encrypt"]
+                );
+
+                return cryptoKey;
+
+            } catch (error) {
+                throw new Error('公钥格式无效: ' + error.message);
+            }
+        }
+
+        async function encryptPassword(password) {
+            if (!cachedPublicKey) {
+                throw new Error('公钥未初始化');
+            }
+            try {
+                // 文本编码
+                const encoder = new TextEncoder();
+                const data = encoder.encode(password);
+
+                // 使用RSA-OAEP加密
+                const encryptedBuffer = await window.crypto.subtle.encrypt(
+                    {
+                        name: "RSA-OAEP"
+                    },
+                    cachedPublicKey,
+                    data
+                );
+
+                // 转换为Base64字符串
+                return arrayBufferToBase64(encryptedBuffer);
+
+            } catch (error) {
+                throw new Error('密码加密失败');
+            }
+        }
+
+         // ArrayBuffer转Base64
+        function arrayBufferToBase64(buffer) {
+            const bytes = new Uint8Array(buffer);
+            let binary = '';
+            for (let i = 0; i < bytes.byteLength; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            return btoa(binary);
+        }
+
+        async function handleLogin() {
+            // 第一步：确保公钥已加载
+            await fetchAndStorePublicKey();
+
             const username = usernameInput.value.trim();
             const password = passwordInput.value.trim();
+
+            // 第二步：加密密码
+            const encryptedPassword = await encryptPassword(password);
 
             loginText.textContent = '登录中...';
             loginSpinner.style.display = 'inline-block';
@@ -681,7 +793,7 @@
                 method: 'POST',
                 headers: {
                     'username': username,
-                    'password': password
+                    'password': encryptedPassword
                 }
             })
                 .then(response => {

@@ -10,6 +10,7 @@ import githubcew.arguslog.core.cmd.ExecuteResult;
 import githubcew.arguslog.web.ArgusRequest;
 import githubcew.arguslog.web.ArgusResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.stereotype.Component;
 
 import java.util.Objects;
@@ -19,25 +20,8 @@ import java.util.Objects;
  *
  * @author chenenwei
  */
-@Component
-public class AccountAuthenticator implements Authenticator {
 
-
-    private final UserProvider userProvider;
-
-    private final TokenProvider tokenProvider;
-
-    /**
-     * 构造方法
-     *
-     * @param userProvider  用户提供者
-     * @param tokenProvider token提供者
-     */
-    @Autowired
-    public AccountAuthenticator(UserProvider userProvider, TokenProvider tokenProvider) {
-        this.userProvider = userProvider;
-        this.tokenProvider = tokenProvider;
-    }
+public class ArgusAccountAuthenticator implements Authenticator {
 
     /**
      * 认证
@@ -50,35 +34,32 @@ public class AccountAuthenticator implements Authenticator {
     public boolean authenticate(ArgusRequest request, ArgusResponse response) {
 
         ArgusProperties argusProperties = ContextUtil.getBean(ArgusProperties.class);
-        // 判断是否需要认证
-        boolean isAuth = false;
+        UserProvider userProvider = ContextUtil.getBean(UserProvider.class);
+        TokenProvider tokenProvider = ContextUtil.getBean(TokenProvider.class);
+
         Account account = new Account();
         if (argusProperties.isEnableAuth()) {
+            // 自定义认证
             String username = request.getAccount().getUsername();
             String password = request.getAccount().getPassword();
-
-            account = userProvider.provide(username);
-            isAuth = account.getUsername().equals(username) && account.getPassword().equals(password);
-        }
-        // 如果配置不需要认证
-        else {
-            isAuth = true;
+            boolean customize = customize(username, password, userProvider.provide(username));
+            if (!customize) {
+                return false;
+            }
         }
 
-        if (isAuth) {
-            Token token = tokenProvider.provide();
-            response.setToken(token);
-            response.setExecuteResult(ExecuteResult.success(ExecuteResult.OK));
+        // 构建返回的tokne
+        Token token = tokenProvider.provide();
+        response.setToken(token);
+        response.setExecuteResult(ExecuteResult.success(ExecuteResult.OK));
 
-            // 添加用户到ArgusCache
-            ArgusUser argusUser = new ArgusUser();
-            argusUser.setAccount(account);
-            argusUser.setSession(request.getSession());
-            argusUser.setToken(token);
-            ArgusCache.addUserToken(token.getToken(), argusUser);
-            return true;
-        }
-        return false;
+        // 添加用户到ArgusCache
+        ArgusUser argusUser = new ArgusUser();
+        argusUser.setAccount(account);
+        argusUser.setSession(request.getSession());
+        argusUser.setToken(token);
+        ArgusCache.addUserToken(token.getToken(), argusUser);
+        return true;
     }
 
     /**
@@ -94,13 +75,15 @@ public class AccountAuthenticator implements Authenticator {
                 && !Objects.isNull(request.getAccount().getPassword());
     }
 
+
     /**
-     * 如果校验成功,立即返回
+     * 自定义认证（可以继承 AccountAuthenticator 后重写此方法）
      *
-     * @return 是否立即返回
+     * @param username 用户名
+     * @param password 密码
+     * @return 认证结果
      */
-    @Override
-    public boolean returnImmediately() {
-        return true;
+    protected boolean customize(String username, String password, Account provide) {
+        return provide.getUsername().equals(username) && provide.getPassword().equals(password);
     }
 }

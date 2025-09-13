@@ -52,4 +52,14 @@ public class ContextUtil implements ApplicationContextAware {
         return applicationContext.getBean(beanName);
     }
 
+    /**
+     * 获取bean
+     *
+     * @param beanName beanName
+     * @return bean
+     */
+    public static <T> T getBean(String beanName, Class<T> requiredType) {
+        return applicationContext.getBean(beanName, requiredType);
+    }
+
 }
