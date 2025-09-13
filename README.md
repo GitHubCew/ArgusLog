@@ -75,7 +75,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 
 6. 访问项目web + `/argus/index.html`  
-   例如： `localhost:80/context/argus/index.html` (context: 为项目的context-path上下文)
+   例如： `http://localhost:8080/context/argus/index.html` (context: 为项目的context-path上下文)
 
 
 7. 进入arguslog,如果出现如下界面，则成功
@@ -91,61 +91,77 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
           Developed by: chenenwei heyugui               
 16:04:24
 提示: 可以使用 ↑/↓ 方向键浏览历史命令
-'connect' 连接 'exit' 或 'Ctrl+D' 关闭连接 'clear' 清屏 'auth' 认证 'help' 查看命令列表
+'connect' 连接, 'logout' 关闭连接 'clear' 清屏 'auth' 认证 'help' 查看命令列表
 
 $
 ```
 
 8.命令介绍
-- connect 连接 WebSocket 服务器
-- exit/quit 断开 WebSocket 连接
-- clear 清空终端屏幕
-- auth [username] [password] [time] 认证
-- help [command] 查看命令用法
-- ls [-m] [path] 查看API（监听）接口,支持模糊搜索
-- monitor [path] [param | result | time]监控指定API接口,监控内容可选：param:参数 result:结果 time:耗时
-- remove [-a | path] 移除指定监听接口或者全部监听接口
+-  connect         连接argus
+-  exit            退出argus
+-  logout          退出登录
+-  help            显示帮助信息
+-  clear           清除控制台
+-  show            显示系统信息
+-  set             系统变量设置
+-  ls              显示接口列表
+-  monitor         监听接口参数、耗时、结果、异常等数据
+-  remove          移除监听接口
+-  trace           查看接口调用链
+-  revert          移除调用链监听接口
 
+可使用 'help <命令>' 查看详细帮助
 
-# 例子
+# 示例
 
-假设我们有以下接口：
-
+存在如下接口：
 ```java
-@GetMapping("/activityWalkRouteActivity/info")
-public Result<ActivityWalkRouteActivityInfoVO> info(@RequestParam("id") Long id) {
-    // 接口实现
-}
+    @GetMapping("/activityWalkRouteActivity/info")
+    public Result<ActivityWalkRouteActivityInfoVO> info(@RequestParam("id") Long id) {
+        // TODO
+    }
 ```
 
-如果我们要监控 `/activityWalkRouteActivity/info` 的入参和耗时，并监控返回的结果和耗时。
-
-
-1 连接和监听接口
-
-首先我们访问 http://localhost:80/context/argus/index.html 进入arguslog终端，输入命令：
-
+如果我们要监控 `/activityWalkRouteActivity/info` 的入参和耗时。
 ```shell
-# 输入connect命令连接 WebSocket 服务器
-$connect
-16:43:18
-Connecting to ws://localhost:8080/argus-ws...
-16:43:18
-argus 已连接
+# minitor 监听全部命令参数
+ monitor /activityWalkRouteActivity/info  -a
+ 
+ # minitor 监听入参,耗时
+  monitor /activityWalkRouteActivity/info  param time
 ```
 
 2 结果输出
 ```shell 
-
-# 输如monitor命令监测后，需要等待或者手动调用接口/activityWalkRouteActivity/info
-# 例如：curl http://localhost:8080/activityWalkRouteActivity/info?id=495
-
 # 接口监测结果输出
 param ==> "id":495   # 方法参数
-time  ==> 151 # 方法耗时
+time  ==> 151 ms # 方法耗时
 
 ```
 
+### show显示修改变量
+```shell
+argus@guest% show
+属性                           值                             可修改         描述                        
+─────────────────────────────────────────────────────────────────────────────────────────────────
+enableAuth                    true                           yes          认证状态                      
+tokenFlushTime                60                             no           token 刷新时间（秒）             
+printUserInfo                 true                           no           启动时打印用户信息                 
+printBanner                   true                           no           启动时打印banner信息             
+tokenExpireTime               3600                           no           token过期时间(秒)              
+threadCoreNum                 1                              no           任务核心线程数                   
+threadNum                     3                              no           任务非核心线程数                  
+maxWaitQueueSize              20                             no           任务队列最大等待数量                
+traceMaxEnhancedClassNum      500                            yes          最大增强类数量                   
+traceIncludePackages          null                           yes          包含包                       
+traceExcludePackages          null                           yes          排除包                       
+traceDefaultExcludePackages   [sun., javax., java.]          no           默认排除包                     
+traceMaxDepth                 6                              yes          调用链最大深度                   
+traceColorThreshold           300                            yes          调用链方法耗时阈值(ms)
+argus@ %
+
+```
+使用set {key} {value} 修改变量值,可修改认证方式, trace调用链的 包含包,排除包以及调用阈值
 
 ## 扩展
 ### 自定义命令
