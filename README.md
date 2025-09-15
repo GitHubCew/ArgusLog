@@ -173,16 +173,54 @@ argus@ %
         // todo 业务逻辑
     }
 ```
-2.注册自定义命令 使用 CommandManager类的register进行注册
+2.注册自定义命令 使用 CommandManager 类的register进行注册
  ```
     commandManager.register("help", HelpCmd.class);
  ```
 
 ### 自定义认证 
-1.实现接口类Authenticator,实现 authenticate(ArgusRequest request, ArgusResponse argusResponse) 方法
- ```
+1.toke认证 与项目使用相同认证凭证，实现接口类 TokenProvider, 实现 provide() 方法,返回Token（凭证token，有效期时间）对象
+#### 示例
+ ```java
+@Component
+public class CustTokenAuth implements TokenProvider {
+    @Resource
+    ShiroConfig shiroConfig;
     @Override
-        public boolean authenticate(ArgusRequest request, ArgusResponse argusResponse) {
-            // 自定义认证方式
+    public Token provide() {
+        boolean authenticated = SecurityUtils.getSubject().isAuthenticated();
+        if(authenticated){
+            Object attribute = ShiroUtils.getSession().getAttribute(ShiroConstants.CSRF_TOKEN);
+            return new Token(Convert.toStr(attribute),System.currentTimeMillis()+ 60*60*1000);
         }
+        return null;
+    }
+}
+    
  ```
+
+
+2.用户认证, 使用自定义的用户密码认证方式   ArgusAccountAuthenticator 类提供了认证方法 customize(String username, String password, Account provide) 
+#### 示例
+
+```java
+
+@Component
+@Slf4j
+public class CustAuth extends ArgusAccountAuthenticator {
+
+   @Autowired
+   ISysUserService sysUserServices;
+
+   @Override
+   protected boolean customize(String username, String password, Account provide) {
+      SysUser sysUser = sysUserServices.selectUserByLoginName(username);
+      if (sysUser != null) {
+         return sysUser.getPassword().equals(Md5Utils.hash(username + password));
+      } else {
+         log.error("用户不存在");
+      }
+      return false;
+   }
+}
+```
