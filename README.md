@@ -118,8 +118,8 @@ context: 你的项目上下文context
 
 
 默认账户：
-* username: argus
-* password: argus
+* 用户名: argus
+* 密码: argus
 
 ![首页](./images/首页.png)
 
