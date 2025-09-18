@@ -226,9 +226,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 7. 进入arguslog,如果出现如下界面，则成功
 
-![首页](./images/首页.png)
-
-
 
 8.命令介绍
 -  connect         连接argus
