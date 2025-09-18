@@ -26,7 +26,7 @@ ArgusLog是一个基于SpringBoot + Websocket 开发的接口监测web端命令�
 
 **不同认证框架配置参考下面进行配置**
 
-### （1）ShroiConfig 配置
+### （1）Shiro 配置
 
 ```java
 @Configuration
