@@ -2,16 +2,163 @@
 
 ArgusLog是一个基于SpringBoot + Websocket 开发的接口监测web端命令行工具, 主要用于开发或线上接口定位、性能优化分析，支持针对一个或多个接口的的入参、返回值、耗时、异常、调用链进行监测， 可以解决一些复杂场景下接口监测的问题。
 
-# 特性
-- 采用WebSocket连接，实时监控接口请求
-- 支持多接口监控，支持模糊搜索
-- 支持监控入参、返回值、耗时
-- 支持接口移除监控
-- 性能高、不影响原业务
-- 支持多种终端，如：Web终端、websocket工具
+# 快速使用：
 
-# 使用步骤：
+## 1.引入依赖：
 
+最新版本访问
+[Maven中央仓库地址(Sonatype Central)](https://central.sonatype.com/artifact/io.github.githubcew/arguslog)
+
+```xml
+      <dependency>
+            <groupId>io.github.githubcew</groupId>
+            <artifactId>arguslog</artifactId>
+            <version>${version}</version> <!-- 换为实际版本号 -->
+        </dependency>
+```
+
+## 2.配置argus权限：
+
+需要放开的argus访问路径权限如下：
+* /argus/**
+* argus-ws
+
+
+**不同认证框架配置参考下面进行配置**
+
+### （1）ShroiConfig 配置
+
+```java
+@Configuration
+public class ShiroConfig {
+
+   @Bean
+   public ShiroFilterFactoryBean shiroFilter(SecurityManager securityManager) {
+
+      ShiroFilterFactoryBean factoryBean = new ShiroFilterFactoryBean();
+      factoryBean.setSecurityManager(securityManager);
+      Map<String, String> filters = new LinkedHashMap<>();
+
+      // 在此处配置放开 argus 权限
+      filters.put("/argus/**", "anno");
+      filters.put("/argus-ws", "anno");
+
+      factoryBean.setFilterChainDefinitionMap(filters);
+      return factoryBean;
+   }
+}
+```
+
+
+### （2）SpringSecurity 配置
+```java
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
+    
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http
+            .authorizeRequests()
+                // 在此处配置放开 argus 权限
+                .antMatchers("/argus/*","/argus-ws").permitAll()
+             // 其他接口需要认证
+            .anyRequest().authenticated()
+            .and()
+            .formLogin().disable()
+            .httpBasic().disable()
+            .csrf().disable(); 
+    }
+}
+```
+
+### （3）自定义Filter
+
+只用在自定义的Filter逻辑中放开权限即可
+```java
+@WebFilter(urlPatterns = {"/*"}, filterName = "AuthTokenFilter")
+public class AuthTokenFilter implements Filter {
+    
+    // 放开权限的路径
+    private final String[] excludeUrlPatterns = new String[]{
+     
+           "/argus/**",
+           "/argus-ws"
+    };
+    
+   @Override
+   public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+      HttpServletRequest httpRequest = (HttpServletRequest) request;
+      HttpServletResponse httpServletResponse = (HttpServletResponse) response;
+      String requestURI = httpRequest.getRequestURI();
+
+      boolean matched = RegexHelper.isMatch(requestURI, excludeUrlPatterns);
+      // 放开权限直接放行
+      if (matched) {
+         chain.doFilter(request, response);
+      }
+   }
+}
+```
+
+## 3.启动项目
+
+## 4.访问 argus
+
+### 首页：
+ 
+访问地址：http://ip:port/context/argus/index.html
+
+ip：你的项目ip 
+
+port: 你的项目端口
+
+
+context: 你的项目上下文context
+
+
+默认账户：
+* username: argus
+* password: argus
+
+![首页](./images/首页.png)
+
+
+
+## 5.使用argus
+
+### （1）登录argus
+登录argus成功后，会进入到argus web终端
+![登录成功页面](./images/登录成功.png)]
+
+### （2）查看可用命令
+可使用help查看命令和命令的使用方法
+![help命令用法](./images/help命令.png)]
+
+### （3）查询接口列表
+
+使用ls命令查看项目的接口列表
+![查询接口列表](./images/查询接口.png)]
+
+
+### （4）监控接口参数
+
+使用命令monitor 监测接口参数
+![监控接口参数](./images/Monitor监测和响应.png)]
+
+
+### （5）追踪接口调用链
+
+使用命令trace 追踪接口调用链
+![追踪接口调用链](./images/Trace追踪和响应.png)]
+
+
+
+
+
+
+
+## 自定义开发：
 1. 克隆项目
 ```shell
 git clone https://github.com/GitHubCew/ArgusLog.git
@@ -23,7 +170,6 @@ maven clean install
 ```
 或者从Maven中央仓库拉取最新依赖：
 
-[Maven中央仓库地址(Sonatype Central)](https://central.sonatype.com/artifact/io.github.githubcew/arguslog)
 
 
 3. 在项目中引用依赖:
@@ -38,14 +184,14 @@ maven clean install
 
 4. 如果项目中有安全校验，则需要放开路径：
     - `/argus-ws`
-    - `/argus/index.html`
+    - `/argus/**`
 
 
 例如：Shiro中添加：
 
    ```java
    filters.put("/argus-ws", "anon");
-   filters.put("/argus/index.html", "anon");
+   filters.put("/argus/**", "anon");
    ```
 
 SpringSecurity中添加：
@@ -59,7 +205,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http
             .authorizeRequests()
                 // 放开指定的接口
-                .antMatchers("/argus-ws", "/argus/index.1.html").permitAll()
+                .antMatchers("/argus-ws", "/argus/*").permitAll()
                 // 其他接口需要认证
                 .anyRequest().authenticated()
             .and()
@@ -80,21 +226,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 7. 进入arguslog,如果出现如下界面，则成功
 
-``` shell
-  ,---.                             ,--.                 
- /  O  \ ,--.--. ,---.,--.,--. ,---.|  |    ,---. ,---.  
-|  .-.  ||  .--'| .-. |  ||  |(  .-'|  |   | .-. | .-. | 
-|  | |  ||  |   ' '-' '  ''  '.-'  `)  '--.' '-' ' '-' ' 
-`--' `--'`--'   .`-  / `----' `----'`-----' `---'.`-  /  
-                `---'                            `---'   
-                                                         
-          Developed by: chenenwei heyugui               
-16:04:24
-提示: 可以使用 ↑/↓ 方向键浏览历史命令
-'connect' 连接, 'logout' 关闭连接 'clear' 清屏 'auth' 认证 'help' 查看命令列表
+![首页](./images/首页.png)
 
-$
-```
+
 
 8.命令介绍
 -  connect         连接argus
