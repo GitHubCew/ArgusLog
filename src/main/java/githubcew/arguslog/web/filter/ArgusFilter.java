@@ -24,7 +24,7 @@ import java.security.KeyPair;
 import java.util.Base64;
 
 /**
- * Augus 过滤器
+ * Argus 过滤器
  */
 public class ArgusFilter implements Filter {
 
