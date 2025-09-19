@@ -191,9 +191,9 @@ _**_context_**_: 你的项目上下文context
 ![追踪接口调用链](./images/Trace追踪和响应.png)]
 
 
-## 系统配置
+# 系统配置
 
-### 默认配置
+## 默认配置
 
 ```yaml
 
@@ -231,9 +231,9 @@ argus.trace-exclude-packages=null # 追踪排除的包
 其中部分配置可以在运行时使用命令 _**show**_ 查看, 命令 _**set**_ 修改，具体参考命令介绍部分。
 
 
-## 命令介绍
+# 命令介绍
 
-### help
+## help
 
 查看系统可用命令，也可以用help [命令] 或者  [命令] -h查看命令具体用法：
 ```shell
@@ -270,7 +270,7 @@ Usage: monitor [-ahtV] [path] [targets...]
   -t, --total        不传参数时, 监听全部target, 多个参数用空格隔开
   -V, --version      Print version information and exit.
 ```
-### connect
+## connect
 
 连接argus
 
@@ -283,7 +283,7 @@ argus@argus% connect
 argus@argus %
 ```
 
-### exit
+## exit
 关闭argus连接(不退出登录)
 
 ```shell
@@ -292,7 +292,7 @@ argus@argus% exit
 argus@argus %
 ```
 
-### logout
+## logout
 退出登录
 ```shell
 argus@argus% logout
@@ -300,14 +300,14 @@ argus@argus% logout
 
 指定后会延时跳转到登录页面
 
-### clear
+## clear
 清除控制台
 
 ```shell
 argus@argus% clear
 ```
 
-### show
+## show
 查看系统信息
 
 目前可用变量为： config
@@ -347,7 +347,7 @@ argus@argus %
 ```
 部分变量可使用 _**set**_ 命令修改
 
-### set
+## set
 
 修改系统变量
 
@@ -378,7 +378,7 @@ ok
 argus@argus %
 ```
 
-### ls
+## ls
 **显示系统接口列表**
 
 _**用法**_：
@@ -422,7 +422,7 @@ rgus@argus% ls -m
 argus@argus %
 ```
 
-### monitor
+## monitor
 **监听接口参数**
 
 _**用法**_：
@@ -489,7 +489,7 @@ ok
 argus@argus %
 ```
 
-### remove
+## remove
 
 移除监听接口
 
@@ -521,7 +521,7 @@ argus@argus %
 ```
 
 
-### trace
+## trace
 
 追踪接口调用链
 
@@ -569,7 +569,7 @@ argus@argus% trace -m
 argus@argus %
 ```
 
-### revert
+## revert
 取消追踪
 
 _**用法**_：
@@ -601,9 +601,9 @@ argus@argus %
 ```
 
 
-## 自定义开发
+# 自定义开发
 
-### 自定义新命令
+## 自定义新命令
 
 _**步骤：**_
 
@@ -768,7 +768,7 @@ argus@argus %
 
 ```
 
-### 自定义认证 
+## 自定义认证 
 
 1.toke认证 
 
