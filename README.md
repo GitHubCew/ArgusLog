@@ -1,6 +1,44 @@
 # ArgusLog 介绍
 
-ArgusLog是一个基于SpringBoot + Websocket 开发的接口监测web端命令行工具, 主要用于开发或线上接口定位、性能优化分析，支持针对一个或多个接口的的入参、返回值、耗时、异常、调用链进行监测， 可以解决一些复杂场景下接口监测的问题。
+ArgusLog 是一款基于 SpringBoot 与 WebSocket 技术构建的轻量级接口监测与诊断工具，专为 Web 端命令行环境设计。该工具致力于提升开发与生产环境中接口问题的排查效率与系统性能优化能力，支持对单接口或批量接口进行全方位监测，涵盖请求参数、返回结果、响应耗时、异常信息及方法调用链追踪等关键维度，可有效应对复杂业务场景下的接口调试与性能分析挑战。
+
+此外，ArgusLog 具备高度可扩展性，支持用户自定义命令，便于适配不同项目结构和诊断需求。工具还提供灵活的身份集成能力，可与企业现有用户体系无缝对接，并支持自定义 Token 与有效期管理，保障操作安全性与审计合规性。可帮助开发团队快速定位问题、优化系统性能。
+
+
+# 功能介绍
+
+## 1.接口监控
+
+* 可使用 _**monitor [参数]**_ 命令 监听指定接口参数
+* 可使用 _**remove [参数]**_ 命令移除监听的接口
+* 可使用 _**ls -m**_ 命令查看当前监听的接口列表
+
+
+可监控的接口参数：
+
+**_param_**: 前端参数\
+**_methodParam_**: 后端方法参数\
+**_result_**: 接口返回结果\
+**_time_**: 接口耗时\
+**_header_**: 请求头\
+**_ip_**: 请求ip\
+**_url_**: 请求url\
+**_api_**: 接口路径\
+**_type_**: 方法全限定名\
+**_method_**: 请求方式
+
+## 2.接口追踪
+
+* 可使用 _**trace [参数]**_ 命令 追踪指定接口调用链
+* 可使用 _**revert [参数]**_ 命令移除追踪的接口
+* 可使用 _**trace -m**_ 命令查看当前追踪的接口列表
+
+trace追踪可指定参数:
+
+_**-i**_  [过滤包名] \
+**_-e_**    [排除包名] \
+**_-d_**    [指定追踪深度] \
+**_-t_**    [指定方法耗时颜色阈值]
 
 # 快速使用：
 
@@ -109,12 +147,12 @@ public class AuthTokenFilter implements Filter {
  
 访问地址：http://ip:port/context/argus/index.html
 
-ip：你的项目ip 
+_**ip**_：你的项目ip 
 
-port: 你的项目端口
+_**port**_: 你的项目端口
 
 
-context: 你的项目上下文context
+_**_context_**_: 你的项目上下文context
 
 
 默认账户：
@@ -155,130 +193,141 @@ context: 你的项目上下文context
 
 ## 系统配置
 
+### 默认配置
+
+```yaml
+
+## 认证配置
+argus.enable-auth=true #是否开启登录认证
+
+## 账户配置
+argus.username=argus  # 账户名
+argus.password=argus  # 密码
+
+## token配置
+argus.token-flush-time= 60 #token刷新时间(秒)
+argus.token-expire-time= 3600 #token过期时间（秒）
+
+# argus信息配置
+argus.print-banner=true #启动时打印argus banner
+argus.print-user-info=true #启动时打印用户信息
+
+## 线程池配置
+argus.thread-core-num=1 #线程池核心线程数
+argus.thread-num=3 #线程池最大线程数
+argus.max-wait-queue-size=20 #最大任务队列数
+
+## trace 相关默认配置
+argus.trace-max-depth=6 #追踪最大深度
+argus.trace-color-threshold=300 #追踪方法耗时颜色阈值
+argus.trace-default-exclude-packages= sun.,java.,javax. #默认排查包
+argus.trace-include-packages=null # 追踪包含的包
+argus.trace-max-enhanced-class-num=500 # 最大增强类数量
+argus.trace-exclude-packages=null # 追踪排除的包
+
+
+```
+
+其中部分配置可以在运行时使用命令 _**show**_ 查看, 命令 _**set**_ 修改，具体参考命令使用部分。
+
 
 ## 命令介绍
 
-1. help：查看所有命令和命令的使用方法
+### help
 
-
-
-
-
-## 自定义开发：
-1. 克隆项目
+查看系统可用命令，也可以用help [命令] 或者  [命令] -h查看命令具体用法：
 ```shell
-git clone https://github.com/GitHubCew/ArgusLog.git
-```
+argus@argus% help
+Argus 可用命令：
 
-2. 使用maven clean install 命令安装到本地maven仓库
-```shell
-maven clean install
-```
-或者从Maven中央仓库拉取最新依赖：
-
-
-
-3. 在项目中引用依赖:
-
-```xml
-      <dependency>
-            <groupId>io.github.githubcew</groupId>
-            <artifactId>arguslog</artifactId>
-            <version>${version}</version> <!-- 换为实际版本号 -->
-        </dependency>
-```
-
-4. 如果项目中有安全校验，则需要放开路径：
-    - `/argus-ws`
-    - `/argus/**`
-
-
-例如：Shiro中添加：
-
-   ```java
-   filters.put("/argus-ws", "anon");
-   filters.put("/argus/**", "anon");
-   ```
-
-SpringSecurity中添加：
-```java
-@Configuration
-@EnableWebSecurity
-public class SecurityConfig extends WebSecurityConfigurerAdapter {
-    
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
-        http
-            .authorizeRequests()
-                // 放开指定的接口
-                .antMatchers("/argus-ws", "/argus/*").permitAll()
-                // 其他接口需要认证
-                .anyRequest().authenticated()
-            .and()
-            .formLogin().disable()
-            .httpBasic().disable()
-            .csrf().disable(); // 根据需求决定是否禁用CSRF
-    }
-}
-```
-
-
-5. 启动项目
-
-
-6. 访问项目web + `/argus/index.html`  
-   例如： `http://localhost:8080/context/argus/index.html` (context: 为项目的context-path上下文)
-
-
-7. 进入arguslog,如果出现如下界面，则成功
-
-
-8.命令介绍
--  connect         连接argus
--  exit            退出argus
--  logout          退出登录
--  help            显示帮助信息
--  clear           清除控制台
--  show            显示系统信息
--  set             系统变量设置
--  ls              显示接口列表
--  monitor         监听接口参数、耗时、结果、异常等数据
--  remove          移除监听接口
--  trace           查看接口调用链
--  revert          移除调用链监听接口
+   connect         连接argus
+   exit            退出argus
+   logout          退出登录
+   help            显示帮助信息
+   clear           清除控制台
+   show            显示系统信息
+   set             系统变量设置
+   ls              显示接口列表
+   monitor         监听接口参数、耗时、结果、异常等数据
+   remove          移除监听接口
+   trace           查看接口调用链
+   revert          移除调用链监听接口
+   test            test
 
 可使用 'help <命令>' 查看详细帮助
-
-# 示例
-
-存在如下接口：
-```java
-    @GetMapping("/activityWalkRouteActivity/info")
-    public Result<ActivityWalkRouteActivityInfoVO> info(@RequestParam("id") Long id) {
-        // TODO
-    }
 ```
 
-如果我们要监控 `/activityWalkRouteActivity/info` 的入参和耗时。
+
+查看命令用法
 ```shell
-# minitor 监听全部命令参数
- monitor /activityWalkRouteActivity/info  -a
- 
- # minitor 监听入参,耗时
-  monitor /activityWalkRouteActivity/info  param time
+argus@argus% help monitor
+Usage: monitor [-ahtV] [path] [targets...]
+监听接口参数、耗时、结果、异常等数据
+      [path]         接口路径
+      [targets...]   监听接口目标参数， 可选：param,methodParam,result,time,
+                       header,ip,url,api,type,method
+  -a, --all          监听全部接口
+  -h, --help         Show this help message and exit.
+  -t, --total        不传参数时, 监听全部target, 多个参数用空格隔开
+  -V, --version      Print version information and exit.
 ```
+### connect
 
-2 结果输出
-```shell 
-# 接口监测结果输出
-param ==> "id":495   # 方法参数
-time  ==> 151 ms # 方法耗时
+连接argus
 
-```
-
-### show显示修改变量
 ```shell
-argus@guest% show
+argus@argus% ls
+未连接，请先使用 connect 连接
+argus@argus% connect
+已连接 argus
+输入 'help' 查看命令列表。
+argus@argus %
+```
+
+### exit
+关闭argus连接(不退出登录)
+
+```shell
+argus@argus% exit
+已断开 argus 连接: 1000 
+argus@argus %
+```
+
+### logout
+退出登录
+```shell
+argus@argus% logout
+```
+
+指定后会延时跳转到登录页面
+
+### clear
+清除控制台
+
+```shell
+argus@argus% clear
+```
+
+### show
+查看系统信息
+
+目前可用变量为： config
+
+_**用法**_：
+```shell
+Usage: show [-hV] [variable]
+显示系统信息
+      [variable]   变量名
+  -h, --help       Show this help message and exit.
+  -V, --version    Print version information and exit.
+argus@argus %
+```
+
+
+_**示例**_：
+1. 查看系统变量
+```shell
+argus@argus% show config
 属性                           值                             可修改         描述                        
 ─────────────────────────────────────────────────────────────────────────────────────────────────
 enableAuth                    true                           yes          认证状态                      
@@ -289,18 +338,272 @@ tokenExpireTime               3600                           no           token�
 threadCoreNum                 1                              no           任务核心线程数                   
 threadNum                     3                              no           任务非核心线程数                  
 maxWaitQueueSize              20                             no           任务队列最大等待数量                
-traceMaxEnhancedClassNum      500                            yes          最大增强类数量                   
-traceIncludePackages          null                           yes          包含包                       
-traceExcludePackages          null                           yes          排除包                       
-traceDefaultExcludePackages   [sun., javax., java.]          no           默认排除包                     
+traceMaxEnhancedClassNum      1000                           yes          最大增强类数量                   
+traceIncludePackages          [com.]                         yes          包含包                       
+traceExcludePackages          []                             yes          排除包                       
+traceDefaultExcludePackages   []                             no           默认排除包                     
 traceMaxDepth                 6                              yes          调用链最大深度                   
 traceColorThreshold           300                            yes          调用链方法耗时阈值(ms)
-argus@ %
-
+argus@argus %
 ```
-使用set {key} {value} 修改变量值,可修改认证方式, trace调用链的 包含包,排除包以及调用阈值
+部分变量可使用 _**set**_ 命令修改
 
-## 扩展
+### set
+
+修改系统变量
+
+_**用法**_：
+```shell
+Usage: set [-hV] variable values...
+系统变量设置
+      variable    系统变量名
+      values...   值
+  -h, --help      Show this help message and exit.
+  -V, --version   Print version information and exit.
+argus@argus %
+```
+
+_**示例**_：：
+
+1.修改接口追踪最大深度
+```shell
+argus@argus% set traceMaxDepth 5 
+ok
+argus@argus %
+```
+
+2.关闭登录认证
+```shell
+argus@argus% set  enableAuth false 
+ok
+argus@argus %
+```
+
+### ls
+**显示系统接口列表**
+
+_**用法**_：
+
+```shell
+Usage: ls [-hmV] [path]
+显示接口列表
+      [path]      接口路径
+  -h, --help      Show this help message and exit.
+  -m              查看用户监听的接口,不传时查询全部接口
+  -V, --version   Print version information and exit.
+```
+
+_**示例**_：
+
+1.查询接口列表
+```shell
+argus@argus% ls
+/demo/demo2
+/error
+/demo/demo
+/user/listUser
+/test
+/user/getUser
+ (6)  # 接口数量
+argus@argus %
+```
+2.使用 * 模糊匹配查询
+```shell
+argus@argus% ls *demo*
+/demo/demo2
+/demo/demo
+ (2)
+argus@argus %
+```
+3.使用 ls -m 查询已检听的接口列表（也支持 * 模糊匹配）
+```shell
+rgus@argus% ls -m
+/user/getUser
+ (1)
+argus@argus %
+```
+
+### monitor
+**监听接口参数**
+
+_**用法**_：
+```shell
+Usage: monitor [-ahtV] [path] [targets...]
+监听接口参数、耗时、结果、异常等数据
+      [path]         接口路径
+      [targets...]   监听接口目标参数， 可选：param,methodParam,result,time,
+                       header,ip,url,api,type,method
+  -a, --all          监听全部接口
+  -h, --help         Show this help message and exit.
+  -t, --total        不传参数时, 监听全部target, 多个参数用空格隔开
+  -V, --version      Print version information and exit.
+argus@argus %
+```
+
+**可用target**：
+
+**_param_**: 前端参数\
+**_methodParam_**: 后端方法参数\
+**_result_**: 接口返回结果\
+**_time_**: 接口耗时\
+**_header_**: 请求头\
+**_ip_**: 请求ip\
+**_url_**: 请求url\
+**_api_**: 接口路径\
+**_type_**: 方法全限定名\
+**_method_**: 请求方式
+
+_**示例**_：
+
+1.监听接口(不指定target时，默认为: url,param,result,time)
+```shell
+monitor /user/getUser
+ok
+argus@argus %
+```
+
+2.监听接口(指定target)
+```shell
+monitor /user/getUser param result time
+ok
+argus@argus %
+```
+
+3.监听全部接口
+```shell
+monitor -a
+ok
+argus@argus %
+```
+
+4.监听全部接口,全部target
+```shell
+monitor -a -t
+ok
+argus@argus %
+```
+
+5.监听全部接口,指定target
+```shell
+monitor -a -t param result time
+ok
+argus@argus %
+```
+
+### remove
+
+移除监听接口
+
+_**用法**_：
+```shell
+Usage: remove [-ahV] [path]
+移除监听接口
+      [path]      接口路径
+  -a, --all       移除所有接口
+  -h, --help      Show this help message and exit.
+  -V, --version   Print version information and exit.
+argus@argus %
+```
+
+_**示例**_：
+
+1.移除监听接口
+```shell
+argus@argus% remove /user/getUser
+ok
+argus@argus %
+```
+
+2.移除全部监听接口
+```shell
+argus@argus% remove -a
+ok
+argus@argus %
+```
+
+
+### trace
+
+追踪接口调用链
+
+_**用法**_：
+```shell
+
+Usage: trace [-hmV] [-d=] [-t=] [-e[=package...]]... [-i
+             [=package...]]... [path]
+查看接口调用链
+      [path]               接口路径
+  -d, --depth=   调用链的最大的深度
+  -e, --exclude[=package...]
+                           排除包名，过滤掉指定包名的方法
+  -h, --help               Show this help message and exit.
+  -i, --include[=package...]
+                           指定包名，只显示包含指定包名的方法
+  -m                       查看已监听的调用链接口
+  -t, --threshold=
+                           指定调用链方法耗时阈值，单位ms
+  -V, --version            Print version information and exit.
+argus@argus %
+```
+
+_**示例**_：
+
+1.追踪接口
+```shell
+argus@argus% trace /user/getUser
+ok
+argus@argus %
+```
+
+2.追踪接口(指定包、深度、方法耗时颜色阈值)
+```shell
+argus@argus% trace /user/getUser -i com. -t 20 -d 5
+ok
+argus@argus %
+```
+
+3.查看已追踪的接口列表
+```shell
+argus@argus% trace -m
+/user/getUser
+ (1)
+argus@argus %
+```
+
+### revert
+取消追踪
+
+_**用法**_：
+```shell
+
+Usage: revert [-ahV] [path]
+移除调用链监听接口
+      [path]      接口路径
+  -a              移除监听的全部调用链接口
+  -h, --help      Show this help message and exit.
+  -V, --version   Print version information and exit.
+argus@argus %
+```
+
+_**示例**_：
+
+1.取消追踪接口
+```shell
+argus@argus% revert /user/getUser
+ok
+argus@argus %
+```
+
+2.取消全部追踪接口
+```shell
+argus@argus% revert -a
+ok
+argus@argus %
+```
+
+
+
+## 自定义开发
 ### 自定义命令
 1.继承BaseCommand类 创建自定义命令类,使用注解@CommandLine.Command 标记命令名称
 重写命令执行方法  public Integer execute()
