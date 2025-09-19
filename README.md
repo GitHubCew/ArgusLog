@@ -35,7 +35,7 @@ ArgusLog 是一款基于 SpringBoot 与 WebSocket 技术构建的轻量级接口
 
 trace追踪可指定参数:
 
-_**-i**_  [过滤包名] \
+_**-i**_    [过滤包名] \
 **_-e_**    [排除包名] \
 **_-d_**    [指定追踪深度] \
 **_-t_**    [指定方法耗时颜色阈值]
@@ -44,7 +44,7 @@ _**-i**_  [过滤包名] \
 
 ## 1.引入依赖：
 
-最新版本访问
+最新版本地址：
 [Maven中央仓库地址(Sonatype Central)](https://central.sonatype.com/artifact/io.github.githubcew/arguslog)
 
 ```xml
@@ -131,7 +131,7 @@ public class AuthTokenFilter implements Filter {
       String requestURI = httpRequest.getRequestURI();
 
       boolean matched = RegexHelper.isMatch(requestURI, excludeUrlPatterns);
-      // 放开权限直接放行
+      // 指定权限放行
       if (matched) {
          chain.doFilter(request, response);
       }
@@ -228,7 +228,7 @@ argus.trace-exclude-packages=null # 追踪排除的包
 
 ```
 
-其中部分配置可以在运行时使用命令 _**show**_ 查看, 命令 _**set**_ 修改，具体参考命令使用部分。
+其中部分配置可以在运行时使用命令 _**show**_ 查看, 命令 _**set**_ 修改，具体参考命令介绍部分。
 
 
 ## 命令介绍
@@ -252,7 +252,6 @@ Argus 可用命令：
    remove          移除监听接口
    trace           查看接口调用链
    revert          移除调用链监听接口
-   test            test
 
 可使用 'help <命令>' 查看详细帮助
 ```
@@ -602,30 +601,187 @@ argus@argus %
 ```
 
 
-
 ## 自定义开发
-### 自定义命令
-1.继承BaseCommand类 创建自定义命令类,使用注解@CommandLine.Command 标记命令名称
-重写命令执行方法  public Integer execute()
-```
-  @Override
-    public Integer execute() throws Exception {
-        // todo 业务逻辑
+
+### 自定义新命令
+
+_**步骤：**_
+
+* 定义命令：\
+     1.继承 BaseCommand 类 \
+     2.重写 execute() 方法 \
+     3.自定义业务逻辑 \
+     4.可使用picocliOutput.out输出正常数据，可使用picocliOutput.err输出错误数据（或直接抛出异常）\
+     5.返回状态码（OK_CODE, ERROR_CODE）
+
+```java
+// 命令描述
+@CommandLine.Command(
+        name = "hello",
+        description = "hello",
+        mixinStandardHelpOptions = true
+)
+
+// 定义hello命令, 继承BaseCommand
+public class HelloCmd extends BaseCommand {
+
+    // 配置命令选项和参数
+    @CommandLine.Parameters(
+            index = "0",
+            description = "命令输入",
+            arity = "1",
+            paramLabel = "text"
+    )
+    private String text;
+
+    /**
+     * 1.实现 BaseCommand 类
+     * 2.重写 execute() 方法
+     * 3.自定义逻辑
+     * 4.可使用picocliOutput.out输出正常数据，可使用picocliOutput.err输出错误数据（或直接抛出异常）
+     * 5.返回状态码（OK_CODE, ERROR_CODE）
+     * @return 命令执行状态结果
+     */
+    @Override
+    protected Integer execute() {
+        // 自定义逻辑，输出内容到命令行
+        picocliOutput.out(text);
+        return OK_CODE;
     }
+}
 ```
-2.注册自定义命令 使用 CommandManager 类的register进行注册
- ```
-    commandManager.register("help", HelpCmd.class);
- ```
+
+* 注册命令：
+     1.实现 ArgusConfigurer 接口
+     2.重写registerCommand方法并注册定义的命令
+
+
+```java
+@Component
+public class MyCommand implements ArgusConfigurer {
+
+    /**
+     * 注册自定义命令
+     * @param commandManager argus命令管理器
+     */
+    @Override
+    public void registerCommand(CommandManager commandManager) {
+        // 命令： key: 命令名称 value: 命令类
+        commandManager.register("hello", HelloCmd.class);
+    }
+}
+```
+
+
+_**示例**_：
+
+1.自定义hello命令
+
+```java
+/**
+ *
+ * 自定义命令和注册步骤：
+ *
+ * 定义命令：
+ *      1.继承 BaseCommand 类
+ *      2.重写 execute() 方法
+ *      3.自定义逻辑
+ *      4.可使用picocliOutput.out输出正常数据，可使用picocliOutput.err输出错误数据（或直接抛出异常）
+ *      5.返回状态码（OK_CODE, ERROR_CODE）
+ * 注册命令：
+ *      1.实现 githubcew.arguslog.config.ArgusConfigurer 接口
+ *      2.重写并注册定义的命令 
+ *        @Override
+ *        public void registerCommand(CommandManager commandManager) {
+ *         // 命令
+ *         commandManager.register("hello", HelloCmd.class);
+ *        }
+ */
+@Component
+public class MyCommand implements ArgusConfigurer {
+
+    /**
+     * 注册自定义命令
+     * @param commandManager argus命令管理器
+     */
+    @Override
+    public void registerCommand(CommandManager commandManager) {
+        // 命令： key: 命令名称 value: 命令类
+        commandManager.register("hello", HelloCmd.class);
+    }
+
+    // 命令描述
+    @CommandLine.Command(
+            name = "hello",
+            description = "hello",
+            mixinStandardHelpOptions = true
+    )
+
+    // 定义hello命令
+    public static class HelloCmd extends BaseCommand {
+
+        // 配置命令选项和参数
+        @CommandLine.Parameters(
+                index = "0",
+                description = "命令输入",
+                arity = "1",
+                paramLabel = "text"
+        )
+        private String text;
+
+        /**
+         * 1.实现 BaseCommand
+         * 2.重写 execute()
+         * 3.自定义逻辑
+         * 4.可使用picocliOutput.out输出正常数据，可使用picocliOutput.err输出错误数据（或直接抛出异常）
+         * 5.返回状态码（OK_CODE, ERROR_CODE）
+         * @return 命令执行状态结果
+         */
+        @Override
+        protected Integer execute() {
+            // 自定逻辑
+            picocliOutput.out(text);
+            return OK_CODE;
+        }
+    }
+}
+```
+
+_**自定义命令使用示例**_
+
+查看hello命令用法
+```shell
+argus@argus% help hello
+Usage: hello [-hV] text
+hello
+      text        命令输入
+  -h, --help      Show this help message and exit.
+  -V, --version   Print version information and exit.
+argus@argus %
+```
+
+命令hello使用
+```shell
+argus@argus% hello argus
+argus
+argus@argus %
+
+```
 
 ### 自定义认证 
-1.toke认证 与项目使用相同认证凭证，实现接口类 TokenProvider, 实现 provide() 方法,返回Token（凭证token，有效期时间）对象
-#### 示例
+
+1.toke认证 
+
+与项目使用相同认证凭证，实现接口类 TokenProvider, 实现 provide() 方法,返回Token（凭证token，有效期时间）对象
+
+_**示例**_：
  ```java
 @Component
-public class CustTokenAuth implements TokenProvider {
+public class CustomTokenAuth implements TokenProvider {
+    
     @Resource
-    ShiroConfig shiroConfig;
+    private ShiroConfig shiroConfig;
+    
     @Override
     public Token provide() {
         boolean authenticated = SecurityUtils.getSubject().isAuthenticated();
@@ -636,18 +792,21 @@ public class CustTokenAuth implements TokenProvider {
         return null;
     }
 }
-    
  ```
 
 
-2.用户认证, 使用自定义的用户密码认证方式   ArgusAccountAuthenticator 类提供了认证方法 customize(String username, String password, Account provide) 
-#### 示例
+2.用户认证
+
+使用自定义的用户密码认证方式，ArgusAccountAuthenticator 类提供了认证方法 customize(String username, String password, Account provide)
+实现逻辑之后就可以使用系统的用户登录 argus
+
+_**示例**_：：
 
 ```java
 
 @Component
 @Slf4j
-public class CustAuth extends ArgusAccountAuthenticator {
+public class CustomAuth extends ArgusAccountAuthenticator {
 
    @Autowired
    ISysUserService sysUserServices;
