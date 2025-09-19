@@ -635,7 +635,7 @@ public class HelloCmd extends BaseCommand {
     private String text;
 
     /**
-     * 1.实现 BaseCommand 类
+     * 1.继承 BaseCommand 类
      * 2.重写 execute() 方法
      * 3.自定义逻辑
      * 4.可使用picocliOutput.out输出正常数据，可使用picocliOutput.err输出错误数据（或直接抛出异常）
@@ -730,8 +730,8 @@ public class MyCommand implements ArgusConfigurer {
         private String text;
 
         /**
-         * 1.实现 BaseCommand
-         * 2.重写 execute()
+         * 1.继承 BaseCommand 类
+         * 2.重写 execute() 方法
          * 3.自定义逻辑
          * 4.可使用picocliOutput.out输出正常数据，可使用picocliOutput.err输出错误数据（或直接抛出异常）
          * 5.返回状态码（OK_CODE, ERROR_CODE）
