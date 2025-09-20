@@ -10,7 +10,8 @@ public interface TokenProvider {
     /**
      * 提供token
      *
+     * @param username 用户名
      * @return token
      */
-    Token provide();
+    Token provide(String username);
 }

@@ -49,7 +49,7 @@ public class ArgusAccountAuthenticator implements Authenticator {
         }
 
         // 构建返回token
-        Token token = tokenProvider.provide();
+        Token token = tokenProvider.provide(request.getAccount().getUsername());
         response.setToken(token);
         response.setExecuteResult(ExecuteResult.success(ExecuteResult.OK));
 

@@ -19,7 +19,7 @@ public class ArgusTokenProvider implements TokenProvider {
     }
 
     @Override
-    public Token provide() {
+    public Token provide(String username) {
         return new Token(UUID.randomUUID().toString(), System.currentTimeMillis() + this.expireTime * 1000);
     }
 }

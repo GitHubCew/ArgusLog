@@ -783,14 +783,13 @@ _**示例**_：
 public class CustomTokenAuth implements TokenProvider {
     
     @Resource
-    private ShiroConfig shiroConfig;
+    private SessionMapper sessionMapper;
     
     @Override
-    public Token provide() {
-        boolean authenticated = SecurityUtils.getSubject().isAuthenticated();
-        if(authenticated){
-            Object attribute = ShiroUtils.getSession().getAttribute(ShiroConstants.CSRF_TOKEN);
-            return new Token(Convert.toStr(attribute),System.currentTimeMillis()+ 60*60*1000);
+    public Token provide(String username) {
+        Session session = sessionMapper.getSessionByUsername(username);
+        if(session != null){
+            return new Token(session.getTokenValue(),System.currentTimeMillis() + 60 * 60 * 1000);
         }
         return null;
     }
