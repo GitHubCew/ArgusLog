@@ -224,6 +224,7 @@ argus.trace-default-exclude-packages= sun.,java.,javax. #默认排查包
 argus.trace-include-packages=null # 追踪包含的包
 argus.trace-max-enhanced-class-num=500 # 最大增强类数量
 argus.trace-exclude-packages=null # 追踪排除的包
+argus.trace-max-thread-num=5 # 调用链处理线程数
 
 
 ```
@@ -343,6 +344,8 @@ traceExcludePackages          []                             yes          排除
 traceDefaultExcludePackages   []                             no           默认排除包                     
 traceMaxDepth                 6                              yes          调用链最大深度                   
 traceColorThreshold           300                            yes          调用链方法耗时阈值(ms)
+traceMaxThreadNum             5                              yes          调用链处理线程数
+
 argus@argus %
 ```
 部分变量可使用 _**set**_ 命令修改
