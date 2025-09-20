@@ -599,6 +599,30 @@ public class ArgusCache {
     }
 
     /**
+     * 根据用户获取自己追踪但其他人未监测信息
+     *
+     * @param user 用户token
+     * @return 监测信息，如果不存在返回null
+     */
+    public static List<MonitorInfo> getTraceMonitorAndNoOtherByUser(String user) {
+        if (!userTraceMethods.containsKey(user)) {
+            return null;
+        }
+
+        // 计算其他用户监测的所有方法
+        Set<Method> otherUsersMethods = userTraceMethods.entrySet().stream()
+                .filter(entry -> !entry.getKey().equals(user))
+                .flatMap(entry -> entry.getValue().stream())
+                .map(monitor -> monitor.getArgusMethod().getMethod())
+                .collect(Collectors.toSet());
+
+        // 只保留当前用户独有监测的方法
+        return userTraceMethods.get(user).stream()
+                .filter(monitor -> !otherUsersMethods.contains(monitor.getArgusMethod().getMethod()))
+                .collect(Collectors.toList());
+    }
+
+    /**
      * 查询用户追踪接口列表
      *
      * @param argusUser 用户token

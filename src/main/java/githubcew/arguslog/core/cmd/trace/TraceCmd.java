@@ -15,6 +15,7 @@ import githubcew.arguslog.web.ArgusUserContext;
 import picocli.CommandLine;
 
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 /**
@@ -193,10 +194,10 @@ public class TraceCmd extends BaseCommand {
                 .collect(Collectors.groupingBy(MethodCallInfo::getSubCalledClass));
 
         // 继承方法重定义类
-        redefine(argusMethod.getSignature(), extendMethods);
+        redefine(argusMethod.getSignature(), extendMethods, argusProperties.getTraceMaxThreadNum());
 
         // 非继承方法重定义类
-        redefine(argusMethod.getSignature(), nonExtendMethods);
+        redefine(argusMethod.getSignature(), nonExtendMethods, argusProperties.getTraceMaxThreadNum());
 
         String user = ArgusUserContext.getCurrentUsername();
 
@@ -216,8 +217,15 @@ public class TraceCmd extends BaseCommand {
      * @param methodKey 监听方法唯一标识
      * @param methods   方法映射表
      */
-    private void redefine(String methodKey, Map<String, List<MethodCallInfo>> methods) {
-        methods.forEach((className, callInfos) -> {
+    private void redefine(String methodKey, Map<String, List<MethodCallInfo>> methods, int maxTraceThread) {
+
+        if (methods.isEmpty()) {
+            return;
+        }
+        int threadNum = Math.min(methods.size(), maxTraceThread);
+        ExecutorService executorService = Executors.newFixedThreadPool(threadNum);
+        CountDownLatch latch = new CountDownLatch(methods.size());
+        methods.forEach((className, callInfos) -> executorService.submit(() -> {
             try {
                 Class<?> aClass = Class.forName(className.replace("/", "."));
                 List<String> methodNames = callInfos.stream()
@@ -228,6 +236,19 @@ public class TraceCmd extends BaseCommand {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        });
+            finally {
+                latch.countDown();
+            }
+        }));
+        try {
+            latch.await(30, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            executorService.shutdownNow();
+
+            TraceEnhanceManager.revertClassWithKey(methodKey);
+            throw new RuntimeException("方法增强超时");
+
+        }
     }
 }

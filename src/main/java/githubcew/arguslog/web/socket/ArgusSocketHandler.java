@@ -4,7 +4,10 @@ import githubcew.arguslog.ArgusStarter;
 import githubcew.arguslog.core.account.ArgusUser;
 import githubcew.arguslog.core.cache.ArgusCache;
 import githubcew.arguslog.core.cmd.ExecuteResult;
+import githubcew.arguslog.monitor.ArgusMethod;
+import githubcew.arguslog.monitor.MonitorInfo;
 import githubcew.arguslog.monitor.outer.OutputWrapper;
+import githubcew.arguslog.monitor.trace.TraceEnhanceManager;
 import githubcew.arguslog.web.ArgusUserContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -14,7 +17,10 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * WebSocket处理器
@@ -60,7 +66,26 @@ public class ArgusSocketHandler extends TextWebSocketHandler {
      */
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
+        ArgusUser currentUser = ArgusCache.getUserBySession(session);
+        if (Objects.isNull(currentUser)) {
+            return;
+        }
+        try {
+            // 移除用户monitor方法
+            ArgusCache.userRemoveAllMethod(currentUser.getToken().getToken());
 
+            // 移除trace增强
+            List<MonitorInfo> monitorInfos = Optional.ofNullable(ArgusCache.getTraceMonitorAndNoOtherByUser(currentUser.getToken().getToken())).orElse(new ArrayList<>());
+            for (MonitorInfo monitorInfo : monitorInfos) {
+                ArgusMethod argusMethod = monitorInfo.getArgusMethod();
+                TraceEnhanceManager.revertClassWithKey(argusMethod.getSignature());
+            }
+
+            // 移除缓存中的trace方法
+            ArgusCache.userRemoveAllTraceMethod(currentUser.getToken().getToken());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         ArgusUserContext.clearCurrentUser();
     }
 

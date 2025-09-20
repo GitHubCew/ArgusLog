@@ -82,4 +82,8 @@ public class ArgusProperties {
     @ArgusProperty(description = "调用链方法耗时阈值(ms)", modifyInRunning = true)
     private long traceColorThreshold = 300;
 
+    // trace增强处理线程数
+    @ArgusProperty(description = "调用链增强处理线程数", modifyInRunning = true)
+    private int traceMaxThreadNum = 5;
+
 }
