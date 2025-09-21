@@ -1,12 +1,9 @@
 package githubcew.arguslog.monitor;
 
+import githubcew.arguslog.common.util.ContextUtil;
 import githubcew.arguslog.config.ArgusProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import java.util.concurrent.*;
 
@@ -16,22 +13,24 @@ import java.util.concurrent.*;
  * @author chenenwei
  */
 
-@Component
-public class MonitorSender implements InitializingBean, DisposableBean {
+public class MonitorSender {
 
     private static final Logger log = LoggerFactory.getLogger(MonitorSender.class);
 
-    private final ArgusProperties argusProperties;
-    private final ThreadPoolExecutor scheduler;
+    private ArgusProperties argusProperties;
+    private ThreadPoolExecutor scheduler;
+
+    private volatile boolean isStarted = false;
 
 
     /**
-     * 构造方法
-     * @param argusProperties argus 配置
+     * 初始化方法
      */
-    @Autowired
-    public MonitorSender(ArgusProperties argusProperties) {
-        this.argusProperties = argusProperties;
+    public void init() {
+        if (isStarted) {
+            return;
+        }
+        this.argusProperties = ContextUtil.getBean(ArgusProperties.class);
         this.scheduler = new ThreadPoolExecutor(
                 argusProperties.getThreadCoreNum(),
                 argusProperties.getThreadNum(),
@@ -40,6 +39,7 @@ public class MonitorSender implements InitializingBean, DisposableBean {
                 new LinkedBlockingQueue<>(argusProperties.getMaxWaitQueueSize()),
                 new ThreadPoolExecutor.CallerRunsPolicy()
         );
+        isStarted = true;
     }
 
     /**
@@ -69,37 +69,5 @@ public class MonitorSender implements InitializingBean, DisposableBean {
                 scheduler.getActiveCount(),
                 scheduler.getQueue().size(),
                 scheduler.getCompletedTaskCount());
-    }
-
-    /**
-     * 容器销毁
-     * @throws Exception 异常
-     */
-    @Override
-    public void destroy() throws Exception {
-        // 优雅关闭线程池
-        scheduler.shutdown();
-        try {
-            if (!scheduler.awaitTermination(60, TimeUnit.SECONDS)) {
-                scheduler.shutdownNow();
-            }
-        } catch (InterruptedException e) {
-            scheduler.shutdownNow();
-            Thread.currentThread().interrupt();
-        }
-    }
-
-    /**
-     * bean属性设置
-     * @throws Exception 异常
-     */
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        if (log.isDebugEnabled()) {
-            log.debug("MonitorExecutor 初始化完成，线程池配置: " +
-                    "核心线程数=" + argusProperties.getThreadCoreNum() +
-                    ", 最大线程数=" + argusProperties.getThreadNum() +
-                    ", 队列大小=" + argusProperties.getMaxWaitQueueSize());
-        }
     }
 }

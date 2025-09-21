@@ -2,6 +2,7 @@ package githubcew.arguslog.web.filter;
 
 import githubcew.arguslog.common.util.CommonUtil;
 import githubcew.arguslog.common.util.ContextUtil;
+import githubcew.arguslog.core.ArgusManager;
 import githubcew.arguslog.core.account.ArgusUser;
 import githubcew.arguslog.core.cache.ArgusCache;
 import githubcew.arguslog.core.cmd.ExecuteResult;
@@ -62,7 +63,8 @@ public class ArgusTraceRequestFilter implements Filter {
      * @param method 开始方法
      */
     private void submitTraceTask(ArgusRequestContext.MethodNode rootNode, Method method) {
-        MonitorSender monitorSender = ContextUtil.getBean(MonitorSender.class);
+        ArgusManager argusManager = ContextUtil.getBean(ArgusManager.class);
+        MonitorSender monitorSender = argusManager.getMonitorSender();
         ArgusSocketHandler argusSocketHandler = ContextUtil.getBean(ArgusSocketHandler.class);
 
         if (Objects.isNull(rootNode)) {

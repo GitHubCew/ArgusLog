@@ -1,13 +1,10 @@
 package githubcew.arguslog.core.cache;
 
 
+import githubcew.arguslog.common.util.ContextUtil;
 import githubcew.arguslog.config.ArgusProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -18,36 +15,39 @@ import java.util.concurrent.TimeUnit;
  *
  * @author chenenwei
  */
-@Component
-public class ArgusCacheManager implements InitializingBean, DisposableBean {
+public class ArgusCacheManager {
 
     private static final Logger log = LoggerFactory.getLogger(ArgusCacheManager.class);
 
 
-    private final ArgusProperties argusProperties;
+    private ArgusProperties argusProperties;
 
     // 定时任务执行器
-    private final ScheduledExecutorService scheduler;
+    private ScheduledExecutorService scheduler;
+
+    private volatile boolean isStarted = false;
 
     /**
-     * 构造方法
-     *
-     * @param argusProperties 配置
+     * 初始化方法
      */
-    @Autowired
-    public ArgusCacheManager(ArgusProperties argusProperties) {
-        this.argusProperties = argusProperties;
+    private void init () {
+        if (isStarted) {
+            return;
+        }
+        this.argusProperties = ContextUtil.getBean(ArgusProperties.class);
         this.scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
             Thread t = new Thread(r, "[Argus-Cache-Thread]");
             t.setDaemon(false);
             return t;
         });
+        isStarted = true;
     }
 
     /**
      * 启动定时清理任务
      */
     public void start() {
+        init();
         scheduler.scheduleAtFixedRate(this::cleanExpiredCredentials,
                 argusProperties.getTokenFlushTime(), argusProperties.getTokenFlushTime(), TimeUnit.SECONDS);
         log.info("【Argus => Started Argus Cache Manager...】");
@@ -88,43 +88,6 @@ public class ArgusCacheManager implements InitializingBean, DisposableBean {
 
             if (log.isDebugEnabled()) {
                 log.debug("【Argus => Scheduler restarted successfully】");
-            }
-        }
-    }
-
-    /**
-     * afterPropertiesSet
-     *
-     * @throws Exception 异常
-     */
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        start();
-    }
-
-    /**
-     * 销毁方法
-     *
-     * @throws Exception 异常
-     */
-    @Override
-    public void destroy() throws Exception {
-        shutdown();
-    }
-
-    /**
-     * 关闭线程
-     */
-    public void shutdown() {
-        if (scheduler != null && !scheduler.isShutdown()) {
-            scheduler.shutdown();
-            try {
-                if (!scheduler.awaitTermination(5, TimeUnit.SECONDS)) {
-                    scheduler.shutdownNow();
-                }
-            } catch (InterruptedException e) {
-                scheduler.shutdownNow();
-                Thread.currentThread().interrupt();
             }
         }
     }

@@ -6,8 +6,10 @@ import githubcew.arguslog.config.ArgusProperties;
 import githubcew.arguslog.core.account.ArgusUserProvider;
 import githubcew.arguslog.core.account.UserProvider;
 import githubcew.arguslog.core.cache.ArgusCache;
+import githubcew.arguslog.core.cache.ArgusCacheManager;
 import githubcew.arguslog.core.cmd.CommandManager;
 import githubcew.arguslog.monitor.ArgusMethod;
+import githubcew.arguslog.monitor.MonitorSender;
 import githubcew.arguslog.monitor.trace.buddy.BuddyProxyManager;
 import githubcew.arguslog.monitor.trace.jdk.JdkProxyWrapper;
 import githubcew.arguslog.web.auth.ArgusAccountAuthenticator;
@@ -16,6 +18,7 @@ import githubcew.arguslog.web.auth.TokenProvider;
 import githubcew.arguslog.web.extractor.Extractor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
@@ -42,7 +45,7 @@ import java.util.Set;
  * @author chenenwei
  */
 @Component
-public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> {
+public class ArgusManager implements ApplicationListener<ContextRefreshedEvent>, CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(ArgusManager.class);
 
@@ -58,6 +61,8 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
     private ApplicationContext applicationContext;
     private ArgusAccountAuthenticator argusAccountAuthenticator;
     private ArgusTokenAuthenticator argusTokenAuthenticator;
+    private ArgusCacheManager argusCacheManager;
+    private MonitorSender monitorSender;
 
 
     private RequestMappingHandlerMapping requestMappingHandlerMapping;
@@ -87,6 +92,14 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
         return argusTokenAuthenticator;
     }
 
+    public ArgusCacheManager getArgusCacheManager() {
+        return argusCacheManager;
+    }
+
+    public MonitorSender getMonitorSender() {
+        return monitorSender;
+    }
+
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
 
@@ -110,6 +123,9 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
             this.argusProperties = applicationContext.getBean(ArgusProperties.class);
             this.argusAccountAuthenticator = applicationContext.getBean(ArgusAccountAuthenticator.class);
             this.argusTokenAuthenticator = applicationContext.getBean(ArgusTokenAuthenticator.class);
+            this.argusCacheManager = new ArgusCacheManager();
+            this.monitorSender = new MonitorSender();
+
             // 注册bean
             init();
 
@@ -139,8 +155,12 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
         // 注册命令
         registerCommand();
 
-        // 包装jdk代理, 提供动态刷新拦截器
-        JdkProxyWrapper.wrapJdkProxies();
+        // 开启线程
+        argusCacheManager.start();
+
+        // 开启线程池
+        monitorSender.init();
+
     }
 
     /**
@@ -205,5 +225,16 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
                         ((ArgusUserProvider) userProvider).getPassword());
             }
         }
+    }
+
+    @Override
+    public void run(String... args) throws Exception {
+
+        log.info("【Argus => ArgusManager wrapper jdk proxy started...】");
+
+        // 包装jdk代理, 提供动态刷新拦截器
+        JdkProxyWrapper.wrapJdkProxies();
+
+        log.info("【Argus => ArgusManager wrapper jdk proxy completed...】");
     }
 }

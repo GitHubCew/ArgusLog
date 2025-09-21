@@ -44,6 +44,7 @@ public class JdkProxyWrapper {
                 }
             } catch (Exception e) {
                 // 忽略无法获取的 Bean（如需要参数的 prototype）
+                e.printStackTrace();
             }
         }
     }
@@ -100,6 +101,18 @@ public class JdkProxyWrapper {
 
         // 获取原始 InvocationHandler（即被代理的逻辑）
         InvocationHandler originalHandler = Proxy.getInvocationHandler(originalProxy);
+
+        // 避免重复包装
+        if (originalHandler instanceof RefreshableProxy) {
+            return;
+        }
+        // 跳过 Spring AOP 代理
+        if (originalHandler instanceof Advised) {
+            if (log.isDebugEnabled()) {
+                log.debug("Argus => Skipping Spring AOP proxy during wrapping: {}", beanName);
+            }
+            return; // 直接返回，不进行任何包装和替换
+        }
 
         // 创建可刷新的代理，目标是原始的 handler 所代理的对象逻辑
         RefreshableProxy<Object> refreshableProxy = new RefreshableProxy<>(originalProxy);

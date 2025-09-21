@@ -1,9 +1,9 @@
 package githubcew.arguslog.aop;
 
 import githubcew.arguslog.common.util.ContextUtil;
+import githubcew.arguslog.core.ArgusManager;
 import githubcew.arguslog.core.cache.ArgusCache;
 import githubcew.arguslog.monitor.MonitorOutput;
-import githubcew.arguslog.monitor.MonitorSender;
 import githubcew.arguslog.monitor.WebRequestInfo;
 import githubcew.arguslog.monitor.formater.MethodParamFormatter;
 import githubcew.arguslog.monitor.outer.Outer;
@@ -71,8 +71,8 @@ public class MethodAdvice implements MethodInterceptor {
             // 计算耗时
             monitorOutput.setTime(end - start);
             // 使用线程池处理输出
-            MonitorSender monitorSender = ContextUtil.getBean(MonitorSender.class);
-            monitorSender.submit(() -> {
+            ArgusManager argusManager = ContextUtil.getBean(ArgusManager.class);
+            argusManager.getMonitorSender().submit(() -> {
                 // 输出content
                 Outer outer = ContextUtil.getBean(Outer.class);
                 outer.out(invocation.getMethod(), monitorOutput);
