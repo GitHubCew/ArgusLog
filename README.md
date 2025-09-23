@@ -1,9 +1,13 @@
 # ArgusLog 介绍
 
-ArgusLog 是一款基于 SpringBoot 与 WebSocket 技术构建的轻量级接口监测与诊断工具，专为 Web 端命令行环境设计。该工具致力于提升开发与生产环境中接口问题的排查效率与系统性能优化能力，支持对单接口或批量接口进行全方位监测，涵盖请求参数、返回结果、响应耗时、异常信息及方法调用链追踪等关键维度，可有效应对复杂业务场景下的接口调试与性能分析挑战。
-
-此外，ArgusLog 具备高度可扩展性，支持用户自定义命令，便于适配不同项目结构和诊断需求。工具还提供灵活的身份集成能力，可与企业现有用户体系无缝对接，并支持自定义 Token 与有效期管理，保障操作安全性与审计合规性。可帮助开发团队快速定位问题、优化系统性能。
-
+   ArgusLog 是一款基于 SpringBoot 与 WebSocket 技术构建的轻量级接口监测与诊断工具，专为 Web 端命令行环境设计。其主要特点包括：\
+   1.全方位接口监测：支持对单接口或批量接口进行监测，全面覆盖请求参数、返回结果、响应耗时、异常信息及调用链追踪等关键维度。\
+   2.深度运行时诊断：集成多项高级诊断功能，包括：\
+   (1).Spring 容器 Bean 检索：支持动态查询、验证容器中 Bean 的定义、依赖关系及属性配置，快速定位依赖注入或配置加载异常\
+   (2)Jad 字节码反编译：可实时查看部署环境中任意类的反编译源码，辅助分析第三方库行为、动态代理逻辑或线上源码不一致问题。\
+   (3)受限热部署：支持在不重启服务的情况下动态更新特定方法逻辑或配置类，提升开发调试与线上应急处理效率。\
+   (4)高可扩展性与集成能力：支持用户自定义命令以适配不同项目需求，并能与企业现有用户体系无缝对接。\
+   3.安全与合规保障：通过自定义 Token 与有效期管理机制，确保操作安全性与审计合规性。
 
 # 功能介绍
 
@@ -39,6 +43,21 @@ _**-i**_    [过滤包名] \
 **_-e_**    [排除包名] \
 **_-d_**    [指定追踪深度] \
 **_-t_**    [指定方法耗时颜色阈值]
+
+## 3.spring ioc容器bean检索
+
+可使用 **_ioc_** list [参数] 检索容器中的bean\
+可使用 _**ioc**_ get [参数] 获取指定bean或类型的bean
+
+## 4.反编译与热部署
+
+可使用 _**jad**_ [**全限定性类名**]  [**方法列表**] 反编译字节码
+
+**_jad_** 反编译可指定参数：
+
+_**-p**_   [查看代理对象字节码] \
+-_**om**_  [仅查看方法名（不显示方法体）]
+
 
 # 快速使用：
 
@@ -603,7 +622,250 @@ ok
 argus@argus %
 ```
 
+## ioc
+spring ioc bean检索
 
+_**用法**_：
+
+```shell
+Usage: ioc [-hV] operatorType [name]
+spring ioc命令
+      operatorType   spring ioc容器查询类型, ls: 模糊查询(支持*匹配 bean名称 和
+                       类名称) get: 精确查询(支持按 bean名称 和 bean类型)
+      [name]         对象bean名称或者全限定类
+  -h, --help         Show this help message and exit.
+  -V, --version      Print version information and exit.
+argus@Envi %
+```
+
+_**示例**_：
+
+1.查询com.example下的全部bean
+```shell
+argus@Envi% ioc list *com.example*
+auth => com.example.demo.config.Auth
+demoApplication => com.example.demo.DemoApplication$$EnhancerBySpringCGLIB$$1
+demoConfig => com.example.demo.config.DemoConfig$$EnhancerBySpringCGLIB$$1
+myCommand => com.example.demo.config.MyCommand
+scheduleConfig => com.example.demo.config.ScheduleConfig$$EnhancerBySpringCGLIB$$1
+test2ServiceImpl => com.example.demo.service.Test2ServiceImpl
+testApi => com.example.demo.controller.TestApi$$EnhancerBySpringCGLIB$$1
+testController => com.example.demo.controller.TestController$$EnhancerBySpringCGLIB$$1
+testRunner => com.example.demo.runner.TestRunner
+testServer => com.example.demo.service.TestServer
+testServiceImpl => com.example.demo.service.TestServiceImpl
+testTask => com.example.demo.task.TestTask
+userController => com.example.demo.controller.UserController$$EnhancerBySpringCGLIB$$1
+userMapper => com.example.demo.mapper.UserMapper
+userServiceImpl => com.example.demo.service.impl.UserServiceImpl$$EnhancerBySpringCGLIB$$1
+xssFilter => com.example.demo.config.XssFilter
+ (16)
+argus@Envi %
+```
+
+2.查询全部实现过滤器Filter接口的bean
+```shell
+argus@Envi% ioc get javax.servlet.Filter
+xssFilter => com.example.demo.config.XssFilter (order: -2147483648)
+characterEncodingFilter => org.springframework.boot.web.servlet.filter.OrderedCharacterEncodingFilter (order: -2147483648)
+requestBodyCacheFilter => githubcew.arguslog.web.filter.RequestBodyCachingFilter (order: -2147483647)
+argusTraceRequestFilter => githubcew.arguslog.web.filter.ArgusTraceRequestFilter (order: -2147483638)
+argusFilter => githubcew.arguslog.web.filter.ArgusFilter (order: -2147483628)
+formContentFilter => org.springframework.boot.web.servlet.filter.OrderedFormContentFilter (order: -9900)
+requestContextFilter => org.springframework.boot.web.servlet.filter.OrderedRequestContextFilter (order: -105)
+ (7)
+argus@Envi %
+```
+
+3.根据bean名称查询bean
+```shell
+argus@Envi% ioc get xssFilter
+xssFilter => com.example.demo.config.XssFilter (order: -2147483648)
+argus@Envi %
+```
+
+## jad
+java反编译
+
+_**用法**_：
+```shell
+Usage: jad [-hpV] [-om] className [methodNames...]
+反编译指定类
+      className            类全限定名
+      [methodNames...]     方法名列表
+  -h, --help               Show this help message and exit.
+      -om, --only-method   只显示方法声明
+  -p, --proxy              显示代理对象字节码
+  -V, --version            Print version information and exit.
+argus@Envi %
+```
+
+_**示例**_：
+
+1.反编译指定的类（目标对象）
+```shell
+argus@Envi% jad com.example.demo.config.Auth
+package com.example.demo.config;
+
+import githubcew.arguslog.core.account.Account;
+import githubcew.arguslog.web.auth.ArgusAccountAuthenticator;
+import org.springframework.stereotype.Component;
+
+@Component
+public class Auth
+extends ArgusAccountAuthenticator {
+    public Auth() {
+        super();
+    }
+
+    @Override
+    // line 21
+    protected boolean customize(String username, String password, Account account) {
+        return username.equals(account.getUsername()) && password.equals(account.getPassword());
+    }
+}
+
+argus@Envi %
+```
+
+2.反编译指定的类（代理对象）
+```shell
+argus@Envi% jad com.example.demo.config.DemoConfig$$EnhancerBySpringCGLIB$$1 -p
+package com.example.demo.config;
+
+import com.example.demo.config.DemoConfig;
+import java.lang.reflect.Method;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.cglib.core.ReflectUtils;
+import org.springframework.cglib.core.Signature;
+import org.springframework.cglib.proxy.Callback;
+import org.springframework.cglib.proxy.MethodInterceptor;
+import org.springframework.cglib.proxy.MethodProxy;
+import org.springframework.cglib.proxy.NoOp;
+import org.springframework.context.annotation.ConfigurationClassEnhancer;
+
+/*
+ * Exception performing whole class analysis ignored.
+ */
+public class DemoConfig$$EnhancerBySpringCGLIB$$1
+extends DemoConfig
+implements ConfigurationClassEnhancer.EnhancedConfiguration {
+    private boolean CGLIB$BOUND;
+    public static Object CGLIB$FACTORY_DATA;
+    private static final ThreadLocal CGLIB$THREAD_CALLBACKS;
+    private static final Callback[] CGLIB$STATIC_CALLBACKS;
+    private MethodInterceptor CGLIB$CALLBACK_0;
+    private MethodInterceptor CGLIB$CALLBACK_1;
+    private NoOp CGLIB$CALLBACK_2;
+    private static Object CGLIB$CALLBACK_FILTER;
+    private static final Method CGLIB$setBeanFactory$6$Method;
+    private static final MethodProxy CGLIB$setBeanFactory$6$Proxy;
+    private static final Object[] CGLIB$emptyArgs;
+    public BeanFactory $$beanFactory;
+
+    static void CGLIB$STATICHOOK3() {
+        CGLIB$THREAD_CALLBACKS = new ThreadLocal();
+        CGLIB$emptyArgs = new Object[0];
+        Class<?> clazz = Class.forName("com.example.demo.config.DemoConfig$$EnhancerBySpringCGLIB$$1");
+        Class<?> clazz2 = Class.forName("org.springframework.beans.factory.BeanFactoryAware");
+        CGLIB$setBeanFactory$6$Method = ReflectUtils.findMethods(new String[]{"setBeanFactory", "(Lorg/springframework/beans/factory/BeanFactory;)V"}, clazz2.getDeclaredMethods())[0];
+        CGLIB$setBeanFactory$6$Proxy = MethodProxy.create(clazz2, clazz, "(Lorg/springframework/beans/factory/BeanFactory;)V", "setBeanFactory", "CGLIB$setBeanFactory$6");
+    }
+
+    final void CGLIB$setBeanFactory$6(BeanFactory beanFactory) throws BeansException {
+        super.setBeanFactory(beanFactory);
+    }
+
+    @Override
+    public final void setBeanFactory(BeanFactory beanFactory) throws BeansException {
+        MethodInterceptor methodInterceptor = this.CGLIB$CALLBACK_1;
+        if (methodInterceptor == null) {
+            DemoConfig$$EnhancerBySpringCGLIB$$1.CGLIB$BIND_CALLBACKS((Object)this);
+            methodInterceptor = this.CGLIB$CALLBACK_1;
+        }
+        if (methodInterceptor != null) {
+            Object object = methodInterceptor.intercept(this, CGLIB$setBeanFactory$6$Method, new Object[]{beanFactory}, CGLIB$setBeanFactory$6$Proxy);
+            return;
+        }
+        super.setBeanFactory(beanFactory);
+    }
+
+    public static MethodProxy CGLIB$findMethodProxy(Signature signature) {
+        String string = ((Object)signature).toString();
+        switch (string.hashCode()) {
+            case 2095635076: {
+                if (!string.equals("setBeanFactory(Lorg/springframework/beans/factory/BeanFactory;)V")) break;
+                return CGLIB$setBeanFactory$6$Proxy;
+            }
+        }
+        return null;
+    }
+
+    public DemoConfig$$EnhancerBySpringCGLIB$$1() {
+        DemoConfig$$EnhancerBySpringCGLIB$$1 demoConfig$$EnhancerBySpringCGLIB$$1 = this;
+        super();
+        DemoConfig$$EnhancerBySpringCGLIB$$1.CGLIB$BIND_CALLBACKS((Object)demoConfig$$EnhancerBySpringCGLIB$$1);
+    }
+
+    public static void CGLIB$SET_THREAD_CALLBACKS(Callback[] callbackArray) {
+        CGLIB$THREAD_CALLBACKS.set(callbackArray);
+    }
+
+    public static void CGLIB$SET_STATIC_CALLBACKS(Callback[] callbackArray) {
+        CGLIB$STATIC_CALLBACKS = callbackArray;
+    }
+
+    private static final void CGLIB$BIND_CALLBACKS(Object object) {
+        block2: {
+            Object object2;
+            DemoConfig$$EnhancerBySpringCGLIB$$1 demoConfig$$EnhancerBySpringCGLIB$$1;
+            block3: {
+                demoConfig$$EnhancerBySpringCGLIB$$1 = (DemoConfig$$EnhancerBySpringCGLIB$$1)object;
+                if (demoConfig$$EnhancerBySpringCGLIB$$1.CGLIB$BOUND) break block2;
+                demoConfig$$EnhancerBySpringCGLIB$$1.CGLIB$BOUND = true;
+                object2 = CGLIB$THREAD_CALLBACKS.get();
+                if (object2 != null) break block3;
+                object2 = CGLIB$STATIC_CALLBACKS;
+                if (CGLIB$STATIC_CALLBACKS == null) break block2;
+            }
+            Callback[] callbackArray = (Callback[])object2;
+            DemoConfig$$EnhancerBySpringCGLIB$$1 demoConfig$$EnhancerBySpringCGLIB$$12 = demoConfig$$EnhancerBySpringCGLIB$$1;
+            demoConfig$$EnhancerBySpringCGLIB$$12.CGLIB$CALLBACK_2 = (NoOp)callbackArray[2];
+            demoConfig$$EnhancerBySpringCGLIB$$12.CGLIB$CALLBACK_1 = (MethodInterceptor)callbackArray[1];
+            demoConfig$$EnhancerBySpringCGLIB$$12.CGLIB$CALLBACK_0 = (MethodInterceptor)callbackArray[0];
+        }
+    }
+
+    static {
+        DemoConfig$$EnhancerBySpringCGLIB$$1.CGLIB$STATICHOOK4();
+        DemoConfig$$EnhancerBySpringCGLIB$$1.CGLIB$STATICHOOK3();
+    }
+
+    static void CGLIB$STATICHOOK4() {
+    }
+}
+argus@Envi %
+```
+
+3.反编译指定方法
+```shell
+argus@Envi% jad com.example.demo.config.Auth customize
+    
+protected boolean customize(String username, String password, Account account) {
+    return username.equals(account.getUsername()) && password.equals(account.getPassword());
+}
+
+argus@Envi %
+```
+
+4.反编译类（只查看方法）
+```shell
+argus@Envi% jad com.example.demo.config.Auth -om
+public Auth();
+protected boolean customize(String username, String password, Account account);
+argus@Envi %
+```
 # 自定义开发
 
 ## 自定义新命令
