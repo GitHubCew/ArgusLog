@@ -703,7 +703,7 @@ argus@Envi %
 _**示例**_：
 
 1.反编译指定的类（目标对象）
-```shell
+```java
 argus@Envi% jad com.example.demo.config.Auth
 package com.example.demo.config;
 
@@ -729,7 +729,7 @@ argus@Envi %
 ```
 
 2.反编译指定的类（代理对象）
-```shell
+```java
 argus@Envi% jad com.example.demo.config.DemoConfig$$EnhancerBySpringCGLIB$$1 -p
 package com.example.demo.config;
 
@@ -849,7 +849,7 @@ argus@Envi %
 ```
 
 3.反编译指定方法
-```shell
+```java
 argus@Envi% jad com.example.demo.config.Auth customize
     
 protected boolean customize(String username, String password, Account account) {
@@ -860,7 +860,7 @@ argus@Envi %
 ```
 
 4.反编译类（只查看方法）
-```shell
+```java
 argus@Envi% jad com.example.demo.config.Auth -om
 public Auth();
 protected boolean customize(String username, String password, Account account);
