@@ -1,5 +1,6 @@
 package githubcew.arguslog.core.cache;
 
+import githubcew.arguslog.common.util.PatternUtil;
 import githubcew.arguslog.core.account.ArgusUser;
 import githubcew.arguslog.monitor.ArgusMethod;
 import githubcew.arguslog.monitor.MonitorInfo;
@@ -114,7 +115,7 @@ public class ArgusCache {
      */
     public static List<String> getUrisWithPattern(String pattern) {
         return uriMethodCache.keySet().stream()
-                .filter(u -> match(u, pattern))
+                .filter(u -> PatternUtil.match(u, pattern))
                 .collect(Collectors.toList());
     }
 
@@ -254,7 +255,7 @@ public class ArgusCache {
         }
 
         uriMethodCache.forEach((uri, method) -> {
-            if (!match(uri, pattern)) {
+            if (!PatternUtil.match(uri, pattern)) {
                 return;
             }
 
@@ -371,7 +372,7 @@ public class ArgusCache {
             return;
         }
 
-        monitorInfos.removeIf(monitorInfo -> match(monitorInfo.getArgusMethod().getUri(), pattern));
+        monitorInfos.removeIf(monitorInfo -> PatternUtil.match(monitorInfo.getArgusMethod().getUri(), pattern));
 
         if (monitorInfos.isEmpty()) {
             userMonitorMethods.remove(argusUser);
@@ -420,7 +421,7 @@ public class ArgusCache {
         }
 
         return monitorInfos.stream()
-                .filter(monitor -> match(monitor.getArgusMethod().getUri(), pattern))
+                .filter(monitor -> PatternUtil.match(monitor.getArgusMethod().getUri(), pattern))
                 .map(monitor -> monitor.getArgusMethod().getUri())
                 .sorted()
                 .collect(Collectors.toList());
@@ -687,52 +688,5 @@ public class ArgusCache {
 
     // ==================== userTraceInfo 相关操作 ====================
     // 注：userTraceInfo 目前没有公开的操作方法，可以根据需要添加
-
-    // ==================== 通用工具方法 ====================
-
-    /**
-     * 检查URI是否匹配模式
-     *
-     * @param uri     接口URI
-     * @param pattern 正则表达式模式
-     * @return 如果匹配返回true，否则返回false
-     */
-    public static boolean match(String uri, String pattern) {
-        if (!pattern.contains("*")) {
-            return uri.equalsIgnoreCase(pattern);
-        }
-        return matchPattern(uri.toLowerCase(), pattern.toLowerCase());
-    }
-
-    /**
-     * 使用正则模式匹配URI
-     *
-     * @param uri     接口URI
-     * @param pattern 正则表达式模式
-     * @return 如果匹配返回true，否则返回false
-     */
-    public static boolean matchPattern(String uri, String pattern) {
-        String regex = "^" + escapeAndReplaceWildcard(pattern) + "$";
-        return Pattern.matches(regex, uri);
-    }
-
-    /**
-     * 转义和替换通配符
-     *
-     * @param pattern 原始模式字符串
-     * @return 处理后的正则表达式字符串
-     */
-    private static String escapeAndReplaceWildcard(String pattern) {
-        StringBuilder sb = new StringBuilder();
-        for (char c : pattern.toCharArray()) {
-            if (c == '*') {
-                sb.append(".*");
-            } else if ("\\[]^$.{}?+|()".indexOf(c) != -1) {
-                sb.append('\\').append(c);
-            } else {
-                sb.append(c);
-            }
-        }
-        return sb.toString();
-    }
+    
 }

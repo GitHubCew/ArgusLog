@@ -8,6 +8,7 @@ import githubcew.arguslog.monitor.formater.ArgusMethodParamFormatter;
 import githubcew.arguslog.monitor.formater.MethodParamFormatter;
 import githubcew.arguslog.monitor.outer.ArgusWebSocketOuter;
 import githubcew.arguslog.monitor.outer.Outer;
+import githubcew.arguslog.monitor.trace.jdk.JdkProxyWrapper;
 import githubcew.arguslog.web.auth.ArgusAccountAuthenticator;
 import githubcew.arguslog.web.auth.ArgusTokenAuthenticator;
 import githubcew.arguslog.web.filter.ArgusFilter;
@@ -20,14 +21,15 @@ import githubcew.arguslog.web.extractor.Extractor;
 import githubcew.arguslog.web.servlet.ArgusServlet;
 import githubcew.arguslog.web.socket.ArgusHandshakeInterceptor;
 import githubcew.arguslog.web.socket.ArgusSocketHandler;
+import org.springframework.aop.framework.ProxyConfig;
 import org.springframework.aop.support.DefaultPointcutAdvisor;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
-import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.context.annotation.*;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -40,6 +42,7 @@ import javax.servlet.DispatcherType;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
+import java.util.Objects;
 
 /**
  * 自动配置类
@@ -49,7 +52,7 @@ import java.security.NoSuchAlgorithmException;
 @EnableWebSocket
 @Configuration
 @EnableAspectJAutoProxy
-public class ArgusAutoConfiguration implements ImportBeanDefinitionRegistrar, WebSocketConfigurer {
+public class ArgusAutoConfiguration implements ImportBeanDefinitionRegistrar, WebSocketConfigurer, InitializingBean {
 
     @Qualifier("argusSocketHandler")
     @Autowired
@@ -110,8 +113,6 @@ public class ArgusAutoConfiguration implements ImportBeanDefinitionRegistrar, We
         registration.setDispatcherTypes(DispatcherType.REQUEST);
         return registration;
     }
-
-
 
     /**
      * 切点
@@ -235,6 +236,18 @@ public class ArgusAutoConfiguration implements ImportBeanDefinitionRegistrar, We
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
         scanPackages(registry, "githubcew.arguslog");
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+
+        if (!Objects.isNull(argusProperties.getJdkPoxyWrapExcludeClasses())) {
+            argusProperties.getJdkPoxyWrapExcludeClasses().forEach(JdkProxyWrapper.Excluded::addExcludeClass);
+        }
+
+        if (!Objects.isNull(argusProperties.getJdkProxyWrapExcludePackages())) {
+            argusProperties.getJdkProxyWrapExcludePackages().forEach(JdkProxyWrapper.Excluded::addExcludePackage);
+        }
     }
 
     /**

@@ -43,7 +43,7 @@ public abstract class BaseCommand implements Callable<Integer> {
         Integer result = 0;
         try {
             result = execute();
-            if (!picocliOutput.hasNormalOutput) {
+            if (!picocliOutput.hasNormalOutput && !picocliOutput.hasErrorOutput) {
                 picocliOutput.out(OK);
             }
         } catch (Exception e) {

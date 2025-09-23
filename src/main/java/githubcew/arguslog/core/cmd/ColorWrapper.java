@@ -23,7 +23,7 @@ public class ColorWrapper {
      * @return 颜色文本
      */
     public static String green(String text) {
-        return "[#00FFC8]" + text + "[/]";
+        return "[#4CAF50]" + text + "[/]";
     }
 
     /**

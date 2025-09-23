@@ -86,4 +86,11 @@ public class ArgusProperties {
     @ArgusProperty(description = "调用链处理线程数", modifyInRunning = true)
     private int traceMaxThreadNum = 5;
 
+    // jdk包装排除类集合
+    @ArgusProperty(description = "jdk包装排除类集合")
+    private Set<String> jdkPoxyWrapExcludeClasses;
+
+    // jdk包装排除包集合
+    @ArgusProperty(description = "jdk包装排除包集合")
+    private Set<String> jdkProxyWrapExcludePackages;
 }

@@ -63,6 +63,10 @@ public class BuddyProxyManager {
         }
     }
 
+    public static Instrumentation getInstrumentation() {
+        return instrumentation;
+    }
+
     /**
      * 为指定类的增加方法
      *

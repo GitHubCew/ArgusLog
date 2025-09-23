@@ -11,14 +11,13 @@ import githubcew.arguslog.core.cmd.CommandManager;
 import githubcew.arguslog.monitor.ArgusMethod;
 import githubcew.arguslog.monitor.MonitorSender;
 import githubcew.arguslog.monitor.trace.buddy.BuddyProxyManager;
-import githubcew.arguslog.monitor.trace.jdk.JdkProxyWrapper;
 import githubcew.arguslog.web.auth.ArgusAccountAuthenticator;
 import githubcew.arguslog.web.auth.ArgusTokenAuthenticator;
 import githubcew.arguslog.web.auth.TokenProvider;
 import githubcew.arguslog.web.extractor.Extractor;
+import lombok.SneakyThrows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
@@ -45,7 +44,7 @@ import java.util.Set;
  * @author chenenwei
  */
 @Component
-public class ArgusManager implements ApplicationListener<ContextRefreshedEvent>, CommandLineRunner {
+public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> {
 
     private static final Logger log = LoggerFactory.getLogger(ArgusManager.class);
 
@@ -100,6 +99,7 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent>,
         return monitorSender;
     }
 
+    @SneakyThrows
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
 
@@ -225,16 +225,5 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent>,
                         ((ArgusUserProvider) userProvider).getPassword());
             }
         }
-    }
-
-    @Override
-    public void run(String... args) throws Exception {
-
-        log.info("【Argus => ArgusManager wrapper jdk proxy started...】");
-
-        // 包装jdk代理, 提供动态刷新拦截器
-        JdkProxyWrapper.wrapJdkProxies();
-
-        log.info("【Argus => ArgusManager wrapper jdk proxy completed...】");
     }
 }

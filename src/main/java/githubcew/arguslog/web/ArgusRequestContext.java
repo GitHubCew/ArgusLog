@@ -152,7 +152,7 @@ public class ArgusRequestContext {
 
 
         // 获取带参数的简化方法签名
-        String signatureWithParams = getSignatureWithParams(node);
+        String signatureWithParams = getSignatureWithParams(node, trace.isShowFullClassName());
 
         // 获取行号
         String lineNumber = getLineNumber(node.getMethod(), depth, trace.getMethodCalls());
@@ -202,10 +202,16 @@ public class ArgusRequestContext {
      * 如果参数超过64个字符，则截取并在后面添加"..."
      *
      * @param node 节点
+     * @param showFullClassName 是否显示全类名
      * @return 简化方法签名
      */
-    private static String getSignatureWithParams(MethodNode node) {
-        String className = getSimpleClassName(node.getSignature());
+    private static String getSignatureWithParams(MethodNode node, boolean showFullClassName) {
+        String className = "";
+        if (showFullClassName) {
+            className = getFullClassName(node.getSignature());
+        } else {
+            className = getSimpleClassName(node.getSignature());
+        }
         String methodName = getMethodName(node.getSignature());
 
         // 构建参数列表字符串
@@ -304,6 +310,22 @@ public class ArgusRequestContext {
         }
 
         return classPart;
+    }
+
+    /**
+     * 从完整签名中提取全定类名
+     *
+     * @param signature 完整签名
+     * @return 全定类名
+     */
+    private static String getFullClassName(String signature) {
+        if (signature == null) return "";
+
+        int hashIndex = signature.indexOf('#');
+        if (hashIndex == -1) return signature;
+
+        String classPart = signature.substring(0, hashIndex);
+        return classPart.replace("/", ".");
     }
 
     /**

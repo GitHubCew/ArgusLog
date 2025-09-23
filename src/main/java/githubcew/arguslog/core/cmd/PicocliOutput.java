@@ -12,6 +12,8 @@ public class PicocliOutput {
 
     public boolean hasNormalOutput;
 
+    public boolean hasErrorOutput;
+
     /**
      * 获取输出
      * @return PrintWriter
@@ -53,6 +55,7 @@ public class PicocliOutput {
      * @param msg 消息
      */
     public void error(String msg) {
+        this.hasErrorOutput = true;
         err.println(msg);
         err.flush();
     }

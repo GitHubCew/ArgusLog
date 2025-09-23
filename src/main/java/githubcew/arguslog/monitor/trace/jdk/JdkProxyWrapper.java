@@ -1,133 +1,209 @@
 package githubcew.arguslog.monitor.trace.jdk;
 
-import githubcew.arguslog.common.util.ContextUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.aop.framework.Advised;
-import org.springframework.beans.factory.support.DefaultListableBeanFactory;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ConfigurableApplicationContext;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
-import java.util.Objects;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
- * @author Envi
+ *
+ * jdk 动态代理包装器
+ *
+ * @author chenenwei
  */
 public class JdkProxyWrapper {
 
     private final static Logger log = LoggerFactory.getLogger(JdkProxyWrapper.class);
 
     /**
-     * 包装Proxy
+     * 包装对象
+     * @param bean bean对象
+     * @param beanName bean名称
+     * @return 包装后的对象
      */
-    public static void wrapJdkProxies() {
-        ApplicationContext applicationContext = ContextUtil.context();
-        if (Objects.isNull(applicationContext)) {
-            return;
-        }
-        ConfigurableApplicationContext ctx = (ConfigurableApplicationContext) applicationContext;
-        DefaultListableBeanFactory beanFactory = (DefaultListableBeanFactory) ctx.getBeanFactory();
+    public static Object wrap (Object bean, String beanName) {
 
-        for (String beanName : beanFactory.getBeanDefinitionNames()) {
-            try {
-                // 注意：prototype bean 可能会多次创建，谨慎处理
-                if (beanFactory.isSingleton(beanName)) {
-                    Object bean = beanFactory.getBean(beanName);
-                    if (isEligibleForWrapping(bean)) {
-                        wrapProxyIfNecessary(beanName, bean, beanFactory);
-                        if (log.isDebugEnabled()) {
-                            log.debug("Argus => Warped beanName:  {}", beanName);
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                // 忽略无法获取的 Bean（如需要参数的 prototype）
-                e.printStackTrace();
-            }
+        // 排除基础设施 Bean 和特定排除的 Bean
+        if (Excluded.shouldExclude(bean)) {
+            return bean;
         }
-    }
 
-    /**
-     *  判断是否是需要包装
-     * @param bean bean
-     * @return 结果
-     */
-    private static boolean isEligibleForWrapping(Object bean) {
-        // 必须是 JDK 动态代理
+        // 只处理 JDK 动态代理
         if (!Proxy.isProxyClass(bean.getClass())) {
-            if (log.isDebugEnabled()) {
-                log.debug("Argus => Skipping non-JDK proxy: {}", bean);
-            }
-            return false;
+            return bean;
         }
 
         // 获取当前 InvocationHandler
         InvocationHandler handler = Proxy.getInvocationHandler(bean);
 
-        // 避免重复包装：如果已经是 RefreshableProxy，跳过
+        // 避免重复包装
         if (handler instanceof RefreshableProxy) {
-            return false;
+            return bean;
         }
 
-        // 可选：排除 Spring AOP 的代理（如果你不想增强 AOP）
-        // 如果你希望连 AOP 一起包装，就去掉这个判断
-        // Spring AOP 代理（如 @Transactional），建议单独处理
+        // 排除 Spring AOP 代理
         if (handler instanceof Advised) {
-            if (log.isDebugEnabled()) {
-                log.debug("Argus => Skipping Spring AOP proxy: {}", bean);
-            }
-            return false;
+            return bean;
         }
 
-        // 可选：排除其他已知的特殊代理
-        String handlerClassName = handler.getClass().getName();
-        return !handlerClassName.contains("Lambda") &&
-                !handlerClassName.contains("CGlib");
+        // 创建 RefreshableProxy
+        try {
+            RefreshableProxy<Object> refreshableProxy = new RefreshableProxy<>(bean);
+
+            Object wrappedProxy = Proxy.newProxyInstance(
+                    bean.getClass().getClassLoader(),
+                    bean.getClass().getInterfaces(),
+                    refreshableProxy
+            );
+
+            if (log.isDebugEnabled()) {
+                log.info("【Argus => Successfully wrapped bean: {} 】", beanName);
+            }
+            return wrappedProxy;
+
+        } catch (Exception e) {
+            log.error("【Argus => Failed to wrap bean {}: {} 】", beanName, e.getMessage());
+            return bean;
+        }
     }
 
+
     /**
-     * 包装代理
-     * @param beanName bean名称
-     * @param originalProxy 原代理
-     * @param beanFactory bean工厂
+     * 排除配置
      */
-    private static void wrapProxyIfNecessary(String beanName, Object originalProxy, DefaultListableBeanFactory beanFactory) {
-        // 再次确认类型
-        if (!Proxy.isProxyClass(originalProxy.getClass())) {
-            return;
-        }
+    public static class Excluded {
 
-        // 获取原始 InvocationHandler（即被代理的逻辑）
-        InvocationHandler originalHandler = Proxy.getInvocationHandler(originalProxy);
+        // 排除类
+        private static final Set<String> EXCLUDE_CLASSES = new HashSet<>(Arrays.asList(
+                // 数据源相关
+                "javax.sql.DataSource",
+                "com.zaxxer.hikari.HikariDataSource",
+                "com.zaxxer.hikari.HikariConfig",
+                "org.apache.tomcat.jdbc.pool.DataSource",
+                "com.alibaba.druid.pool.DruidDataSource",
+                "org.springframework.jdbc.datasource.DriverManagerDataSource",
 
-        // 避免重复包装
-        if (originalHandler instanceof RefreshableProxy) {
-            return;
-        }
-        // 跳过 Spring AOP 代理
-        if (originalHandler instanceof Advised) {
-            if (log.isDebugEnabled()) {
-                log.debug("Argus => Skipping Spring AOP proxy during wrapping: {}", beanName);
+                // JDBC 相关
+                "org.springframework.jdbc.core.JdbcTemplate",
+                "org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate",
+                "org.springframework.jdbc.datasource.DataSourceTransactionManager",
+
+                // 事务相关
+                "org.springframework.transaction.PlatformTransactionManager",
+                "org.springframework.orm.jpa.JpaTransactionManager",
+
+                // 调度相关
+                "org.springframework.scheduling.TaskScheduler",
+                "org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler",
+
+                // 缓存相关
+                "org.springframework.cache.CacheManager",
+
+                // JPA 相关
+                "org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean",
+                "org.springframework.orm.jpa.AbstractEntityManagerFactoryBean",
+
+                // MyBatis 相关（如果需要排除）
+                "org.mybatis.spring.SqlSessionFactoryBean",
+                "org.mybatis.spring.SqlSessionTemplate",
+
+                // HikariCP 特定类
+                "com.zaxxer.hikari.pool.HikariPool",
+                "com.zaxxer.hikari.metrics.MetricsTrackerFactory"
+        ));
+
+        // 排除包
+        private static final Set<String> EXCLUDE_PACKAGES = new HashSet<>(Arrays.asList(
+                "com.zaxxer.hikari",
+                "org.springframework.jdbc",
+                "org.springframework.transaction",
+                "org.springframework.orm",
+                "org.springframework.scheduling",
+                "com.alibaba.druid.pool"
+        ));
+
+        /**
+         * 排除特定类
+         *
+         * @param clazz 类
+         * @return 结果
+         */
+        private static boolean shouldExclude(Class<?> clazz) {
+            if (clazz == null || clazz == Object.class) {
+                return false;
             }
-            return; // 直接返回，不进行任何包装和替换
+
+            // 检查当前类的名称
+            String currentClassName = clazz.getName();
+            if (EXCLUDE_CLASSES.contains(currentClassName)) {
+                return true;
+            }
+
+            // 检查包名
+            Package pkg = clazz.getPackage();
+            if (pkg != null) {
+                String packageName = pkg.getName();
+                for (String criticalPackage : EXCLUDE_PACKAGES) {
+                    if (packageName.startsWith(criticalPackage)) {
+                        return true;
+                    }
+                }
+            }
+
+            // 递归检查父类
+            if (shouldExclude(clazz.getSuperclass())) {
+                return true;
+            }
+
+            // 递归检查所有接口
+            for (Class<?> interfaceClass : clazz.getInterfaces()) {
+                if (shouldExclude(interfaceClass)) {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
-        // 创建可刷新的代理，目标是原始的 handler 所代理的对象逻辑
-        RefreshableProxy<Object> refreshableProxy = new RefreshableProxy<>(originalProxy);
-
-        // 重新生成代理对象，使用 refreshableProxy 作为新的 handler
-        Object enhancedProxy = Proxy.newProxyInstance(
-                originalProxy.getClass().getClassLoader(),
-                originalProxy.getClass().getInterfaces(),
-                refreshableProxy
-        );
-
-        // 替换容器中的单例
-        if (beanFactory.containsSingleton(beanName)) {
-            beanFactory.destroySingleton(beanName);
+        /**
+         * 校验是否是关键基础设施类
+         *
+         * @param bean 对象
+         * @return 是否是关键基础设施类
+         */
+        public static boolean shouldExclude(Object bean) {
+            if (bean == null) {
+                return false;
+            }
+            try {
+                return shouldExclude(bean.getClass());
+            } catch (Exception e) {
+                // 记录错误但继续执行
+                return false;
+            }
         }
-        beanFactory.registerSingleton(beanName, enhancedProxy);
+
+        /**
+         * 新增排除类
+         *
+         * @param className 类名
+         */
+        public static void addExcludeClass(String className) {
+            EXCLUDE_CLASSES.add(className);
+        }
+
+        /**
+         * 新增排除包
+         *
+         * @param packageName 包名
+         */
+        public static void addExcludePackage(String packageName) {
+            EXCLUDE_PACKAGES.add(packageName);
+        }
     }
 }

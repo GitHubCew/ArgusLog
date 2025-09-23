@@ -104,11 +104,20 @@
             <version>1.10.8</version>
         </dependency>
 
+        <!--命令-->
         <dependency>
             <groupId>info.picocli</groupId>
             <artifactId>picocli</artifactId>
             <version>4.7.6</version>
         </dependency>
+
+        <!-- 反编译 -->
+        <dependency>
+            <groupId>org.benf</groupId>
+            <artifactId>cfr</artifactId>
+            <version>0.152</version>
+        </dependency>
+
     </dependencies>
 
     <build>

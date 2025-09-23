@@ -56,6 +56,8 @@ public class ContextUtil implements ApplicationContextAware {
      * 获取bean
      *
      * @param beanName beanName
+     * @param <T>        泛型
+     * @param requiredType 类型
      * @return bean
      */
     public static <T> T getBean(String beanName, Class<T> requiredType) {

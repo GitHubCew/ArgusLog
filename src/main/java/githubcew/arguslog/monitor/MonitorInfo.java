@@ -88,6 +88,11 @@ public class MonitorInfo {
         private Set<MethodCallInfo> methodCalls;
 
         /**
+         * 是否显示完整类名
+         */
+        private boolean showFullClassName;
+
+        /**
          * 构造方法
          */
         public Trace() {
@@ -101,11 +106,12 @@ public class MonitorInfo {
          * @param startMethod       开始方法
          * @param methodCalls    方法调用信息
          */
-        public Trace(long colorThreshold, int maxDepth, Method startMethod, Set<MethodCallInfo> methodCalls) {
+        public Trace(long colorThreshold, int maxDepth, Method startMethod, Set<MethodCallInfo> methodCalls, boolean showFullClassName) {
             this.colorThreshold = colorThreshold;
             this.maxDepth = maxDepth;
             this.startMethod = startMethod;
             this.methodCalls = methodCalls;
+            this.showFullClassName = showFullClassName;
         }
     }
 

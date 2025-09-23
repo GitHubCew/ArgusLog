@@ -29,7 +29,7 @@ public class ArgusCommandProcessor {
 
         try {
             int exitCode = cmd.execute(args);
-            String output = baos.toString(StandardCharsets.UTF_8.name()).trim();
+            String output = baos.toString(StandardCharsets.UTF_8.name());
             return exitCode == 0 ? ExecuteResult.success(output) : ExecuteResult.failed(output);
         } catch (Exception e) {
             // 异常也获取输出

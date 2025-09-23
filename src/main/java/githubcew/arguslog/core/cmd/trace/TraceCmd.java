@@ -76,6 +76,15 @@ public class TraceCmd extends BaseCommand {
     )
     private int maxDepth;
 
+    @CommandLine.Option(
+            names = {"-full"},
+            description = "显示全限定类名",
+            arity = "0",
+            fallbackValue = "true",
+            paramLabel = "showFullClassName"
+    )
+    private boolean showFullClassName;
+
     /**
      * 执行逻辑
      * @return 状态码
@@ -203,7 +212,7 @@ public class TraceCmd extends BaseCommand {
 
         MonitorInfo monitorInfo = new MonitorInfo();
         monitorInfo.setArgusMethod(argusMethod);
-        monitorInfo.setTrace(new MonitorInfo.Trace(threshold, maxDepth, method.getMethod(),  methodCallInfos));
+        monitorInfo.setTrace(new MonitorInfo.Trace(threshold, maxDepth, method.getMethod(),  methodCallInfos, showFullClassName));
         ArgusCache.addUserTraceMethod(user, monitorInfo);
 
         if (skipClasses.size() > 0) {

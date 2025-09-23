@@ -1,7 +1,7 @@
 package githubcew.arguslog.monitor.trace;
 
+import githubcew.arguslog.common.util.ProxyUtil;
 import githubcew.arguslog.monitor.trace.buddy.BuddyProxyManager;
-import githubcew.arguslog.monitor.trace.jdk.JdkProxyUtils;
 import githubcew.arguslog.monitor.trace.buddy.TracingAdvice;
 import githubcew.arguslog.monitor.trace.jdk.JdkProxyManager;
 import githubcew.arguslog.monitor.trace.jdk.JdkProxyTracingAdvice;
@@ -25,8 +25,8 @@ public class TraceEnhanceManager {
     public static void enhanceMethods(String key, Class<?> targetClass, List<String> methodNames) {
 
         // jdk代理类
-        if (JdkProxyUtils.isJdkProxyClass(targetClass)) {
-            Class<?>[] proxyInterfaces = JdkProxyUtils.getProxyInterfaces(targetClass);
+        if (ProxyUtil.isJdkProxyClass(targetClass)) {
+            Class<?>[] proxyInterfaces = ProxyUtil.getProxyInterfaces(targetClass);
             for (Class<?> proxyInterface : proxyInterfaces) {
                 try {
                     JdkProxyManager.proxyMethod(key, proxyInterface, JdkProxyTracingAdvice.class);
@@ -60,9 +60,9 @@ public class TraceEnhanceManager {
     public static void revertClass(Class<?> targetClass) {
 
         // jdk代理类
-        if (JdkProxyUtils.isJdkProxyClass(targetClass)) {
+        if (ProxyUtil.isJdkProxyClass(targetClass)) {
 
-            Class<?>[] proxyInterfaces = JdkProxyUtils.getProxyInterfaces(targetClass);
+            Class<?>[] proxyInterfaces = ProxyUtil.getProxyInterfaces(targetClass);
             for (Class<?> proxyInterface : proxyInterfaces) {
                 JdkProxyManager.revertProxy(proxyInterface);
             }
