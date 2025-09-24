@@ -630,7 +630,7 @@ _**用法**_：
 ```shell
 Usage: ioc [-hV] operatorType [name]
 spring ioc命令
-      operatorType   spring ioc容器查询类型, ls: 模糊查询(支持*匹配 bean名称 和
+      operatorType   spring ioc容器查询类型, list: 模糊查询(支持*匹配 bean名称 和
                        类名称) get: 精确查询(支持按 bean名称 和 bean类型)
       [name]         对象bean名称或者全限定类
   -h, --help         Show this help message and exit.
