@@ -377,7 +377,12 @@ public class ArgusCache {
         if (monitorInfos.isEmpty()) {
             userMonitorMethods.remove(argusUser);
             // 删除方法监听用户
-            methodUsers.forEach((method, users) -> users.removeIf(user -> user.equals(argusUser)));
+            methodUsers.forEach((method, users) -> {
+                users.removeIf(user -> user.equals(argusUser));
+                if (methodUsers.get(method).size() == 0) {
+                    methodUsers.remove(method);
+                }
+            });
         }
     }
 

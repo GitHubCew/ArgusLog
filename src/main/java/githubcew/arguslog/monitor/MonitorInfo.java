@@ -4,6 +4,7 @@ import githubcew.arguslog.monitor.trace.asm.MethodCallInfo;
 import lombok.Data;
 
 import java.lang.reflect.Method;
+import java.util.Date;
 import java.util.Set;
 
 /**
@@ -65,6 +66,8 @@ public class MonitorInfo {
 
     private Trace trace;
 
+    private Date date;
+
     @Data
     public static class Trace {
         /**
@@ -91,7 +94,6 @@ public class MonitorInfo {
          * 是否显示完整类名
          */
         private boolean showFullClassName;
-
         /**
          * 构造方法
          */
@@ -103,7 +105,7 @@ public class MonitorInfo {
          *
          * @param colorThreshold 颜色阈值
          * @param maxDepth       最大深度
-         * @param startMethod       开始方法
+         * @param startMethod    开始方法
          * @param methodCalls    方法调用信息
          */
         public Trace(long colorThreshold, int maxDepth, Method startMethod, Set<MethodCallInfo> methodCalls, boolean showFullClassName) {
