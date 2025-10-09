@@ -302,4 +302,32 @@ public class ProxyUtil {
         if (obj == null) return null;
         return extractOriginalClassName(obj.getClass().getName());
     }
+
+    /**
+     * 是否是代理类
+     * @param obj 对象
+     * @return 是否是代理类
+     */
+    public static boolean isProxy (Object obj) {
+        return isJdkProxyClass(obj.getClass())
+                || isSpringAopProxy(obj)
+                || isCglibProxy(obj)
+                || isMockitoMock(obj)
+                || isSpringConfigurationCglibProxy(obj);
+
+    }
+
+    /**
+     * 判断类名是否表示一个代理类。
+     *
+     * @param className 类全限定名
+     * @return {@code true} 如果是代理类，否则 {@code false}
+     */
+    public static boolean isProxyClass(String className) {
+        return className.startsWith("com.sun.proxy.") ||
+                className.contains("CGLIB") ||
+                className.contains("$$") ||
+                className.contains("$Proxy") ||
+                className.contains("EnhancerBy");
+    }
 }

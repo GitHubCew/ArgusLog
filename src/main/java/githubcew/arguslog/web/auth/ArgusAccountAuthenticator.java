@@ -81,6 +81,7 @@ public class ArgusAccountAuthenticator implements Authenticator {
      *
      * @param username 用户名
      * @param password 密码
+     * @param provide  用户信息
      * @return 认证结果
      */
     protected boolean customize(String username, String password, Account provide) {

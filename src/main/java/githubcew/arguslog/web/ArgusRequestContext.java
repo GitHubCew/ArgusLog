@@ -386,6 +386,14 @@ public class ArgusRequestContext {
     }
 
     /**
+     * 获取请求id
+     * @return id
+     */
+    public static String getRequestId () {
+        return REQUEST_ID.get();
+    }
+
+    /**
      * 获取开始方法
      *
      * @param method 方法

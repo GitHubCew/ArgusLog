@@ -57,6 +57,13 @@ public class ArgusCache {
     private static final Map<String, List<MonitorInfo>> userTraceMethods = new ConcurrentHashMap<>(16);
 
     /**
+     * 用户sql方法列表
+     * key: 用户token
+     * value: sql方法信息列表
+     */
+    private static final Map<String, MonitorInfo.Sql> userSqlMonitorMethods = new ConcurrentHashMap<>(16);
+
+    /**
      * 私有构造函数，防止实例化
      */
     private ArgusCache() {
@@ -135,6 +142,14 @@ public class ArgusCache {
                 .map(Map.Entry::getKey)
                 .findFirst()
                 .orElse(null);
+    }
+
+    /**
+     * 获取所有接口方法
+     * @return 所有方法
+     */
+    public static List<ArgusMethod> getMethods() {
+        return new ArrayList<>(uriMethodCache.values());
     }
 
     // ==================== methodUsers 相关操作 ====================
@@ -691,7 +706,24 @@ public class ArgusCache {
                 .anyMatch(monitor -> monitor.getArgusMethod().getUri().equals(uri));
     }
 
-    // ==================== userTraceInfo 相关操作 ====================
-    // 注：userTraceInfo 目前没有公开的操作方法，可以根据需要添加
-    
+    // ==================== userSql 相关操作 ====================
+
+    public static void addUserSqlMonitor(String token, MonitorInfo.Sql SqlMonitor) {
+        userSqlMonitorMethods.put(token, SqlMonitor);
+    }
+
+    public static void removeUserSqlMonitor(String token) {
+        if (userSqlMonitorMethods.isEmpty() || !userSqlMonitorMethods.containsKey(token)) {
+            return;
+        }
+        userSqlMonitorMethods.remove(token);
+    }
+
+    public static List<String> getSqlMonitorUsers() {
+        return new ArrayList<>(userSqlMonitorMethods.keySet());
+    }
+
+    public static MonitorInfo.Sql getSqlMonitorByUser(String token) {
+        return userSqlMonitorMethods.get(token);
+    }
 }

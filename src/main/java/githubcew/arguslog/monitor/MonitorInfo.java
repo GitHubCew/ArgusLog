@@ -5,6 +5,7 @@ import lombok.Data;
 
 import java.lang.reflect.Method;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -107,6 +108,7 @@ public class MonitorInfo {
          * @param maxDepth       最大深度
          * @param startMethod    开始方法
          * @param methodCalls    方法调用信息
+         * @param showFullClassName 是否显示完整类名
          */
         public Trace(long colorThreshold, int maxDepth, Method startMethod, Set<MethodCallInfo> methodCalls, boolean showFullClassName) {
             this.colorThreshold = colorThreshold;
@@ -117,4 +119,37 @@ public class MonitorInfo {
         }
     }
 
+    @Data
+    public static class Sql {
+
+        /**
+         * 耗时阈值（ms）
+         */
+        private Long threshold;
+
+        /**
+         * 包名
+         */
+        private String packageName;
+
+        /**
+         * 类型名
+         */
+        private String className;
+
+        /**
+         * 方法名列表
+         */
+        private List<String> methodNames;
+
+        public Sql() {
+        }
+
+        public Sql(Long threshold, String packageName, String className, List<String> methodNames) {
+            this.threshold = threshold;
+            this.packageName = packageName;
+            this.className = className;
+            this.methodNames = methodNames;
+        }
+    }
 }

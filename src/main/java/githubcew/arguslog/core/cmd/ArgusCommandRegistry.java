@@ -6,6 +6,7 @@ import githubcew.arguslog.core.cmd.monitor.LsCmd;
 import githubcew.arguslog.core.cmd.monitor.MonitorCmd;
 import githubcew.arguslog.core.cmd.monitor.RemoveCmd;
 import githubcew.arguslog.core.cmd.spring.IocCmd;
+import githubcew.arguslog.core.cmd.sql.SqlCmd;
 import githubcew.arguslog.core.cmd.system.*;
 import githubcew.arguslog.core.cmd.trace.RevertCmd;
 import githubcew.arguslog.core.cmd.trace.TraceCmd;
@@ -55,7 +56,10 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
         // 代码相关命令
         this.commandManager.register("jad", JadCmd.class);
 
-        // spring相关
+        // spring相关命令
         this.commandManager.register("ioc", IocCmd.class);
+
+        // sql相关命令
+        this.commandManager.register("sql", SqlCmd.class);
     }
 }
