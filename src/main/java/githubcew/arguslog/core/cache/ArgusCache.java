@@ -708,10 +708,19 @@ public class ArgusCache {
 
     // ==================== userSql 相关操作 ====================
 
+    /**
+     * 增加用户SQL监听
+     * @param token 用户token
+     * @param SqlMonitor 监听信息
+     */
     public static void addUserSqlMonitor(String token, MonitorInfo.Sql SqlMonitor) {
         userSqlMonitorMethods.put(token, SqlMonitor);
     }
 
+    /**
+     * 移除用户SQL监听
+     * @param token 用户token
+     */
     public static void removeUserSqlMonitor(String token) {
         if (userSqlMonitorMethods.isEmpty() || !userSqlMonitorMethods.containsKey(token)) {
             return;
@@ -719,10 +728,19 @@ public class ArgusCache {
         userSqlMonitorMethods.remove(token);
     }
 
+    /**
+     * 获取所有用户SQL监听用户
+     * @return 用户列表
+     */
     public static List<String> getSqlMonitorUsers() {
         return new ArrayList<>(userSqlMonitorMethods.keySet());
     }
 
+    /**
+     * 获取用户SQL监听信息
+     * @param token 用户token
+     * @return 监听信息，如果用户不存在返回null
+     */
     public static MonitorInfo.Sql getSqlMonitorByUser(String token) {
         return userSqlMonitorMethods.get(token);
     }

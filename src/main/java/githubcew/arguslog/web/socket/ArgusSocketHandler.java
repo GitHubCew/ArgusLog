@@ -71,8 +71,9 @@ public class ArgusSocketHandler extends TextWebSocketHandler {
             return;
         }
         try {
+            String token = currentUser.getToken().getToken();
             // 移除用户monitor方法
-            ArgusCache.userRemoveAllMethod(currentUser.getToken().getToken());
+            ArgusCache.userRemoveAllMethod(token);
 
             // 移除trace增强
             List<MonitorInfo> monitorInfos = Optional.ofNullable(ArgusCache.getTraceMonitorAndNoOtherByUser(currentUser.getToken().getToken())).orElse(new ArrayList<>());
@@ -82,7 +83,10 @@ public class ArgusSocketHandler extends TextWebSocketHandler {
             }
 
             // 移除缓存中的trace方法
-            ArgusCache.userRemoveAllTraceMethod(currentUser.getToken().getToken());
+            ArgusCache.userRemoveAllTraceMethod(token);
+
+            // 移除监控sql
+            ArgusCache.removeUserSqlMonitor(token);
         } catch (Exception e) {
             e.printStackTrace();
         }

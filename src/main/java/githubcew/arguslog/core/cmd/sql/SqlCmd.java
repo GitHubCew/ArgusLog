@@ -69,6 +69,9 @@ public class SqlCmd extends BaseCommand {
     }
 
     private void addSqlMonitor () {
+        if (threshold == null) {
+            threshold = 0L;
+        }
         ArgusCache.addUserSqlMonitor(ArgusUserContext.getCurrentUsername(), new MonitorInfo.Sql(threshold, packageName, className, methodNames));
     }
 

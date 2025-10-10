@@ -965,7 +965,7 @@
                     statusIndicator.classList.add('connected');
                     statusText.textContent = '已连接';
                     addOutput("已连接 argus", 'success');
-                    addOutput("输入 'help' 查看命令列表。", 'info');
+                    addOutput("输入 'help' 查看命令列表。快捷键：ctrl+e 关闭连接，ctrl+q 登出。", 'info');
                     // 连接成功后，创建新的输入行
                     addCommandInputLine();
                 };
@@ -1392,6 +1392,38 @@
             container.appendChild(line);
             const input = document.getElementById('commandInput');
             input.addEventListener('keydown', function(e) {
+                const isCtrlOrMeta = e.ctrlKey || e.metaKey;
+
+                // 如果按下了 Ctrl 或 Meta（Cmd on Mac）
+                if (isCtrlOrMeta && !e.altKey) {
+                    const key = e.key.toLowerCase();
+
+                    // 白名单：允许系统编辑快捷键
+                    if (['c', 'v', 'x'].includes(key)) {
+                        // 允许浏览器默认行为（复制/粘贴/剪切）
+                        return;
+                    }
+
+                    // 自定义快捷键：Ctrl+E → exit
+                    if (key === 'e') {
+                        e.preventDefault();
+                        handleCommand('exit');
+                        return;
+                    }
+
+                    // 自定义快捷键：Ctrl+Q → 带提示登出
+                    if (key === 'q') {
+                        e.preventDefault();
+                        addOutput("正在登出...", "info");
+                        setTimeout(logout, 1000);
+                        return;
+                    }
+
+                    // 其他所有 Ctrl/Meta 组合：阻止默认行为（包括 Ctrl+R, Ctrl+T, F5 等）
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return;
+                }
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     const command = input.value.trim();
@@ -1446,7 +1478,8 @@
                     addCommandInputLine();
                     break;
                 case 'logout':
-                    setTimeout(logout, 1000);
+                    addOutput('正在登出...', 'info');
+                    setTimeout(logout, 1500);
                     break;
                 default:
                     sendCommand(command);
