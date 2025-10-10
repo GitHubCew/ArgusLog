@@ -4,6 +4,7 @@ import githubcew.arguslog.ArgusStarter;
 import githubcew.arguslog.core.account.ArgusUser;
 import githubcew.arguslog.core.cache.ArgusCache;
 import githubcew.arguslog.core.cmd.ExecuteResult;
+import githubcew.arguslog.core.cmd.system.ResetCmd;
 import githubcew.arguslog.monitor.ArgusMethod;
 import githubcew.arguslog.monitor.MonitorInfo;
 import githubcew.arguslog.monitor.outer.OutputWrapper;
@@ -71,22 +72,8 @@ public class ArgusSocketHandler extends TextWebSocketHandler {
             return;
         }
         try {
-            String token = currentUser.getToken().getToken();
-            // 移除用户monitor方法
-            ArgusCache.userRemoveAllMethod(token);
-
-            // 移除trace增强
-            List<MonitorInfo> monitorInfos = Optional.ofNullable(ArgusCache.getTraceMonitorAndNoOtherByUser(currentUser.getToken().getToken())).orElse(new ArrayList<>());
-            for (MonitorInfo monitorInfo : monitorInfos) {
-                ArgusMethod argusMethod = monitorInfo.getArgusMethod();
-                TraceEnhanceManager.revertClassWithKey(argusMethod.getSignature());
-            }
-
-            // 移除缓存中的trace方法
-            ArgusCache.userRemoveAllTraceMethod(token);
-
-            // 移除监控sql
-            ArgusCache.removeUserSqlMonitor(token);
+            // 重置
+            new ResetCmd().reset();
         } catch (Exception e) {
             e.printStackTrace();
         }

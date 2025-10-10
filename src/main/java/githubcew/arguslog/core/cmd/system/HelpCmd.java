@@ -60,7 +60,8 @@ public class HelpCmd extends BaseCommand {
                     e.printStackTrace();
                 }
             });
-            picocliOutput.out("\n可使用 'help <命令>' 查看详细帮助");
+            picocliOutput.out("\n快捷键：ctrl+s 清除所有监听， ctrl+e 关闭连接，ctrl+q 登出。");
+            picocliOutput.out("可使用 'help <命令>' 查看详细帮助");
         }
         // 输出指定命令使用帮助
         else {

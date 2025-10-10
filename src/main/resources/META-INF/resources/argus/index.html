@@ -965,7 +965,8 @@
                     statusIndicator.classList.add('connected');
                     statusText.textContent = '已连接';
                     addOutput("已连接 argus", 'success');
-                    addOutput("输入 'help' 查看命令列表。快捷键：ctrl+e 关闭连接，ctrl+q 登出。", 'info');
+                    addOutput("输入 'help' 查看命令列表 。", 'info');
+                    addOutput("快捷键：ctrl+s 清除所有监听， ctrl+e 关闭连接，ctrl+q 登出。 ", 'info');
                     // 连接成功后，创建新的输入行
                     addCommandInputLine();
                 };
@@ -1399,11 +1400,16 @@
                     const key = e.key.toLowerCase();
 
                     // 白名单：允许系统编辑快捷键
-                    if (['c', 'v', 'x'].includes(key)) {
+                    if (['a', 'c', 'v', 'x'].includes(key)) {
                         // 允许浏览器默认行为（复制/粘贴/剪切）
                         return;
                     }
 
+                    if (key === 's') {
+                        e.preventDefault();
+                        handleCommand('reset');
+                        return;
+                    }
                     // 自定义快捷键：Ctrl+E → exit
                     if (key === 'e') {
                         e.preventDefault();

@@ -43,6 +43,7 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
         this.commandManager.register("clear", ClearCmd.class);
         this.commandManager.register("show", ShowCmd.class);
         this.commandManager.register("set", SetCmd.class);
+        this.commandManager.register("reset", ResetCmd.class);
 
         // 监控命令
         this.commandManager.register("ls", LsCmd.class);
