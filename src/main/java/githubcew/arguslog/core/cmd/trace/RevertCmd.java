@@ -65,7 +65,7 @@ public class RevertCmd extends BaseCommand {
 
         try {
             // 回退方法调用链追踪
-            String user = ArgusUserContext.getCurrentUsername();
+            String user = ArgusUserContext.getCurrentUserToken();
             TraceEnhanceManager.revertClassWithKey(uriMethod.getSignature());
             // 移除监听用户
             ArgusCache.userRemoveTraceMethod(user, uriMethod);
@@ -81,6 +81,6 @@ public class RevertCmd extends BaseCommand {
 
         TraceEnhanceManager.revertAllClasses();
         // 移除全部监听用户
-        ArgusCache.userRemoveAllTraceMethod(ArgusUserContext.getCurrentUsername());
+        ArgusCache.userRemoveAllTraceMethod(ArgusUserContext.getCurrentUserToken());
     }
 }

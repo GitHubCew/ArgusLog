@@ -58,7 +58,7 @@ public abstract class BaseCommand implements Callable<Integer> {
      * @return 0 成功 -1为失败
      * @throws Exception 异常
      */
-      protected  Integer execute() throws Exception {
+      protected Integer execute() throws Exception {
          return OK_CODE;
      }
 }

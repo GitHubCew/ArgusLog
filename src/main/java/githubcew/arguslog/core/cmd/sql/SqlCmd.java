@@ -72,10 +72,10 @@ public class SqlCmd extends BaseCommand {
         if (threshold == null) {
             threshold = 0L;
         }
-        ArgusCache.addUserSqlMonitor(ArgusUserContext.getCurrentUsername(), new MonitorInfo.Sql(threshold, packageName, className, methodNames));
+        ArgusCache.addUserSqlMonitor(ArgusUserContext.getCurrentUserToken(), new MonitorInfo.Sql(threshold, packageName, className, methodNames));
     }
 
     private void removeSqlMonitor () {
-        ArgusCache.removeUserSqlMonitor(ArgusUserContext.getCurrentUsername());
+        ArgusCache.removeUserSqlMonitor(ArgusUserContext.getCurrentUserToken());
     }
 }

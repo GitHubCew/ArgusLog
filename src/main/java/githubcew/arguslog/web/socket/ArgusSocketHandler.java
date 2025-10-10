@@ -4,11 +4,7 @@ import githubcew.arguslog.ArgusStarter;
 import githubcew.arguslog.core.account.ArgusUser;
 import githubcew.arguslog.core.cache.ArgusCache;
 import githubcew.arguslog.core.cmd.ExecuteResult;
-import githubcew.arguslog.core.cmd.system.ResetCmd;
-import githubcew.arguslog.monitor.ArgusMethod;
-import githubcew.arguslog.monitor.MonitorInfo;
 import githubcew.arguslog.monitor.outer.OutputWrapper;
-import githubcew.arguslog.monitor.trace.TraceEnhanceManager;
 import githubcew.arguslog.web.ArgusUserContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -18,10 +14,7 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * WebSocket处理器
@@ -70,12 +63,6 @@ public class ArgusSocketHandler extends TextWebSocketHandler {
         ArgusUser currentUser = ArgusCache.getUserBySession(session);
         if (Objects.isNull(currentUser)) {
             return;
-        }
-        try {
-            // 重置
-            new ResetCmd().reset();
-        } catch (Exception e) {
-            e.printStackTrace();
         }
         ArgusUserContext.clearCurrentUser();
     }

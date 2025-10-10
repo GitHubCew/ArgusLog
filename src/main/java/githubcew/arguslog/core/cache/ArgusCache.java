@@ -470,6 +470,19 @@ public class ArgusCache {
     }
 
     /**
+     * 根据用户名获取用户信息
+     *
+     * @param username 用户token
+     * @return 用户信息，如果不存在返回null
+     */
+    public static ArgusUser getUserByUsername(String username) {
+        return userTokens.values().stream()
+                .filter(user -> user.getAccount().getUsername().equals(username))
+                .findFirst()
+                .orElse(null);
+    }
+
+    /**
      * 检查是否存在指定token
      *
      * @param token 用户token
@@ -534,6 +547,36 @@ public class ArgusCache {
                 // 删除监听trace方法用户
                 userTraceMethods.keySet().removeIf(u -> u.equals(token));
 
+                // 移除用户sql
+                userSqlMonitorMethods.remove(token);
+                return true;
+            }
+            return false;
+        });
+    }
+
+    /**
+     * 移除过期的凭证
+     */
+    public static void clearUserToken(String token) {
+
+        userTokens.entrySet().removeIf(entry -> {
+
+            if (entry.getValue().getToken().getToken().equals(token)) {
+                // 删除方法监听用户
+                methodUsers.entrySet().removeIf(methodEntry -> {
+                    methodEntry.getValue().removeIf(u -> u.equals(token));
+                    return methodEntry.getValue().isEmpty();
+                });
+
+                // 删除用户监听方法
+                userMonitorMethods.keySet().removeIf(u -> u.equals(token));
+
+                // 删除监听trace方法用户
+                userTraceMethods.keySet().removeIf(u -> u.equals(token));
+
+                // 移除用户sql
+                userSqlMonitorMethods.remove(token);
                 return true;
             }
             return false;
@@ -743,5 +786,15 @@ public class ArgusCache {
      */
     public static MonitorInfo.Sql getSqlMonitorByUser(String token) {
         return userSqlMonitorMethods.get(token);
+    }
+
+
+    /**
+     * 获取所有在线用户
+     * @return 用户列表
+     */
+    public static Set<String> getAllOnlineUser () {
+
+        return userTokens.values().stream().map(user -> user.getAccount().getUsername()).collect(Collectors.toSet());
     }
 }

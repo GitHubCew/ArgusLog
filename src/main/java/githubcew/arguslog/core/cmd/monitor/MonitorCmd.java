@@ -97,7 +97,7 @@ public class MonitorCmd extends BaseCommand {
         }
 
         // 监听接口
-        ArgusCache.addMonitorInfo(ArgusUserContext.getCurrentUsername(), monitorInfo, path);
+        ArgusCache.addMonitorInfo(ArgusUserContext.getCurrentUserToken(), monitorInfo, path);
         return OK_CODE;
     }
 

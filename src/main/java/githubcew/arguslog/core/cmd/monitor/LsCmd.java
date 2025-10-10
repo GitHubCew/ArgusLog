@@ -44,7 +44,7 @@ public class LsCmd extends BaseCommand {
         // 监听的接口
         String output;
         if (monitor) {
-            output = output(ArgusUserContext.getCurrentUsername(), path);
+            output = output(ArgusUserContext.getCurrentUserToken(), path);
         }
         // 接口
         else {

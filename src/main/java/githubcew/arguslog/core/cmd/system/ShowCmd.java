@@ -2,11 +2,15 @@ package githubcew.arguslog.core.cmd.system;
 
 import githubcew.arguslog.common.util.ContextUtil;
 import githubcew.arguslog.config.ArgusProperties;
+import githubcew.arguslog.core.account.ArgusUser;
 import githubcew.arguslog.core.anno.ArgusProperty;
+import githubcew.arguslog.core.cache.ArgusCache;
 import githubcew.arguslog.core.cmd.BaseCommand;
+import githubcew.arguslog.monitor.outer.OutputWrapper;
 import picocli.CommandLine;
 
 import java.lang.reflect.Field;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -41,8 +45,12 @@ public class ShowCmd extends BaseCommand {
         if (variable.equals("config")) {
             picocliOutput.out(String.join("\n", getConfig()));
         }
+        else if (variable.equals("user")) {
+
+            picocliOutput.out(getUsers());
+        }
         else {
-            throw new RuntimeException("Variable not found! available：\n" + Arrays.asList("config"));
+            throw new RuntimeException("Variable not found! available：\n" + Arrays.asList("config", "user"));
         }
         return OK_CODE;
     }
@@ -383,5 +391,32 @@ public class ShowCmd extends BaseCommand {
         return IntStream.range(0, count)
                 .mapToObj(i -> str)
                 .collect(Collectors.joining());
+    }
+
+    /**
+     * 获取用户
+     * @return 用户列表
+     */
+    private String getUsers () {
+        StringBuilder userInfo = new StringBuilder();
+
+        userInfo.append(repeat(" ", 2))
+                .append("用户")
+                .append(repeat(" ", 10))
+                .append("过期时间")
+                .append("\n")
+                .append(repeat("─", 36))
+                .append("\n");
+
+        Set<String> allOnlineUser = ArgusCache.getAllOnlineUser();
+        for (String username : allOnlineUser) {
+            ArgusUser argusUser = ArgusCache.getUserByUsername(username);
+            String expireTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(argusUser.getToken().getExpireTime()));
+            userInfo.append(OutputWrapper.wrapperCopy(argusUser.getAccount().getUsername()))
+                    .append("  ")
+                    .append(expireTime)
+                    .append("\n");
+        }
+        return userInfo.toString();
     }
 }

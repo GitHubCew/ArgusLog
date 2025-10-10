@@ -965,8 +965,9 @@
                     statusIndicator.classList.add('connected');
                     statusText.textContent = '已连接';
                     addOutput("已连接 argus", 'success');
-                    addOutput("输入 'help' 查看命令列表 。", 'info');
                     addOutput("快捷键：ctrl+s 清除所有监听， ctrl+e 关闭连接，ctrl+q 登出。 ", 'info');
+                    addOutput("输入 'help' 查看命令列表 。", 'info');
+
                     // 连接成功后，创建新的输入行
                     addCommandInputLine();
                 };
@@ -1420,8 +1421,7 @@
                     // 自定义快捷键：Ctrl+Q → 带提示登出
                     if (key === 'q') {
                         e.preventDefault();
-                        addOutput("正在登出...", "info");
-                        setTimeout(logout, 1000);
+                        handleCommand('logout');
                         return;
                     }
 
@@ -1484,6 +1484,8 @@
                     addCommandInputLine();
                     break;
                 case 'logout':
+                    // 先移除用户
+                    sendCommand('rmuser');
                     addOutput('正在登出...', 'info');
                     setTimeout(logout, 1500);
                     break;

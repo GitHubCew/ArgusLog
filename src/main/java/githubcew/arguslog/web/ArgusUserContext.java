@@ -47,12 +47,21 @@ public class ArgusUserContext {
     }
 
     /**
+     * 获取当前用户token
+     * @return token
+     */
+    public static String getCurrentUserToken() {
+        ArgusUser user = getCurrentUser();
+        return user != null ? user.getToken().getToken() : null;
+    }
+
+    /**
      * 获取当前用户名
      * @return 用户名
      */
     public static String getCurrentUsername() {
         ArgusUser user = getCurrentUser();
-        return user != null ? user.getToken().getToken() : null;
+        return user != null ? user.getAccount().getUsername() : null;
     }
 
     /**

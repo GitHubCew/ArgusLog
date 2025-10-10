@@ -39,17 +39,32 @@ public class ArgusAccountAuthenticator implements Authenticator {
 
         Account account = new Account();
         if (argusProperties.isEnableAuth()) {
-            // 自定义认证
+
             String username = request.getAccount().getUsername();
             String password = request.getAccount().getPassword();
-            boolean customize = customize(username, password, userProvider.provide(username));
-            if (!customize) {
-                return false;
+
+            // 管理员用户
+            if (Objects.equals(username, argusProperties.getUsername())) {
+                if (!Objects.equals(password, argusProperties.getPassword())) {
+                    return false;
+                }
             }
+            else {
+                // 其他用户
+                boolean customize = customize(username, password, userProvider.provide(username));
+                if (!customize) {
+                    return false;
+                }
+            }
+            account.setUsername(username);
+            account.setPassword(password);
         }
 
         // 构建返回token
         Token token = tokenProvider.provide(request.getAccount().getUsername());
+        if (Objects.isNull(token)) {
+            token = new ArgusTokenProvider(argusProperties.getTokenExpireTime()).provide(request.getAccount().getUsername());
+        }
         response.setToken(token);
         response.setExecuteResult(ExecuteResult.success(ExecuteResult.OK));
 

@@ -109,7 +109,7 @@ public class TraceCmd extends BaseCommand {
      * 查看已监听的接口
      */
     private String view () {
-        String currentUsername = ArgusUserContext.getCurrentUsername();
+        String currentUsername = ArgusUserContext.getCurrentUserToken();
         List<String> dataList = ArgusCache.getTraceUriByUser(currentUsername);
         long total = dataList.size();
         if (dataList.size() > 50) {
@@ -208,7 +208,7 @@ public class TraceCmd extends BaseCommand {
         // 非继承方法重定义类
         redefine(argusMethod.getSignature(), nonExtendMethods, argusProperties.getTraceMaxThreadNum());
 
-        String user = ArgusUserContext.getCurrentUsername();
+        String user = ArgusUserContext.getCurrentUserToken();
 
         MonitorInfo monitorInfo = new MonitorInfo();
         monitorInfo.setArgusMethod(argusMethod);

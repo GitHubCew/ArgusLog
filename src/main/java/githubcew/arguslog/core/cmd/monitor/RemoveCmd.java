@@ -55,7 +55,7 @@ public class RemoveCmd extends BaseCommand {
                 throw new RuntimeException(ERROR_PATH_NOT_FOUND);
             }
         }
-        ArgusCache.removeMonitorMethodWithPattern(ArgusUserContext.getCurrentUsername(), path);
+        ArgusCache.removeMonitorMethodWithPattern(ArgusUserContext.getCurrentUserToken(), path);
         return OK_CODE;
     }
 }
