@@ -1,4 +1,4 @@
-package githubcew.arguslog.core;
+package githubcew.arguslog.processor;
 
 import githubcew.arguslog.monitor.trace.jdk.JdkProxyWrapper;
 import org.springframework.beans.BeansException;

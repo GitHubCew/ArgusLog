@@ -25,7 +25,7 @@
 
     <groupId>io.github.githubcew</groupId>
     <artifactId>arguslog</artifactId>
-    <version>0.5.4</version>
+    <version>0.5.5</version>
     <packaging>jar</packaging>
 
     <properties>
@@ -158,8 +158,8 @@
                 </executions>
             </plugin>
 
-<!--&lt;!&ndash;            打包到maven中央仓库插件&ndash;&gt;-->
-<!--&lt;!&ndash;             强制GPG插件配置&ndash;&gt;-->
+<!--            打包到maven中央仓库插件-->
+<!--             强制GPG插件配置-->
 <!--            <plugin>-->
 <!--                <groupId>org.apache.maven.plugins</groupId>-->
 <!--                <artifactId>maven-gpg-plugin</artifactId>-->
@@ -187,17 +187,17 @@
 <!--                </configuration>-->
 <!--            </plugin>-->
 
-            <plugin>
-                <groupId>org.sonatype.central</groupId>
-                <artifactId>central-publishing-maven-plugin</artifactId>
-                <version>0.8.0</version>
-                <extensions>true</extensions>
-                <configuration>
-                    <publishingServerId>ossrh</publishingServerId>
-                    <autoPublish>false</autoPublish>
-                    <waitUntil>published</waitUntil>
-                </configuration>
-            </plugin>
+<!--            <plugin>ArgusCache-->
+<!--                <groupId>org.sonatype.central</groupId>-->
+<!--                <artifactId>central-publishing-maven-plugin</artifactId>-->
+<!--                <version>0.8.0</version>-->
+<!--                <extensions>true</extensions>-->
+<!--                <configuration>-->
+<!--                    <publishingServerId>ossrh</publishingServerId>-->
+<!--                    <autoPublish>false</autoPublish>-->
+<!--                    <waitUntil>published</waitUntil>-->
+<!--                </configuration>-->
+<!--            </plugin>-->
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

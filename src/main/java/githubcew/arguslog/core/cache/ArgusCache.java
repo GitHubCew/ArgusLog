@@ -512,7 +512,7 @@ public class ArgusCache {
      */
     public static ArgusUser getUserBySession(WebSocketSession session) {
         return userTokens.values().stream()
-                .filter(user -> user.getSession().equals(session))
+                .filter(user -> user.getSession() != null && user.getSession().equals(session))
                 .findFirst()
                 .orElse(null);
     }
