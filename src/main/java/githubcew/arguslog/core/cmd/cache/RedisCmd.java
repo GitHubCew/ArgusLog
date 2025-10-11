@@ -66,6 +66,11 @@ public class RedisCmd extends BaseCommand {
             // 3. 根据操作类型执行
             switch (operatorType) {
                 case "list": {
+                    if (Objects.isNull(key)) {
+                        key = "*";
+                    } else {
+                        key = "*" + key + "*";
+                    }
                     Method keysMethod = stringRedisTemplateClass.getMethod("keys", Object.class);
                     @SuppressWarnings("unchecked")
                     Set<String> keySet = (Set<String>) keysMethod.invoke(stringRedisTemplate, key);
