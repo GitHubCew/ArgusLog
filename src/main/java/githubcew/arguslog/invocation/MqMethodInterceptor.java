@@ -18,7 +18,9 @@ import java.lang.reflect.Method;
 import java.util.List;
 
 /**
- * @author Envi
+ * MQ 方法拦截器
+ *
+ * @author chenenwei
  */
 public class MqMethodInterceptor extends SafeMethodInterceptor{
 

@@ -169,7 +169,15 @@ public class ArgusMethodParamFormatter implements MethodParamFormatter {
                 if (str.trim().isEmpty()) {
                     return "\"\"";
                 }
-                return "\"" + str.replace("\"", "\\\"") + "\"";
+
+                // 检查是否是 JSON 格式字符串
+                if (isJsonString(str)) {
+                    // 如果是 JSON 字符串，直接返回，不进行额外转义
+                    return str;
+                } else {
+                    // 普通字符串，进行转义处理
+                    return "\"" + escapeJsonString(str) + "\"";
+                }
             }
             return value.toString();
         }
@@ -422,5 +430,161 @@ public class ArgusMethodParamFormatter implements MethodParamFormatter {
                 className.startsWith("jakarta.servlet") ||
                 className.startsWith("org.springframework.web.context.request") ||
                 className.startsWith("org.springframework.web.multipart");
+    }
+
+    /**
+     * 判断字符串是否是 JSON 格式
+     *
+     * @param str 待检测的字符串
+     * @return true 如果是 JSON 格式，false 否则
+     */
+    private boolean isJsonString(String str) {
+        if (str == null || str.trim().isEmpty()) {
+            return false;
+        }
+
+        String trimmed = str.trim();
+
+        // 检查是否是 JSON 对象格式
+        if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+            return isValidJsonObject(trimmed);
+        }
+
+        // 检查是否是 JSON 数组格式
+        if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+            return isValidJsonArray(trimmed);
+        }
+
+        return false;
+    }
+
+    /**
+     * 检查是否是有效的 JSON 对象
+     */
+    private boolean isValidJsonObject(String str) {
+        try {
+            // 简单的结构检查
+            int length = str.length();
+            if (length < 2) return false;
+
+            // 检查大括号匹配
+            int braceCount = 0;
+            boolean inString = false;
+            char prevChar = 0;
+
+            for (int i = 0; i < length; i++) {
+                char c = str.charAt(i);
+
+                // 处理转义字符
+                if (prevChar == '\\') {
+                    prevChar = c;
+                    continue;
+                }
+
+                // 处理字符串边界
+                if (c == '"' && prevChar != '\\') {
+                    inString = !inString;
+                }
+
+                // 只在非字符串内统计大括号
+                if (!inString) {
+                    if (c == '{') braceCount++;
+                    if (c == '}') braceCount--;
+                }
+
+                prevChar = c;
+            }
+
+            return braceCount == 0 && !inString;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * 检查是否是有效的 JSON 数组
+     */
+    private boolean isValidJsonArray(String str) {
+        try {
+            // 简单的结构检查
+            int length = str.length();
+            if (length < 2) return false;
+
+            // 检查中括号匹配
+            int bracketCount = 0;
+            boolean inString = false;
+            char prevChar = 0;
+
+            for (int i = 0; i < length; i++) {
+                char c = str.charAt(i);
+
+                // 处理转义字符
+                if (prevChar == '\\') {
+                    prevChar = c;
+                    continue;
+                }
+
+                // 处理字符串边界
+                if (c == '"' && prevChar != '\\') {
+                    inString = !inString;
+                }
+
+                // 只在非字符串内统计中括号
+                if (!inString) {
+                    if (c == '[') bracketCount++;
+                    if (c == ']') bracketCount--;
+                }
+
+                prevChar = c;
+            }
+
+            return bracketCount == 0 && !inString;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * 转义 JSON 字符串中的特殊字符
+     */
+    private String escapeJsonString(String str) {
+        if (str == null) return null;
+
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < str.length(); i++) {
+            char c = str.charAt(i);
+            switch (c) {
+                case '"':
+                    sb.append("\\\"");
+                    break;
+                case '\\':
+                    sb.append("\\\\");
+                    break;
+                case '\b':
+                    sb.append("\\b");
+                    break;
+                case '\f':
+                    sb.append("\\f");
+                    break;
+                case '\n':
+                    sb.append("\\n");
+                    break;
+                case '\r':
+                    sb.append("\\r");
+                    break;
+                case '\t':
+                    sb.append("\\t");
+                    break;
+                default:
+                    // 处理 Unicode 控制字符
+                    if (c <= '\u001F' || (c >= '\u007F' && c <= '\u009F')) {
+                        sb.append(String.format("\\u%04x", (int) c));
+                    } else {
+                        sb.append(c);
+                    }
+                    break;
+            }
+        }
+        return sb.toString();
     }
 }

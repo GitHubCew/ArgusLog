@@ -76,7 +76,6 @@ public class ArgusCache {
      * value: 队列名称
      */
     private static final Map<String, String> userMqMonitorMethods = new ConcurrentHashMap<>(16);
-
     /**
      * 私有构造函数，防止实例化
      */
