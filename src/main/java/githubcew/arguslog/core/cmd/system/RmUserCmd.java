@@ -5,7 +5,6 @@ import githubcew.arguslog.config.ArgusProperties;
 import githubcew.arguslog.core.account.ArgusUser;
 import githubcew.arguslog.core.cache.ArgusCache;
 import githubcew.arguslog.core.cmd.BaseCommand;
-import githubcew.arguslog.web.ArgusRequestContext;
 import githubcew.arguslog.web.ArgusUserContext;
 import picocli.CommandLine;
 

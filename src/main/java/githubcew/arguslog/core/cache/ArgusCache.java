@@ -563,6 +563,9 @@ public class ArgusCache {
 
                 // 移除用户sql
                 userSqlMonitorMethods.remove(token);
+
+                // 移除用户mq监听
+                userMqMonitorMethods.remove(token);
                 return true;
             }
             return false;
@@ -591,6 +594,9 @@ public class ArgusCache {
 
                 // 移除用户sql
                 userSqlMonitorMethods.remove(token);
+
+                // 移除用户mq监听
+                userMqMonitorMethods.remove(token);
                 return true;
             }
             return false;
