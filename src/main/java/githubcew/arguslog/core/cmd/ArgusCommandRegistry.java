@@ -6,6 +6,7 @@ import githubcew.arguslog.core.cmd.code.JadCmd;
 import githubcew.arguslog.core.cmd.monitor.LsCmd;
 import githubcew.arguslog.core.cmd.monitor.MonitorCmd;
 import githubcew.arguslog.core.cmd.monitor.RemoveCmd;
+import githubcew.arguslog.core.cmd.mq.MqCmd;
 import githubcew.arguslog.core.cmd.spring.IocCmd;
 import githubcew.arguslog.core.cmd.sql.SqlCmd;
 import githubcew.arguslog.core.cmd.system.*;
@@ -65,5 +66,6 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
         // 中间件命令
         this.commandManager.register("sql", SqlCmd.class);
         this.commandManager.register("redis", RedisCmd.class);
+        this.commandManager.register("mq", MqCmd.class);
     }
 }

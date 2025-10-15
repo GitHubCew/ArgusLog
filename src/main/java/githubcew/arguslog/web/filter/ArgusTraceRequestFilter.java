@@ -87,7 +87,9 @@ public class ArgusTraceRequestFilter implements Filter {
                 String uri = ArgusCache.getMethodUri(new ArgusMethod(method));
                 String tree = ArgusRequestContext.buildTreeString(rootNode, 0, monitorInfo.getTrace(), new ArrayList<>(), new HashMap<>());
                 String methodSignature = CommonUtil.generateSignature(method);
-                String output = "uri => " + OutputWrapper.wrapperCopy(uri)
+
+                String output = "Argus TRACE: \n"
+                        +"uri => " + OutputWrapper.wrapperCopy(uri)
                         + "\nmethod => " + methodSignature
                         + "\ntracing => "
                         + "\n" + tree;

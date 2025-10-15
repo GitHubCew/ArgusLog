@@ -2,6 +2,8 @@ package githubcew.arguslog.common.util;
 
 import org.objectweb.asm.Type;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 
@@ -79,6 +81,19 @@ public class CommonUtil {
      */
     public static String toDot(String className) {
         return className.replace('/', '.');
+    }
+
+    /**
+     * 提取异常信息
+     * @param e 异常
+     * @return 异常信息
+     */
+    public static String extractException(Throwable e) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        e.printStackTrace(pw);
+        pw.flush();
+        return sw.toString();
     }
 }
 

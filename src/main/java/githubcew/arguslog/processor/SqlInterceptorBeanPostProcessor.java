@@ -331,7 +331,7 @@ public class SqlInterceptorBeanPostProcessor implements BeanPostProcessor, Prior
                     }
 
                     // 构建监控消息
-                    String message = "Argus Sql => \n";
+                    String message = "Argus SQL => \n";
                     if (startMethod != null) {
                         message += "start => "
                                 + startMethod.getDeclaringClass().getSimpleName()

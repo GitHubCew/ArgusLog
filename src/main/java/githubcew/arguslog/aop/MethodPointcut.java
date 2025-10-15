@@ -24,14 +24,28 @@ public class MethodPointcut implements Pointcut {
     public ClassFilter getClassFilter() {
         return clazz -> {
             Annotation[] annotations = clazz.getAnnotations();
-            boolean flag = false;
             for (Annotation annotation : annotations) {
-                flag = "org.springframework.stereotype.Controller".equals(annotation.annotationType().getName())
-                        || "org.springframework.web.bind.annotation.RestController".equals(annotation.annotationType().getName());
-                if (flag)
-                    break;
+                boolean api = "org.springframework.stereotype.Controller".equals(annotation.annotationType().getName())
+                        || "org.springframework.web.bind.annotation.RestController".equals(annotation.annotationType().getName())
+                        ;
+
+                if (api) {
+                    return true;
+                }
             }
-            return flag;
+
+            // 检查类中是否有消费者方法
+            for (Method method : clazz.getDeclaredMethods()) {
+                for (Annotation annotation : method.getAnnotations()) {
+                    String annotationName = annotation.annotationType().getName();
+                    if (annotationName.equals("org.springframework.amqp.rabbit.annotation.RabbitListener") ||
+                            annotationName.contains("org.springframework.kafka.annotation.KafkaListener") ||
+                            annotationName.contains("org.apache.rocketmq.spring.annotation.RocketMQMessageListener")) {
+                        return true;
+                    }
+                }
+            }
+            return false;
         };
     }
 
@@ -59,8 +73,13 @@ public class MethodPointcut implements Pointcut {
             @Override
             public boolean matches(Method method, Class<?> targetClass, Object... args) {
 
-                // 判断是否监听指定方法
-                return ArgusCache.containsMethod(method);
+                // 判断是否监听指定api方法
+                boolean hasApiMethod =  ArgusCache.containsMethod(method);
+
+                // 判断是否监听指定mq方法
+                boolean hasMqMethod = ArgusCache.getMqMonitorUser(method).size() > 0;
+
+                return hasApiMethod || hasMqMethod;
             }
         };
     }

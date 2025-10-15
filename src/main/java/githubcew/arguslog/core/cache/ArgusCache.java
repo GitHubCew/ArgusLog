@@ -10,7 +10,7 @@ import org.springframework.web.socket.WebSocketSession;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Pattern;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 /**
@@ -27,6 +27,13 @@ public class ArgusCache {
      * value: 方法信息
      */
     private static final Map<String, ArgusMethod> uriMethodCache = new ConcurrentHashMap<>(256);
+
+    /**
+     * mq方法缓存
+     * key: 方法信息
+     * value: 队列列表
+     */
+    private static final Map<Method, List<String>> mqMethodCache = new ConcurrentHashMap<>(16);
 
     /**
      * 监听方法的用户列表
@@ -62,6 +69,13 @@ public class ArgusCache {
      * value: sql方法信息列表
      */
     private static final Map<String, MonitorInfo.Sql> userSqlMonitorMethods = new ConcurrentHashMap<>(16);
+
+    /**
+     * 用户mq方法列表
+     * key: 用户token
+     * value: 队列名称
+     */
+    private static final Map<String, String> userMqMonitorMethods = new ConcurrentHashMap<>(16);
 
     /**
      * 私有构造函数，防止实例化
@@ -796,5 +810,102 @@ public class ArgusCache {
     public static Set<String> getAllOnlineUser () {
 
         return userTokens.values().stream().map(user -> user.getAccount().getUsername()).collect(Collectors.toSet());
+    }
+
+    // ==================== MQ 相关操作 ====================
+
+    /**
+     * 注册 MQ 监听方法及其监听的队列列表。
+     * <p>
+     * 将指定方法与一个或多个队列名称关联，用于后续监控匹配。
+     * 若方法已存在，则追加队列名称（去重由调用方保证）。
+     * </p>
+     *
+     * @param method 监听方法（通常带有 @RabbitListener 等注解）
+     * @param queues 该方法监听的队列或主题名称列表，不可为 null
+     */
+    public static void addMqMethod(Method method, List<String> queues) {
+        mqMethodCache.putIfAbsent(method, new ArrayList<>());
+        mqMethodCache.get(method).addAll(queues);
+    }
+
+    /**
+     * 获取订阅了指定监听方法所关联队列的所有用户 Token 列表。
+     * <p>
+     * 通过比对 {@code userMqMonitorMethods} 中用户订阅的队列与 {@code mqMethodCache} 中方法监听的队列，
+     * 返回所有匹配的用户标识。
+     * </p>
+     *
+     * @param method 目标监听方法
+     * @return 订阅了该方法任一队列的用户 Token 列表；若无订阅，返回空列表
+     */
+    public static List<String> getMqMonitorUser(Method method) {
+        List<String> monitorUser = new ArrayList<>();
+        userMqMonitorMethods.forEach((token, queue) -> {
+            for (Map.Entry<Method, List<String>> entry : mqMethodCache.entrySet()) {
+
+                if (!entry.getValue().contains(queue)) {
+                    continue;
+                }
+                if (!Objects.isNull(method) && entry.getKey().equals(method)) {
+                    monitorUser.add(token);
+                }
+            }
+        });
+        return monitorUser;
+    }
+
+    /**
+     * 构建队列名称到监听方法的反向映射。
+     * <p>
+     * 将内部缓存 {@code mqMethodCache}（方法 → 队列列表）转换为
+     * {@code Map<queueName, Method>}，便于通过队列快速定位监听方法。
+     * </p>
+     * <p>
+     * <strong>注意：</strong>若多个方法监听同一队列，后者会覆盖前者。
+     * </p>
+     *
+     * @return 队列名称到监听方法的映射
+     */
+    public static Map<String, Method> getMethodQueue() {
+        Map<String, Method> methodQueue = new HashMap<>();
+        mqMethodCache.forEach((method, queues) -> {
+            for (String queue : queues) {
+                methodQueue.put(queue, method);
+            }
+        });
+        return methodQueue;
+    }
+
+    /**
+     * 获取指定监听方法所监听的所有队列名称。
+     *
+     * @param method 监听方法
+     * @return 队列名称列表；若方法未注册，返回 null
+     */
+    public static List<String> getMethodQueues(Method method) {
+        return mqMethodCache.get(method);
+    }
+
+    /**
+     * 为指定用户订阅某个 MQ 队列的监控。
+     * <p>
+     * 用户将收到该队列上消息消费的日志推送。
+     * </p>
+     *
+     * @param token 用户唯一标识（如 WebSocket 会话 ID 或用户 ID）
+     * @param queue 队列或主题名称
+     */
+    public static void addMqMonitor(String token, String queue) {
+        userMqMonitorMethods.put(token, queue);
+    }
+
+    /**
+     * 取消指定用户的 MQ 监控订阅。
+     *
+     * @param token 用户唯一标识
+     */
+    public static void removeMqMonitor(String token) {
+        userMqMonitorMethods.remove(token);
     }
 }

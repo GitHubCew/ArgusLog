@@ -2,6 +2,7 @@ package githubcew.arguslog.monitor.outer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import githubcew.arguslog.common.util.CommonUtil;
 import githubcew.arguslog.common.util.ContextUtil;
 import githubcew.arguslog.core.account.ArgusUser;
 import githubcew.arguslog.core.cache.ArgusCache;
@@ -77,6 +78,7 @@ public class ArgusWebSocketOuter implements Outer {
             return false;
         }
 
+        wrapper.append("Argus URI: \n");
         WebRequestInfo webRequestInfo = monitorOutput.getWebRequestInfo();
         if (monitorInfo.isUrl() || monitorInfo.isApi()) {
             wrapper.append("url => ").startCopy().append(webRequestInfo.getUrl()).endCopy().concat();
@@ -137,7 +139,8 @@ public class ArgusWebSocketOuter implements Outer {
         }
 
         wrapper.append("error => ");
-        appendException(wrapper.getBuilder(), exception);
+        String error = CommonUtil.extractException(exception);
+        wrapper.append(error).concat();
         return true;
     }
 
@@ -186,19 +189,5 @@ public class ArgusWebSocketOuter implements Outer {
         } else {
             sb.append(mapper.writeValueAsString(value));
         }
-    }
-
-    /**
-     * 追加异常堆栈
-     *
-     * @param sb builder
-     * @param e  异常
-     */
-    public void appendException(StringBuilder sb, Exception e) {
-        StringWriter sw = new StringWriter();
-        PrintWriter pw = new PrintWriter(sw);
-        e.printStackTrace(pw);
-        pw.flush();
-        sb.append(sw);
     }
 }
