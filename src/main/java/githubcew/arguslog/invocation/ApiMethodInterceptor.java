@@ -39,7 +39,7 @@ public class ApiMethodInterceptor extends SafeMethodInterceptor {
         long end = System.currentTimeMillis();
         // 计算耗时
         monitorOutput.setTime(end - start);
-
+        monitorOutput.setResult(object);
         // 使用线程池处理输出
         ArgusManager argusManager = ContextUtil.getBean(ArgusManager.class);
         argusManager.getMonitorSender().submit(() -> {
