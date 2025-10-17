@@ -69,7 +69,9 @@ public class RedisCmd extends BaseCommand {
                     if (Objects.isNull(key)) {
                         key = "*";
                     } else {
-                        key = "*" + key + "*";
+                        if (!key.contains("*")) {
+                            key = "*" + key + "*";
+                        }
                     }
                     Method keysMethod = stringRedisTemplateClass.getMethod("keys", Object.class);
                     @SuppressWarnings("unchecked")

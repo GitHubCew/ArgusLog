@@ -12,6 +12,12 @@ public abstract class SafeMethodInterceptor implements MethodLifecycleIntercepto
         Object result = null;
         Throwable exception = null;
 
+        // 退出
+        Object exit = exit(invocation);
+        if (exit != null) {
+            return exit;
+        }
+
         // 安全执行前置处理
         safeBeforeInvoke(invocation);
 
@@ -77,7 +83,29 @@ public abstract class SafeMethodInterceptor implements MethodLifecycleIntercepto
 
     // 抽象方法 - 子类只需实现这些，无需关心异常处理
 
+    /**
+     * 退出方法调用
+     * @return 退出方法调用，如果不为null，则返回该值作为方法调用结果
+     */
+     public Object exit(MethodInvocation invocation) {return null;};
+
+    /**
+     * 方法调用前执行
+     * @param invocation 方法调用上下文
+     */
     public abstract void beforeInvoke(MethodInvocation invocation);
+
+    /**
+     * 方法调用后执行
+     * @param invocation 方法调用上下文
+     * @param result 方法调用结果
+     */
     public abstract void afterInvoke(MethodInvocation invocation, Object result);
+
+    /**
+     * 方法抛出异常执行
+     * @param invocation 方法调用上下文
+     * @param e          目标方法抛出的异常
+     */
     public abstract void afterThrowing(MethodInvocation invocation, Throwable e);
 }

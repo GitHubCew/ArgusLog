@@ -25,9 +25,17 @@ public class MqCmd extends BaseCommand {
 
     @CommandLine.Parameters(
             index = "0",
-            description = "操作类型（list | monitor | remove）",
+            description = "操作类型: " +
+                    "list(列出消费监听的队列)" +
+                    "monitor(监听指定队列消息) " +
+                    "remove(移除监听) " +
+                    "stop(暂停某个队列的消费者消费消息)" +
+                    "stopAll(暂停全部消费消费消息)" +
+                    "start（启动某个队列的消费者消费消息） " +
+                    "startAll(启动全部队列的消费者消费消息)",
+
             arity = "1",
-            paramLabel = "list | monitor | remove"
+            paramLabel = "list | monitor | remove | stop | stopAll | start | startAll"
     )
     private String operatorType;
 
@@ -52,6 +60,25 @@ public class MqCmd extends BaseCommand {
             case "remove":
                 removeMqMonitor();
                 break;
+            case "stop":
+                if (Objects.isNull(queue)) {
+                    throw new RuntimeException("请指定队列名称");
+                }
+                new MqConsumeManager().stop(queue);
+                break;
+            case "start":
+                if (Objects.isNull(queue)) {
+                    throw new RuntimeException("请指定队列名称");
+                }
+                new MqConsumeManager().start(queue);
+                break;
+            case "startAll":
+                new MqConsumeManager().startAll();
+                break;
+            case "stopAll":
+                new MqConsumeManager().stopAll();
+                break;
+
             default:
                 throw new RuntimeException("不支持的操作类型: " + operatorType);
         }

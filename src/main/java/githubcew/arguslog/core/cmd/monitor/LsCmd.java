@@ -43,14 +43,18 @@ public class LsCmd extends BaseCommand {
     protected Integer execute() throws Exception {
         // 监听的接口
         String output;
+        if (Objects.isNull(path)) {
+            path = "*";
+        } else {
+            if (!path.contains("*")) {
+                path = "**" + path + "**";
+            }
+        }
         if (monitor) {
             output = output(ArgusUserContext.getCurrentUserToken(), path);
         }
         // 接口
         else {
-            if (Objects.isNull(path)) {
-                path = "*";
-            }
             output = output(null, path);
         }
         picocliOutput.out(String.join(OutputWrapper.LINE_SEPARATOR, output));

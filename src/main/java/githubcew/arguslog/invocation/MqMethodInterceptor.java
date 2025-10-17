@@ -30,6 +30,12 @@ public class MqMethodInterceptor extends SafeMethodInterceptor{
     private ArgusSocketHandler argusSocketHandler;
 
     @Override
+    public Object exit(MethodInvocation invocation) {
+
+        return null;
+    }
+
+    @Override
     public void beforeInvoke(MethodInvocation invocation) {
         safeInit();
         String message = buildMessage(invocation.getMethod(), invocation.getArguments(), null);

@@ -113,6 +113,9 @@ public class IocCmd extends BaseCommand {
      */
     public String listBeans () {
 
+        if (!Objects.isNull(bean) && !bean.contains("*")) {
+            bean = "*" + bean + "*";
+        }
         ApplicationContext applicationContext = ContextUtil.context();
         String[] beanNames = applicationContext.getBeanDefinitionNames();
         Set<String> classes = new HashSet<>();
