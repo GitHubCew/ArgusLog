@@ -38,10 +38,12 @@ public class ArgusAccountAuthenticator implements Authenticator {
         TokenProvider tokenProvider = ContextUtil.getBean(TokenProvider.class);
 
         Account account = new Account();
-        if (argusProperties.isEnableAuth()) {
+        String username = request.getAccount().getUsername();
+        String password = request.getAccount().getPassword();
+        account.setUsername(username);
+        account.setPassword(password);
 
-            String username = request.getAccount().getUsername();
-            String password = request.getAccount().getPassword();
+        if (argusProperties.isEnableAuth()) {
 
             // 管理员用户
             if (Objects.equals(username, argusProperties.getUsername())) {
@@ -56,8 +58,6 @@ public class ArgusAccountAuthenticator implements Authenticator {
                     return false;
                 }
             }
-            account.setUsername(username);
-            account.setPassword(password);
         }
 
         // 构建返回token
