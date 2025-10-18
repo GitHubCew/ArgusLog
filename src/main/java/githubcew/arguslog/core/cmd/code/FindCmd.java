@@ -14,7 +14,6 @@ import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 /**
  * 方法查询命令：根据 type 查询类或方法。
@@ -79,7 +78,7 @@ public class FindCmd extends BaseCommand {
                 findMethods();
                 break;
             default:
-                picocliOutput.out("不支持的类型: " + type);
+                throw new RuntimeException("不支持的类型: " + type);
         }
 
         return OK_CODE;
@@ -95,7 +94,7 @@ public class FindCmd extends BaseCommand {
         try {
             List<Class<?>> classes = findClassesByPattern(className, maxCount);
             if (classes.isEmpty()) {
-                picocliOutput.error("未找到匹配类: " + className);
+                throw new RuntimeException("未找到匹配类: " + className);
             } else {
                 long total = classes.size();
                 if (total > 50) {
@@ -238,6 +237,17 @@ public class FindCmd extends BaseCommand {
      * @return 匹配的类列表
      * @throws Exception 类加载异常
      */
+    /**
+     * 根据类名模式（支持通配符 *）查找匹配的类。
+     * <p>
+     * 匹配忽略大小写，最多返回 maxCount 个匹配类。
+     * </p>
+     *
+     * @param pattern 类名模式，如 "*Controller"
+     * @param maxCount 最大返回类数量
+     * @return 匹配的类列表
+     * @throws Exception 类加载异常
+     */
     private List<Class<?>> findClassesByPattern(String pattern, int maxCount) throws Exception {
         List<Class<?>> matched = new ArrayList<>();
         if (pattern != null && !pattern.contains("*")) {
@@ -247,18 +257,18 @@ public class FindCmd extends BaseCommand {
             } catch (Throwable ignored) {}
         }
 
-        String regex = pattern != null ? pattern.replace(".", "\\.").replace("*", ".*") : ".*";
-        Pattern classPattern = Pattern.compile(regex);
-
-        // 扫描所有类，不限制数量
+        String lowerPattern = pattern.toLowerCase();
         for (String name : scanAllClassNames()) {
-            if (classPattern.matcher(name).matches()) {
+            if (matched.size() >= maxCount) break;
+
+            // 通配符匹配，忽略大小写
+            if (wildcardMatch(name.toLowerCase(), lowerPattern)) {
                 try {
                     matched.add(Class.forName(name));
-                    if (matched.size() >= maxCount) break; // 达到最大匹配数量停止
                 } catch (Throwable ignored) {}
             }
         }
+
         return matched;
     }
 

@@ -20,14 +20,15 @@
         (3).Sql 语句拦截：支持对 SQL 语句进行拦截，可实时查看、分析 SQL 语句执行情况。
         (4).Redis 缓存命令：支持Redis 命令执行。
         (5).Mq 监听命令：支持对 MQ消息监听。
-        (6).受限热部署：支持在不重启服务的情况下动态更新特定方法逻辑或配置类，提升开发调试与线上应急处理效率。
+        (6).方法检索与调用：支持对类和方法进行检索，并可以调用指定方法。
+        (7).受限热部署：支持在不重启服务的情况下动态更新特定方法逻辑或配置类，提升开发调试与线上应急处理效率。
         3.高可扩展性与集成能力：支持用户自定义命令以适配不同项目需求，并能与企业现有用户体系无缝对接。
         4.安全与合规保障：通过自定义 Token 与有效期管理机制，确保操作安全性与审计合规性。
     </description>
 
     <groupId>io.github.githubcew</groupId>
     <artifactId>arguslog</artifactId>
-    <version>0.6.1</version>
+    <version>0.6.2</version>
     <packaging>jar</packaging>
 
     <properties>
