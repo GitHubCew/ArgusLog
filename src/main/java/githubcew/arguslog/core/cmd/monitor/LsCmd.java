@@ -10,7 +10,9 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * @author Envi
+ * 接口列表命令
+ *
+ * @author chenenwei
  */
 @CommandLine.Command(
         name = "ls",

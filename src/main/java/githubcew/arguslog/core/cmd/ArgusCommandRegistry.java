@@ -2,7 +2,9 @@ package githubcew.arguslog.core.cmd;
 
 import githubcew.arguslog.config.ArgusConfigurer;
 import githubcew.arguslog.core.cmd.cache.RedisCmd;
+import githubcew.arguslog.core.cmd.code.InvokeCmd;
 import githubcew.arguslog.core.cmd.code.JadCmd;
+import githubcew.arguslog.core.cmd.code.FindCmd;
 import githubcew.arguslog.core.cmd.monitor.LsCmd;
 import githubcew.arguslog.core.cmd.monitor.MonitorCmd;
 import githubcew.arguslog.core.cmd.monitor.RemoveCmd;
@@ -59,6 +61,8 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
 
         // 代码相关命令
         this.commandManager.register("jad", JadCmd.class);
+        this.commandManager.register("find", FindCmd.class);
+        this.commandManager.register("invoke", InvokeCmd.class);
 
         // spring相关命令
         this.commandManager.register("ioc", IocCmd.class);
