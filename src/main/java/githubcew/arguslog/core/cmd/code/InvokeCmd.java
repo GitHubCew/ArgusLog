@@ -10,9 +10,7 @@ import picocli.CommandLine;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * 命令行命令：动态调用指定类的方法。
@@ -20,9 +18,12 @@ import java.util.Objects;
  * <p>功能说明：
  * <ul>
  *   <li>支持从 Spring 上下文中获取 Bean（优先），或通过反射创建新实例。</li>
- *   <li>支持基本类型、包装类型及 JSON 格式的复杂对象参数。</li>
+ *   <li>支持基本类型、包装类型、JSON 对象、数组、集合等复杂参数。</li>
+ *   <li>自动识别 JSON 参数，非 JSON 内容按普通字符串处理。</li>
  *   <li>支持混合参数，JSON 参数可包含空格或嵌套结构。</li>
- *   <li>输出结果可选择原对象或 JSON 字符串格式。</li>
+ *   <li>支持通配符匹配方法名（*、?），忽略大小写。</li>
+ *   <li>兼容静态方法、继承方法、main(String[] args) 等特殊情况。</li>
+ *   <li>兼容线上扫描：所有类加载、实例化、方法调用都增加容错，避免线上中断。</li>
  * </ul>
  *
  * <p>示例：
@@ -40,24 +41,24 @@ import java.util.Objects;
         name = "invoke",
         description = "动态调用指定类的方法",
         mixinStandardHelpOptions = true,
-        version = "1.0"
+        version = "1.2"
 )
 public class InvokeCmd extends BaseCommand {
 
-    /** 方法签名，例如：cn.demo.Test.demo(java.lang.String.class,cn.cew.Demo.class) */
+    /** 方法签名，例如: cn.demo.Test.demo(java.lang.String.class,int.class) */
     @CommandLine.Parameters(
             index = "0",
-            description = "方法签名，例如: cn.demo.Test.demo(java.lang.String.class,cn.cew.Demo.class)",
-            arity ="1",
+            description = "方法签名，例如: cn.demo.Test.demo(java.lang.String.class,int.class)",
+            arity = "1",
             paramLabel = "methodSignature"
     )
     private String methodSignature;
 
-    /** 方法参数列表，例如：haha {"a": "1", "b": 2} true */
+    /** 方法参数列表，例如: haha {\"a\":1} true */
     @CommandLine.Parameters(
             index = "1",
-            description = "参数列表，例如：haha {\"a\": \"1\", \"b\": 2} true",
             arity = "0..*",
+            description = "方法参数，例如: haha {\"a\":1} true",
             paramLabel = "params"
     )
     private List<String> params;
@@ -65,9 +66,8 @@ public class InvokeCmd extends BaseCommand {
     /** 输出格式，支持 object 或 json，默认 object */
     @CommandLine.Option(
             names = {"-o", "--output"},
-            description = "输出结果格式: object | json",
+            description = "输出格式: object | json",
             defaultValue = "object",
-            arity = "0..1",
             paramLabel = "output"
     )
     private String output;
@@ -78,118 +78,72 @@ public class InvokeCmd extends BaseCommand {
     /**
      * 执行命令：解析方法签名和参数，调用方法并输出结果。
      *
-     * <p>执行流程：
-     * <ol>
-     *   <li>解析方法签名，获取类名、方法名及参数类型。</li>
-     *   <li>尝试从 Spring 上下文获取 Bean，若无则通过反射创建实例。</li>
-     *   <li>解析命令行传入的参数，支持基本类型、包装类型及 JSON 对象类型。</li>
-     *   <li>获取方法并设置可访问性，调用方法。</li>
-     *   <li>输出调用结果，根据 {@code output} 参数决定输出格式。</li>
-     * </ol>
-     *
-     * @return {@link #OK_CODE} 表示成功，{@link #ERROR_CODE} 表示调用异常
-     * @throws Exception 当方法签名解析失败或反射调用失败时抛出
+     * @return {@link #OK_CODE} 表示成功
+     * @throws Exception 当解析失败或调用异常时抛出
      */
     @Override
     protected Integer execute() throws Exception {
         // 1. 解析方法签名
         int idx = methodSignature.indexOf('(');
-        if (idx < 0) {
-            throw new IllegalArgumentException("方法签名格式错误，缺少 '('： " + methodSignature);
-        }
+        if (idx < 0) throw new IllegalArgumentException("方法签名格式错误：" + methodSignature);
 
         String methodFull = methodSignature.substring(0, idx).trim();
         int lastDot = methodFull.lastIndexOf('.');
-        if (lastDot < 0) {
-            throw new IllegalArgumentException("方法签名必须包含类名和方法名，格式：ClassName.methodName(...)，当前输入：" + methodSignature);
-        }
+        if (lastDot < 0) throw new IllegalArgumentException("方法签名缺少类名或方法名：" + methodSignature);
 
-        String className = methodFull.substring(0, lastDot).trim();
-        String methodName = methodFull.substring(lastDot + 1).trim();
+        String className = methodFull.substring(0, lastDot);
+        String methodName = methodFull.substring(lastDot + 1);
 
-        String paramTypesStr = methodSignature.substring(idx + 1, methodSignature.lastIndexOf(')')).trim();
-        List<String> paramTypeNames = new ArrayList<>();
-        if (!paramTypesStr.isEmpty()) {
-            for (String s : paramTypesStr.split(",")) {
-                paramTypeNames.add(s.trim().replace(".class", ""));
+        String paramTypeStr = methodSignature.substring(idx + 1, methodSignature.lastIndexOf(')')).trim();
+        List<String> typeNames = new ArrayList<>();
+        if (!paramTypeStr.isEmpty()) {
+            for (String s : paramTypeStr.split(",")) {
+                typeNames.add(s.trim().replace(".class", ""));
             }
         }
 
-        // 2. 获取目标类与实例
-        Class<?> clazz = Class.forName(className);
+        // 2. 获取类与实例（兼容线上扫描）
+        Class<?> clazz;
+        try {
+            clazz = Class.forName(className);
+        } catch (Throwable e) {
+            throw new IllegalArgumentException("无法加载类: " + className, e);
+        }
+
         Object target = null;
         ApplicationContext ctx = ContextUtil.context();
         if (ctx != null) {
-            String[] beans = ctx.getBeanNamesForType(clazz);
-            if (beans.length > 0) {
-                target = ctx.getBean(beans[0]);
-                clazz = AopProxyUtils.ultimateTargetClass(target);
-            }
-        }
-
-        // 3. 解析参数类型
-        Class<?>[] paramTypes = new Class[paramTypeNames.size()];
-        for (int i = 0; i < paramTypeNames.size(); i++) {
-            paramTypes[i] = parseClass(paramTypeNames.get(i));
-        }
-
-        // 4. 解析参数值（支持混合类型）
-        Object[] args = new Object[paramTypes.length];
-        int tokenIndex = 0; // 命令行参数索引
-
-        if (Objects.isNull(params)) {
-            args = new Object[0];
-        }
-        for (int i = 0; i < paramTypes.length; i++) {
-            Class<?> type = paramTypes[i];
-
-            if (isPrimitiveOrString(type)) {
-                if (tokenIndex >= params.size()) {
-                    throw new IllegalArgumentException("参数数量不足，缺少第 " + (i + 1) + " 个参数");
+            try {
+                String[] beans = ctx.getBeanNamesForType(clazz);
+                if (beans.length > 0) {
+                    target = ctx.getBean(beans[0]);
+                    clazz = AopProxyUtils.ultimateTargetClass(target);
                 }
-                args[i] = parseParamValue(type, params.get(tokenIndex));
-                tokenIndex++;
-            } else {
-                if (tokenIndex >= params.size()) {
-                    throw new IllegalArgumentException("参数数量不足，缺少第 " + (i + 1) + " 个参数");
-                }
-                StringBuilder sb = new StringBuilder();
-                while (true) {
-                    if (sb.length() > 0) sb.append(" ");
-                    sb.append(params.get(tokenIndex));
-                    tokenIndex++;
-                    try {
-                        args[i] = mapper.readValue(sb.toString(), type);
-                        break;
-                    } catch (Exception e) {
-                        if (tokenIndex >= params.size()) {
-                            throw new IllegalArgumentException("无法解析 JSON 参数: " + sb.toString(), e);
-                        }
-                    }
-                }
-            }
+            } catch (Throwable ignored) { /* Spring Bean 获取失败忽略 */ }
         }
 
-        // 5. 获取方法并调用
-        Method method = findMethod(clazz, methodName, paramTypes);
-        if (method == null) {
-            throw new IllegalArgumentException("找不到方法：" + methodSignature);
+        // 3. 构造参数类型
+        Class<?>[] paramTypes = new Class[typeNames.size()];
+        for (int i = 0; i < typeNames.size(); i++) {
+            paramTypes[i] = parseClass(typeNames.get(i));
         }
+
+        // 4. 解析参数值（支持 JSON、混合参数）
+        Object[] args = parseArguments(paramTypes, params);
+
+        // 5. 查找方法（支持通配符匹配）并调用
+        Method method = findMethodWildcard(clazz, methodName, paramTypes);
+        if (method == null) throw new IllegalArgumentException("找不到方法：" + methodSignature);
+
+        Object instance = Modifier.isStatic(method.getModifiers())
+                ? null
+                : safeNewInstance(clazz, target);
 
         Object result;
         try {
-            if (Modifier.isStatic(method.getModifiers())) {
-                result = method.invoke(null, args);
-            } else {
-                Object instance = target != null ? target : clazz.getDeclaredConstructor().newInstance();
-                result = method.invoke(instance, args);
-            }
-        } catch (Exception e) {
-            if (Objects.isNull(e.getMessage())) {
-                throw new RuntimeException(CommonUtil.extractException(e));
-            } else {
-                throw new RuntimeException(e.getMessage());
-            }
+            result = method.invoke(instance, args);
+        } catch (Throwable e) {
+            throw new RuntimeException(CommonUtil.extractException(e));
         }
 
         // 6. 输出结果
@@ -208,35 +162,143 @@ public class InvokeCmd extends BaseCommand {
     }
 
     /**
-     * 获取指定方法（支持继承和非 public 方法）。
+     * 安全创建实例，如果 target 不为空则直接返回，否则尝试反射实例化。
      *
-     * @param clazz      目标类
-     * @param methodName 方法名
-     * @param paramTypes 参数类型数组
-     * @return Method 对象
-     * @throws NoSuchMethodException 方法不存在
+     * @param clazz 目标类
+     * @param target 可能已存在的实例
+     * @return 实例对象，实例化失败返回 null
      */
-    private Method findMethod(Class<?> clazz, String methodName, Class<?>[] paramTypes) throws NoSuchMethodException {
-        Class<?> current = clazz;
-        while (current != null) {
-            try {
-                Method method = current.getDeclaredMethod(methodName, paramTypes);
-                if (!Modifier.isPublic(method.getModifiers())) {
-                    method.setAccessible(true);
+    private Object safeNewInstance(Class<?> clazz, Object target) {
+        if (target != null) return target;
+        try {
+            return clazz.getDeclaredConstructor().newInstance();
+        } catch (Throwable e) {
+            return null; // 容错线上环境
+        }
+    }
+
+    /**
+     * 解析命令行参数到方法参数值。
+     *
+     * @param paramTypes 方法参数类型数组
+     * @param tokens 命令行传入参数
+     * @return 对应方法的参数值数组
+     * @throws Exception 当解析 JSON 或基本类型失败时抛出
+     */
+    private Object[] parseArguments(Class<?>[] paramTypes, List<String> tokens) throws Exception {
+        if (tokens == null) tokens = Collections.emptyList();
+        Object[] args = new Object[paramTypes.length];
+        int tokenIndex = 0;
+
+        for (int i = 0; i < paramTypes.length; i++) {
+            if (tokenIndex >= tokens.size())
+                throw new IllegalArgumentException("参数不足，缺少第 " + (i + 1) + " 个参数");
+
+            Class<?> type = paramTypes[i];
+            String raw = tokens.get(tokenIndex);
+
+            // 支持 main(String[] args)
+            if (type.isArray() && type.getComponentType() == String.class && i == 0) {
+                args[i] = tokens.toArray(new String[0]);
+                break;
+            }
+
+            if (isPrimitiveOrString(type)) {
+                args[i] = parseParamValue(type, raw);
+                tokenIndex++;
+                continue;
+            }
+
+            // 解析 JSON 参数
+            StringBuilder sb = new StringBuilder(raw);
+            while (true) {
+                try {
+                    args[i] = tryParseJson(sb.toString(), type);
+                    tokenIndex++;
+                    break;
+                } catch (Exception e) {
+                    tokenIndex++;
+                    if (tokenIndex >= tokens.size()) {
+                        args[i] = raw; // 容错回退
+                        break;
+                    }
+                    sb.append(" ").append(tokens.get(tokenIndex));
                 }
-                return method;
-            } catch (NoSuchMethodException ignored) {
-                // 如果当前类没找到，继续查找父类
-                current = current.getSuperclass();
             }
         }
-        try {
-            // 如果没有找到声明方法，再尝试 public 方法（包括接口）
-            return clazz.getMethod(methodName, paramTypes);
+        return args;
+    }
+
+    /**
+     * 尝试解析 JSON 字符串到指定类型，如果不是 JSON 则按基本类型解析。
+     *
+     * @param input JSON 字符串或普通值
+     * @param type 目标类型
+     * @return 解析后的对象
+     * @throws Exception 当 JSON 转换失败时抛出
+     */
+    private Object tryParseJson(String input, Class<?> type) throws Exception {
+        if (input == null) return null;
+        String trimmed = input.trim();
+        if ((trimmed.startsWith("{") && trimmed.endsWith("}")) ||
+                (trimmed.startsWith("[") && trimmed.endsWith("]")) ||
+                (trimmed.startsWith("\"") && trimmed.endsWith("\""))) {
+            return mapper.readValue(trimmed, type);
         }
-        catch (NoSuchMethodException e) {
-            return null;
+        return parseParamValue(type, input);
+    }
+
+    /**
+     * 查找方法，支持通配符匹配方法名并忽略大小写。
+     *
+     * @param clazz 目标类
+     * @param pattern 方法名模式
+     * @param paramTypes 方法参数类型数组
+     * @return 方法对象，如果未找到返回 null
+     */
+    private Method findMethodWildcard(Class<?> clazz, String pattern, Class<?>[] paramTypes) {
+        Method[] methods = clazz.getDeclaredMethods();
+        for (Method m : methods) {
+            if (wildcardMatch(m.getName(), pattern)) {
+                if (paramTypes.length == m.getParameterCount()) {
+                    m.setAccessible(true);
+                    return m;
+                }
+            }
         }
+        if (clazz.getSuperclass() != null) {
+            return findMethodWildcard(clazz.getSuperclass(), pattern, paramTypes);
+        }
+        return null;
+    }
+
+    /**
+     * 通配符匹配，支持 '*' 和 '?'，忽略大小写。
+     *
+     * @param text 待匹配字符串
+     * @param pattern 模式
+     * @return true 匹配成功
+     */
+    private boolean wildcardMatch(String text, String pattern) {
+        text = text.toLowerCase();
+        pattern = pattern.toLowerCase();
+
+        int t = 0, p = 0, star = -1, mark = 0;
+        while (t < text.length()) {
+            if (p < pattern.length() && (pattern.charAt(p) == '?' || pattern.charAt(p) == text.charAt(t))) {
+                t++; p++;
+            } else if (p < pattern.length() && pattern.charAt(p) == '*') {
+                star = p++;
+                mark = t;
+            } else if (star != -1) {
+                p = star + 1;
+                t = ++mark;
+            } else {
+                return false;
+            }
+        }
+        while (p < pattern.length() && pattern.charAt(p) == '*') p++;
+        return p == pattern.length();
     }
 
     /**
@@ -267,16 +329,16 @@ public class InvokeCmd extends BaseCommand {
      */
     private Class<?> parseClass(String name) throws ClassNotFoundException {
         switch (name) {
-            case "int":     return int.class;
-            case "long":    return long.class;
+            case "int": return int.class;
+            case "long": return long.class;
             case "boolean": return boolean.class;
-            case "double":  return double.class;
-            case "float":   return float.class;
-            case "short":   return short.class;
-            case "byte":    return byte.class;
-            case "char":    return char.class;
-            case "String":  return String.class;
-            default:        return Class.forName(name);
+            case "double": return double.class;
+            case "float": return float.class;
+            case "short": return short.class;
+            case "byte": return byte.class;
+            case "char": return char.class;
+            case "String": return String.class;
+            default: return Class.forName(name);
         }
     }
 
@@ -297,10 +359,7 @@ public class InvokeCmd extends BaseCommand {
         if (type == float.class || type == Float.class) return Float.parseFloat(value);
         if (type == short.class || type == Short.class) return Short.parseShort(value);
         if (type == byte.class || type == Byte.class) return Byte.parseByte(value);
-        if (type == char.class || type == Character.class) {
-            if (value.isEmpty()) throw new IllegalArgumentException("char 类型参数不能为空");
-            return value.charAt(0);
-        }
+        if (type == char.class || type == Character.class) return value.charAt(0);
         return mapper.readValue(value, type);
     }
 }

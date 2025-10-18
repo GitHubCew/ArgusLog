@@ -28,7 +28,7 @@
 
     <groupId>io.github.githubcew</groupId>
     <artifactId>arguslog</artifactId>
-    <version>0.6.2</version>
+    <version>0.6.3</version>
     <packaging>jar</packaging>
 
     <properties>

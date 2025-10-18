@@ -13,7 +13,6 @@ import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import java.util.regex.Pattern;
 
 /**
  * 方法查询命令：根据 type 查询类或方法。
@@ -22,6 +21,8 @@ import java.util.regex.Pattern;
  * Spring Bean 优先匹配。
  * 控制扫描数量，防止内存或输出过大导致 CLI 崩溃。
  * </p>
+ *
+ * @author chenenwei
  */
 @CommandLine.Command(
         name = "find",
@@ -49,7 +50,7 @@ public class FindCmd extends BaseCommand {
 
     @CommandLine.Parameters(
             index = "2",
-            description = "方法名（仅 type=method 有效，支持正则）",
+            description = "方法名（仅 type=method 有效，支持通配符 '*'）",
             arity = "0..1",
             paramLabel = "methodName"
     )
@@ -62,20 +63,22 @@ public class FindCmd extends BaseCommand {
 
     @Override
     protected Integer execute() throws Exception {
+
         type = type.trim().toLowerCase();
 
         switch (type) {
-            case "class":
-                if (Objects.isNull(className)) {
-                    throw new RuntimeException("请指定类名");
-                }
-                findClasses(MAX_CLASS_SCAN);
-                break;
+
             case "method":
                 if (Objects.isNull(className)) {
                     throw new RuntimeException("请指定类名");
                 }
                 findMethods();
+                break;
+            case "class":
+                if (Objects.isNull(className)) {
+                    throw new RuntimeException("请指定类名");
+                }
+                findClasses(MAX_CLASS_SCAN);
                 break;
             default:
                 throw new RuntimeException("不支持的类型: " + type);
@@ -124,14 +127,14 @@ public class FindCmd extends BaseCommand {
             // 1. 优先匹配 Spring Bean
             ApplicationContext ctx = ContextUtil.context();
             if (ctx != null) {
-                String regex = className != null ? className.replace(".", "\\.").replace("*", ".*") : ".*";
-                Pattern classPattern = Pattern.compile(regex);
                 for (String beanName : ctx.getBeanDefinitionNames()) {
-                    Class<?> clazz = AopProxyUtils.ultimateTargetClass(ctx.getBean(beanName));
-                    if (classPattern.matcher(clazz.getName()).matches()) {
-                        matchedClasses.add(clazz);
-                        if (matchedClasses.size() >= MAX_CLASS_SCAN) break;
-                    }
+                    try {
+                        Class<?> clazz = AopProxyUtils.ultimateTargetClass(ctx.getBean(beanName));
+                        if (clazz != null && wildcardMatch(clazz.getName(), className)) {
+                            matchedClasses.add(clazz);
+                            if (matchedClasses.size() >= MAX_CLASS_SCAN) break;
+                        }
+                    } catch (Throwable ignored) {}
                 }
             }
 
@@ -163,12 +166,6 @@ public class FindCmd extends BaseCommand {
 
     /**
      * 收集指定类中符合条件的方法到结果映射中。
-     *
-     * @param clazz  目标类
-     * @param result 结果容器
-     */
-    /**
-     * 收集指定类中符合条件的方法到结果映射中。
      * <p>
      * 方法名支持通配符 '*'，例如 "get*" 会匹配所有以 get 开头的方法。
      * </p>
@@ -177,10 +174,10 @@ public class FindCmd extends BaseCommand {
      * @param result 结果容器，key: 方法签名，value: 方法名称
      */
     private void collectMethods(Class<?> clazz, Map<String, String> result) {
-        for (Method method : clazz.getDeclaredMethods()) {
+        for (Method method : clazz.getMethods()) { // 使用 getMethods 支持继承
             if (method.getDeclaringClass() == Object.class) continue;
 
-            // 方法名通配符匹配
+            // 方法名通配符匹配（忽略大小写）
             if (methodName != null && !methodName.isEmpty()) {
                 if (!wildcardMatch(method.getName(), methodName)) {
                     continue;
@@ -200,23 +197,25 @@ public class FindCmd extends BaseCommand {
     }
 
     /**
-     * 通配符匹配，支持 '*' 匹配任意字符序列。
+     * 通配符匹配（忽略大小写）。
+     * 支持 '*' 通配任意字符序列。
      *
-     * @param text 文本
-     * @param pattern 模式，例如 "get*"
+     * @param text    文本（如类名或方法名）
+     * @param pattern 模式（如 "*Controller"）
      * @return 是否匹配
      */
     private boolean wildcardMatch(String text, String pattern) {
+        if (text == null || pattern == null) return false;
+        text = text.toLowerCase();
+        pattern = pattern.toLowerCase();
+
         if (pattern.equals("*")) return true;
-        String[] parts = pattern.split("\\*", -1); // -1 保留空字符串
+        String[] parts = pattern.split("\\*", -1);
         int index = 0;
         boolean first = true;
         for (String part : parts) {
             if (part.isEmpty()) {
-                if (first) {
-                    first = false;
-                    continue;
-                }
+                first = false;
                 continue;
             }
             int found = text.indexOf(part, index);
@@ -225,32 +224,25 @@ public class FindCmd extends BaseCommand {
             index = found + part.length();
             first = false;
         }
-        // 如果 pattern 不是以 '*' 结尾，则必须完全匹配文本尾部
         return pattern.endsWith("*") || index == text.length();
     }
 
     /**
-     * 根据类名模式（支持通配符 *）查找匹配的类。
-     *
-     * @param pattern 类名模式，如 "com.example.*Service"
-     * @param maxCount 最大返回类数量（最终匹配数量）
-     * @return 匹配的类列表
-     * @throws Exception 类加载异常
-     */
-    /**
-     * 根据类名模式（支持通配符 *）查找匹配的类。
+     * 根据类名模式（支持通配符 *，忽略大小写）查找匹配的类。
      * <p>
-     * 匹配忽略大小写，最多返回 maxCount 个匹配类。
+     * 最多返回 maxCount 个匹配类。
      * </p>
      *
-     * @param pattern 类名模式，如 "*Controller"
+     * @param pattern  类名模式，如 "*Controller"
      * @param maxCount 最大返回类数量
      * @return 匹配的类列表
-     * @throws Exception 类加载异常
      */
-    private List<Class<?>> findClassesByPattern(String pattern, int maxCount) throws Exception {
+    private List<Class<?>> findClassesByPattern(String pattern, int maxCount) {
         List<Class<?>> matched = new ArrayList<>();
-        if (pattern != null && !pattern.contains("*")) {
+        if (pattern == null || pattern.isEmpty()) return matched;
+
+        // 没通配符，尝试直接加载
+        if (!pattern.contains("*")) {
             try {
                 matched.add(Class.forName(pattern));
                 return matched;
@@ -258,10 +250,9 @@ public class FindCmd extends BaseCommand {
         }
 
         String lowerPattern = pattern.toLowerCase();
+
         for (String name : scanAllClassNames()) {
             if (matched.size() >= maxCount) break;
-
-            // 通配符匹配，忽略大小写
             if (wildcardMatch(name.toLowerCase(), lowerPattern)) {
                 try {
                     matched.add(Class.forName(name));
@@ -274,23 +265,26 @@ public class FindCmd extends BaseCommand {
 
     /**
      * 扫描 classpath 下所有可访问类名。
-     * 不限制扫描数量，交给 findClassesByPattern 控制返回数量。
+     * <p>
+     * 兼容本地目录与 fat-jar 运行模式。
+     * </p>
      *
      * @return 类全限定名集合
      */
     private Set<String> scanAllClassNames() {
         Set<String> classNames = new LinkedHashSet<>();
-        ClassLoader loader = Thread.currentThread().getContextClassLoader();
-        if (loader == null) loader = ClassLoader.getSystemClassLoader();
-
         String javaClassPath = System.getProperty("java.class.path");
-        if (javaClassPath != null && !javaClassPath.isEmpty()) {
-            String[] paths = javaClassPath.split(Pattern.quote(File.pathSeparator));
-            for (String path : paths) {
-                File file = new File(path);
-                if (file.isDirectory()) scanDirectory(file, file, classNames);
-                else if (file.getName().endsWith(".jar")) scanJarFile(file, classNames);
+        if (javaClassPath == null || javaClassPath.isEmpty()) return classNames;
+
+        String[] paths = javaClassPath.split(File.pathSeparator);
+        for (String path : paths) {
+            File file = new File(path);
+            if (file.isDirectory()) {
+                scanDirectory(file, file, classNames);
+            } else if (file.isFile() && file.getName().endsWith(".jar")) {
+                scanJarFile(file, classNames);
             }
+            if (classNames.size() > 50000) break; // 防止卡死
         }
         return classNames;
     }
@@ -300,10 +294,14 @@ public class FindCmd extends BaseCommand {
         if (files == null) return;
 
         for (File f : files) {
-            if (f.isDirectory()) scanDirectory(root, f, classNames);
-            else if (f.getName().endsWith(".class")) {
+            if (f.isDirectory()) {
+                scanDirectory(root, f, classNames);
+            } else if (f.getName().endsWith(".class")) {
                 String relative = root.toURI().relativize(f.toURI()).getPath();
-                classNames.add(relative.substring(0, relative.length() - 6).replace('/', '.').replace('\\', '.'));
+                classNames.add(relative
+                        .substring(0, relative.length() - 6)
+                        .replace('/', '.')
+                        .replace('\\', '.'));
             }
         }
     }
@@ -313,12 +311,13 @@ public class FindCmd extends BaseCommand {
             Enumeration<JarEntry> entries = jar.entries();
             while (entries.hasMoreElements()) {
                 JarEntry e = entries.nextElement();
-                if (e.isDirectory()) continue;
-                if (e.getName().endsWith(".class")) {
-                    classNames.add(e.getName().replace('/', '.').replace('\\', '.').replaceAll("\\.class$", ""));
+                if (!e.isDirectory() && e.getName().endsWith(".class")) {
+                    classNames.add(e.getName()
+                            .replace('/', '.')
+                            .replace('\\', '.')
+                            .replaceAll("\\.class$", ""));
                 }
             }
         } catch (Exception ignored) {}
     }
-
 }
