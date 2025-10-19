@@ -28,7 +28,7 @@
 
     <groupId>io.github.githubcew</groupId>
     <artifactId>arguslog</artifactId>
-    <version>0.6.3</version>
+    <version>0.6.4</version>
     <packaging>jar</packaging>
 
     <properties>
@@ -161,34 +161,34 @@
                 </executions>
             </plugin>
 
-<!--&lt;!&ndash;            打包到maven中央仓库插件&ndash;&gt;-->
-<!--&lt;!&ndash;             强制GPG插件配置&ndash;&gt;-->
-<!--            <plugin>-->
-<!--                <groupId>org.apache.maven.plugins</groupId>-->
-<!--                <artifactId>maven-gpg-plugin</artifactId>-->
-<!--                <version>3.2.5</version>-->
-<!--                <executions>-->
-<!--                    <execution>-->
-<!--                        <id>sign-artifacts</id>-->
-<!--                        <phase>verify</phase>-->
-<!--                        <goals>-->
-<!--                            <goal>sign</goal>-->
-<!--                        </goals>-->
-<!--                    </execution>-->
-<!--                </executions>-->
-<!--                <configuration>-->
-<!--                    <gpgArguments>-->
-<!--                        <arg>&#45;&#45;pinentry-mode</arg>-->
-<!--                        <arg>loopback</arg>-->
-<!--                        <arg>&#45;&#45;batch</arg>-->
-<!--                        <arg>&#45;&#45;yes</arg>-->
-<!--                    </gpgArguments>-->
-<!--                    <keyname>${gpg.keyname}</keyname>-->
-<!--                    <passphrase>${gpg.passphrase}</passphrase>-->
-<!--                    <passphraseServerId>gpg.passphrase</passphraseServerId>-->
-<!--                    <includeTypes>pom,jar,sources,javadoc</includeTypes>-->
-<!--                </configuration>-->
-<!--            </plugin>-->
+<!--            打包到maven中央仓库插件-->
+<!--             强制GPG插件配置-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>3.2.5</version>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <gpgArguments>
+                        <arg>--pinentry-mode</arg>
+                        <arg>loopback</arg>
+                        <arg>--batch</arg>
+                        <arg>--yes</arg>
+                    </gpgArguments>
+                    <keyname>${gpg.keyname}</keyname>
+                    <passphrase>${gpg.passphrase}</passphrase>
+                    <passphraseServerId>gpg.passphrase</passphraseServerId>
+                    <includeTypes>pom,jar,sources,javadoc</includeTypes>
+                </configuration>
+            </plugin>
 
             <plugin>
                 <groupId>org.sonatype.central</groupId>

@@ -119,7 +119,9 @@ public class InvokeCmd extends BaseCommand {
                     target = ctx.getBean(beans[0]);
                     clazz = AopProxyUtils.ultimateTargetClass(target);
                 }
-            } catch (Throwable ignored) { /* Spring Bean 获取失败忽略 */ }
+            } catch (Throwable ignored) {
+                /* Spring Bean 获取失败忽略 */
+            }
         }
 
         // 3. 构造参数类型
@@ -128,6 +130,8 @@ public class InvokeCmd extends BaseCommand {
             paramTypes[i] = parseClass(typeNames.get(i));
         }
 
+        // 支持反引号包裹的复杂参数（如 JSON 嵌套）
+        params = mergeBacktickParams(params);
         // 4. 解析参数值（支持 JSON、混合参数）
         Object[] args = parseArguments(paramTypes, params);
 
@@ -158,7 +162,63 @@ public class InvokeCmd extends BaseCommand {
                 picocliOutput.out(result.toString());
             }
         }
+        else {
+            picocliOutput.out("null");
+        }
         return OK_CODE;
+    }
+
+    /**
+     * 将反引号包裹的参数整体合并为一个字符串。
+     * 支持复杂 JSON 结构、嵌套 {}、[]、空格等。
+     *
+     * 示例：
+     *   输入：["`{\"a\":1,", "\"b\":{\"x\":2}}`", "true"]
+     *   输出：["{\"a\":1, \"b\":{\"x\":2}}", "true"]
+     */
+    private List<String> mergeBacktickParams(List<String> tokens) {
+        if (tokens == null || tokens.isEmpty()) return Collections.emptyList();
+
+        List<String> merged = new ArrayList<>();
+        StringBuilder current = null;
+        boolean inBacktick = false;
+
+        for (String token : tokens) {
+            if (!inBacktick) {
+                // 检测开始
+                if (token.startsWith("`")) {
+                    inBacktick = true;
+                    current = new StringBuilder();
+                    String part = token.substring(1);
+                    // 单个 token 就闭合了
+                    if (part.endsWith("`")) {
+                        current.append(part, 0, part.length() - 1);
+                        merged.add(current.toString());
+                        inBacktick = false;
+                    } else {
+                        current.append(part);
+                    }
+                } else {
+                    merged.add(token);
+                }
+            } else {
+                // 处于反引号内部
+                if (token.endsWith("`")) {
+                    current.append(" ").append(token, 0, token.length() - 1);
+                    merged.add(current.toString());
+                    inBacktick = false;
+                } else {
+                    current.append(" ").append(token);
+                }
+            }
+        }
+
+        // 容错：如果反引号未闭合，直接加入剩余部分
+        if (inBacktick && current != null) {
+            merged.add(current.toString());
+        }
+
+        return merged;
     }
 
     /**
@@ -173,7 +233,8 @@ public class InvokeCmd extends BaseCommand {
         try {
             return clazz.getDeclaredConstructor().newInstance();
         } catch (Throwable e) {
-            return null; // 容错线上环境
+            // 容错线上环境
+            return null;
         }
     }
 
