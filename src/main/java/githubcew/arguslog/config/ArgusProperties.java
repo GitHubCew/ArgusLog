@@ -93,4 +93,7 @@ public class ArgusProperties {
     // jdk包装排除包集合
     @ArgusProperty(description = "jdk包装排除包集合")
     private Set<String> jdkProxyWrapExcludePackages;
+
+    @ArgusProperty(description = "命令执行超时时间(秒)", modifyInRunning = true)
+    private int cmdExecuteTimeout = 10;
 }

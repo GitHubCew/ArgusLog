@@ -47,6 +47,7 @@ public interface MethodLifecycleInterceptor {
      * </p>
      *
      * @param invocation 方法调用上下文
+     * @param object      目标方法返回的返回值
      */
     void afterInvoke(MethodInvocation invocation, Object object);
 
@@ -59,6 +60,7 @@ public interface MethodLifecycleInterceptor {
      *
      * @param invocation 方法调用上下文
      * @param e          目标方法抛出的异常
+     * @throws Throwable 抛出的异常
      */
     void afterThrowing(MethodInvocation invocation, Throwable e) throws Throwable;
 }

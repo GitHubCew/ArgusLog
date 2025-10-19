@@ -85,6 +85,7 @@ public abstract class SafeMethodInterceptor implements MethodLifecycleIntercepto
 
     /**
      * 退出方法调用
+     * @param invocation 方法调用上下文
      * @return 退出方法调用，如果不为null，则返回该值作为方法调用结果
      */
      public Object exit(MethodInvocation invocation) {return null;};

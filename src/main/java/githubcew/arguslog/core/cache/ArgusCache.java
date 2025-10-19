@@ -573,6 +573,7 @@ public class ArgusCache {
 
     /**
      * 移除过期的凭证
+     * @param token 用户token
      */
     public static void clearUserToken(String token) {
 

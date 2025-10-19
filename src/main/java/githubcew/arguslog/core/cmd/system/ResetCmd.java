@@ -63,6 +63,8 @@ public class ResetCmd extends BaseCommand {
 
     /**
      * 重置
+     * @param username 用户名
+     * @param checkPermission 是否检查权限
      */
     public void reset(String username, boolean checkPermission) {
 

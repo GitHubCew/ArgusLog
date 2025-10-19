@@ -58,7 +58,7 @@ public class InvokeCmd extends BaseCommand {
     @CommandLine.Parameters(
             index = "1",
             arity = "0..*",
-            description = "方法参数，例如: haha {\"a\":1} true",
+            description = "方法参数: ``可用于长字符，如：json、对象参数，例如: haha `{\"a\":1}` true",
             paramLabel = "params"
     )
     private List<String> params;
