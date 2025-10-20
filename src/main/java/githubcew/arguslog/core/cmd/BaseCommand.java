@@ -61,4 +61,12 @@ public abstract class BaseCommand implements Callable<Integer> {
       protected Integer execute() throws Exception {
          return OK_CODE;
      }
+
+     public String getCmd() {
+         CommandLine.Command annotation = this.getClass().getAnnotation(CommandLine.Command.class);
+         if (annotation != null) {
+             return annotation.name();
+         }
+         return null;
+     }
 }

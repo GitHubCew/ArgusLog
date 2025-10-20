@@ -40,36 +40,36 @@ public class ArgusCommandRegistry implements ArgusConfigurer {
             this.commandManager = commandManager;
         }
         // 基础命令
-        this.commandManager.register("connect", ConnectCmd.class);
-        this.commandManager.register("exit", ExitCmd.class);
-        this.commandManager.register("logout", LogoutCmd.class);
-        this.commandManager.register("help", HelpCmd.class);
-        this.commandManager.register("clear", ClearCmd.class);
-        this.commandManager.register("show", ShowCmd.class);
-        this.commandManager.register("set", SetCmd.class);
-        this.commandManager.register("reset", ResetCmd.class);
-        this.commandManager.register("rmuser", RmUserCmd.class);
+        this.commandManager.register(ConnectCmd.class);
+        this.commandManager.register(ExitCmd.class);
+        this.commandManager.register(LogoutCmd.class);
+        this.commandManager.register(HelpCmd.class);
+        this.commandManager.register(ClearCmd.class);
+        this.commandManager.register(ShowCmd.class);
+        this.commandManager.register(SetCmd.class);
+        this.commandManager.register(ResetCmd.class);
+        this.commandManager.register(RmUserCmd.class);
 
         // 监控命令
-        this.commandManager.register("ls", LsCmd.class);
-        this.commandManager.register("monitor", MonitorCmd.class);
-        this.commandManager.register("remove", RemoveCmd.class);
+        this.commandManager.register(LsCmd.class);
+        this.commandManager.register(MonitorCmd.class);
+        this.commandManager.register(RemoveCmd.class);
 
         // 调用链命令
-        this.commandManager.register("trace", TraceCmd.class);
-        this.commandManager.register("revert", RevertCmd.class);
+        this.commandManager.register(TraceCmd.class);
+        this.commandManager.register(RevertCmd.class);
 
         // 代码相关命令
-        this.commandManager.register("jad", JadCmd.class);
-        this.commandManager.register("find", FindCmd.class);
-        this.commandManager.register("invoke", InvokeCmd.class);
+        this.commandManager.register(JadCmd.class);
+        this.commandManager.register(FindCmd.class);
+        this.commandManager.register(InvokeCmd.class);
 
         // spring相关命令
-        this.commandManager.register("ioc", IocCmd.class);
+        this.commandManager.register(IocCmd.class);
 
         // 中间件命令
-        this.commandManager.register("sql", SqlCmd.class);
-        this.commandManager.register("redis", RedisCmd.class);
-        this.commandManager.register("mq", MqCmd.class);
+        this.commandManager.register(SqlCmd.class);
+        this.commandManager.register(RedisCmd.class);
+        this.commandManager.register(MqCmd.class);
     }
 }

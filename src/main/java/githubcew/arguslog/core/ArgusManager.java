@@ -8,6 +8,7 @@ import githubcew.arguslog.core.account.UserProvider;
 import githubcew.arguslog.core.cache.ArgusCache;
 import githubcew.arguslog.core.cache.ArgusCacheManager;
 import githubcew.arguslog.core.cmd.CommandManager;
+import githubcew.arguslog.core.permission.ArgusPermissionConfigure;
 import githubcew.arguslog.monitor.ArgusMethod;
 import githubcew.arguslog.monitor.MonitorSender;
 import githubcew.arguslog.monitor.trace.buddy.BuddyProxyManager;
@@ -18,6 +19,8 @@ import githubcew.arguslog.web.extractor.Extractor;
 import lombok.SneakyThrows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
@@ -40,32 +43,50 @@ import java.util.Set;
 
 /**
  * Argus
+ * 系统核心启动管理器
  *
- * @author chenenwei
+ * 负责：
+ *  - 初始化 Argus 核心组件
+ *  - 注册命令
+ *  - 扫描接口映射
+ *  - 初始化监控与权限系统
+ *  - 打印启动信息
+ *
+ * @author
+ *   chenenwei
  */
 @Component
-public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> {
+public class ArgusManager implements ApplicationListener<ApplicationReadyEvent> {
 
     private static final Logger log = LoggerFactory.getLogger(ArgusManager.class);
 
-    // 初始化锁
+    /** 初始化锁，确保只执行一次 */
     private static volatile boolean initialized = false;
 
-    private ArgusProperties argusProperties;
-    private Extractor extractor;
-    private UserProvider userProvider;
-    private TokenProvider tokenProvider;
-    private List<ArgusConfigurer> configurers = new ArrayList<>();
-    private CommandManager commandManager;
+    @Autowired
     private ApplicationContext applicationContext;
+    @Autowired
+    private ArgusProperties argusProperties;
+    @Autowired
+    private Extractor extractor;
+    @Autowired
+    private UserProvider userProvider;
+    @Autowired
+    private TokenProvider tokenProvider;
+    @Autowired
+    private CommandManager commandManager;
+    @Autowired
     private ArgusAccountAuthenticator argusAccountAuthenticator;
+    @Autowired
     private ArgusTokenAuthenticator argusTokenAuthenticator;
-    private ArgusCacheManager argusCacheManager;
-    private MonitorSender monitorSender;
-
-
+    @Autowired
+    private ArgusPermissionConfigure argusPermissionConfigure;
+    @Autowired
     private RequestMappingHandlerMapping requestMappingHandlerMapping;
 
+    private ArgusCacheManager argusCacheManager;
+    private MonitorSender monitorSender;
+    private List<ArgusConfigurer> configurers = new ArrayList<>();
 
     public Extractor getExtractor() {
         return extractor;
@@ -99,11 +120,17 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
         return monitorSender;
     }
 
+    public ArgusPermissionConfigure getArgusPermissionConfigure () {
+        return argusPermissionConfigure;
+    }
+
+    /**
+     * 应用启动完成后初始化
+     */
     @SneakyThrows
     @Override
-    public void onApplicationEvent(ContextRefreshedEvent event) {
+    public void onApplicationEvent(ApplicationReadyEvent event) {
 
-        // 确保只执行一次
         if (initialized) {
             return;
         }
@@ -113,78 +140,71 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
                 return;
             }
 
-            this.applicationContext = event.getApplicationContext();
             this.configurers = new ArrayList<>(applicationContext.getBeansOfType(ArgusConfigurer.class).values());
-            this.commandManager = applicationContext.getBean(CommandManager.class);
-            this.extractor = applicationContext.getBean(Extractor.class);
-            this.userProvider = applicationContext.getBean(UserProvider.class);
-            this.tokenProvider = applicationContext.getBean(TokenProvider.class);
-            this.requestMappingHandlerMapping = applicationContext.getBean("requestMappingHandlerMapping", RequestMappingHandlerMapping.class);
-            this.argusProperties = applicationContext.getBean(ArgusProperties.class);
-            this.argusAccountAuthenticator = applicationContext.getBean(ArgusAccountAuthenticator.class);
-            this.argusTokenAuthenticator = applicationContext.getBean(ArgusTokenAuthenticator.class);
             this.argusCacheManager = new ArgusCacheManager();
             this.monitorSender = new MonitorSender();
 
-            // 注册bean
+            // 初始化核心组件
             init();
 
-            // 扫描接口
+            // 扫描接口映射
             scan();
 
-            // 初始化 buddy
+            // 初始化 Buddy 代理机制
             BuddyProxyManager.init();
 
-            initialized = true;
+            // 初始化权限
+            argusPermissionConfigure.init();
 
-            // 打印Argus启动信息
+            // 打印 Argus 启动信息
             printArgusInfo();
 
-            log.info("【Argus => ArgusManager initialized successfully...】");
+            initialized = true;
+            log.info("【Argus => ArgusManager initialized successfully after ApplicationReadyEvent...】");
         }
     }
 
     /**
-     * 初始化
+     * 初始化核心组件
      */
-    public void init() {
-
+    private void init() {
         // configurers 排序
         this.configurers.sort(AnnotationAwareOrderComparator.INSTANCE);
 
         // 注册命令
         registerCommand();
 
-        // 开启线程
+        // 启动缓存管理线程
         argusCacheManager.start();
 
-        // 开启线程池
+        // 初始化监控线程池
         monitorSender.init();
-
     }
 
     /**
      * 注册命令
      */
     private void registerCommand() {
-
         for (ArgusConfigurer configurer : configurers) {
-            configurer.registerCommand(this.commandManager);
+            try {
+                configurer.registerCommand(this.commandManager);
+            } catch (Exception e) {
+                log.error("【Argus => Failed to register command from {}】", configurer.getClass().getSimpleName(), e);
+            }
         }
     }
 
     /**
-     * 扫描接口
+     * 扫描接口映射
      */
     private void scan() {
-        // 获取Spring MVC中所有的RequestMapping信息
         Map<RequestMappingInfo, HandlerMethod> handlerMethods = requestMappingHandlerMapping.getHandlerMethods();
 
-        // 遍历所有映射关系
         handlerMethods.forEach((info, handlerMethod) -> {
             Set<String> urlPatterns = info.getPatternsCondition().getPatterns();
             Method method = handlerMethod.getMethod();
-            urlPatterns.forEach(uri -> {
+
+            for (String uri : urlPatterns) {
                 if (!uri.startsWith("/")) {
                     uri = "/" + uri;
                 }
@@ -194,17 +214,19 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
                 argusMethod.setSignature(CommonUtil.generateSignature(method));
                 argusMethod.setUri(uri);
                 ArgusCache.addUriMethod(uri, argusMethod);
-            });
+            }
         });
+
+        log.info("【Argus => Mapped {} API endpoints】", handlerMethods.size());
     }
 
     /**
-     * 打印argus信息
+     * 打印 Argus 信息（Banner + 用户）
      */
     private void printArgusInfo() {
 
+        // 打印 banner
         if (this.argusProperties.isPrintBanner()) {
-            // 打印 argus banner
             try (InputStream inputStream = new ClassPathResource("META-INF/resources/argus/banner.txt").getInputStream();
                  BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
 
@@ -213,17 +235,15 @@ public class ArgusManager implements ApplicationListener<ContextRefreshedEvent> 
                     log.info(line);
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                log.warn("【Argus => Banner not found or failed to load】", e);
             }
         }
-        // 打印用户信息
-        if (this.argusProperties.isPrintUserInfo()) {
 
-            if (userProvider instanceof ArgusUserProvider) {
-                log.info("【Argus => username: {}, password: {}】",
-                        ((ArgusUserProvider) userProvider).getUsername(),
-                        ((ArgusUserProvider) userProvider).getPassword());
-            }
+        // 打印用户信息
+        if (this.argusProperties.isPrintUserInfo() && userProvider instanceof ArgusUserProvider) {
+            ArgusUserProvider provider = (ArgusUserProvider) userProvider;
+            log.info("【Argus => username: {}, password: {}】", provider.getUsername(), provider.getPassword());
         }
     }
 }
+

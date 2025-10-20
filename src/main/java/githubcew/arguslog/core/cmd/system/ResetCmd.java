@@ -52,10 +52,10 @@ public class ResetCmd extends BaseCommand {
         }
         else {
             if (Objects.isNull(username)) {
-                reset(ArgusUserContext.getCurrentUsername(), false);
+                reset(ArgusUserContext.getCurrentUsername());
             }
             else {
-                reset(username, true);
+                reset(username);
             }
         }
         return OK_CODE;
@@ -64,13 +64,9 @@ public class ResetCmd extends BaseCommand {
     /**
      * 重置
      * @param username 用户名
-     * @param checkPermission 是否检查权限
      */
-    public void reset(String username, boolean checkPermission) {
+    public void reset(String username) {
 
-        if (checkPermission) {
-            checkPermission();
-        }
         try {
 
             ArgusUser argusUser = ArgusCache.getUserByUsername(username);
@@ -104,21 +100,6 @@ public class ResetCmd extends BaseCommand {
      */
     public void resetAll() {
 
-        ArgusCache.getAllOnlineUser().forEach(
-                user -> reset(user, true)
-        );
-    }
-
-    /**
-     * 校验权限
-     */
-    private void checkPermission() {
-        // 校验是否是管理员或者是否是当前用户
-        ArgusUser currentUser = ArgusUserContext.getCurrentUser();
-        String currentUsername = currentUser.getAccount().getUsername();
-        ArgusProperties argusProperties = ContextUtil.getBean(ArgusProperties.class);
-        if (!currentUsername.equals(this.username) && !currentUsername.equals(argusProperties.getUsername())) {
-            throw new RuntimeException("权限不足");
-        }
+        ArgusCache.getAllOnlineUser().forEach(this::reset);
     }
 }

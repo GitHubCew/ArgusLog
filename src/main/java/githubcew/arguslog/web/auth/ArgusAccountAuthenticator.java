@@ -7,13 +7,12 @@ import githubcew.arguslog.core.account.ArgusUser;
 import githubcew.arguslog.core.account.UserProvider;
 import githubcew.arguslog.core.cache.ArgusCache;
 import githubcew.arguslog.core.cmd.ExecuteResult;
+import githubcew.arguslog.core.permission.ArgusPermissionConfigure;
 import githubcew.arguslog.web.ArgusRequest;
 import githubcew.arguslog.web.ArgusResponse;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.stereotype.Component;
 
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * 用户认证器
@@ -42,6 +41,10 @@ public class ArgusAccountAuthenticator implements Authenticator {
         String password = request.getAccount().getPassword();
         account.setUsername(username);
         account.setPassword(password);
+
+        // 设置角色
+        Set<String> userRoles = new ArgusPermissionConfigure().getUserRoles(username);
+        account.setRoles(userRoles);
 
         if (argusProperties.isEnableAuth()) {
 

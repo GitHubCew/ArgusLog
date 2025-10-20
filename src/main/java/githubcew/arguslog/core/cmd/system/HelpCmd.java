@@ -3,10 +3,13 @@ package githubcew.arguslog.core.cmd.system;
 import githubcew.arguslog.common.util.ContextUtil;
 import githubcew.arguslog.core.ArgusManager;
 import githubcew.arguslog.core.cmd.BaseCommand;
+import githubcew.arguslog.core.permission.ArgusPermissionConfigure;
+import githubcew.arguslog.web.ArgusUserContext;
 import picocli.CommandLine;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * 帮助命令
@@ -38,6 +41,14 @@ public class HelpCmd extends BaseCommand {
 
         ArgusManager argusManager = ContextUtil.getBean(ArgusManager.class);
         Map<String, Class<? extends BaseCommand>> commands = argusManager.getCommandManager().getCommands();
+
+        // 查询用户拥有的命令权限
+        ArgusPermissionConfigure argusPermissionConfigure = argusManager.getArgusPermissionConfigure();
+        String username = ArgusUserContext.getCurrentUsername();
+        Set<String> userCommands = argusPermissionConfigure.getUserCommands(username);
+
+        // 移除用户没有的命令
+        commands.keySet().removeIf(name -> !userCommands.contains(name));
 
         // 输出可用命令
         if (Objects.isNull(this.command) || this.command.isEmpty()) {

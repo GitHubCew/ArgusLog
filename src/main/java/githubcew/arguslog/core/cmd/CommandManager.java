@@ -1,6 +1,9 @@
 package githubcew.arguslog.core.cmd;
 
+import githubcew.arguslog.common.util.ContextUtil;
+import githubcew.arguslog.core.permission.ArgusPermissionConfigure;
 import githubcew.arguslog.web.ArgusRequest;
+import githubcew.arguslog.web.ArgusUserContext;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -13,7 +16,18 @@ public class CommandManager {
 
     private final Map<String, Class<? extends BaseCommand>> commands = Collections.synchronizedMap(new LinkedHashMap<>(10));
 
-    public void register (String command, Class<? extends BaseCommand> handler) {
+    public void register (Class<? extends BaseCommand> handler) {
+        String command = null;
+        try {
+            BaseCommand baseCommand = handler.newInstance();
+            command = baseCommand.getCmd();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        if (command == null) {
+            return;
+        }
         if (commands.containsKey(command)) {
             throw new RuntimeException("Command \"" + command + "\" already exists!");
         }
@@ -45,6 +59,12 @@ public class CommandManager {
                 return ExecuteResult.failed("Command not found!");
             }
             try {
+                // 校验是否有权限
+                ArgusPermissionConfigure argusPermissionConfigure = ContextUtil.getBean(ArgusPermissionConfigure.class);
+                boolean hasPermission = argusPermissionConfigure.hasPermission(ArgusUserContext.getCurrentUsername(), command.getCommand());
+                if (!hasPermission) {
+                    return ExecuteResult.failed("No permission!");
+                }
                 BaseCommand baseCommand = cmd.newInstance();
                 return ArgusCommandProcessor.execute(baseCommand, request.getRequestCommand().getArgs());
             } catch (Exception e) {

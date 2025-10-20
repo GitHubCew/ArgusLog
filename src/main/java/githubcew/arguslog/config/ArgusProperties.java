@@ -1,13 +1,11 @@
 package githubcew.arguslog.config;
 
 import githubcew.arguslog.core.anno.ArgusProperty;
+import githubcew.arguslog.core.permission.ArgusPermissionConfigure;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Argus配置
@@ -95,5 +93,6 @@ public class ArgusProperties {
     private Set<String> jdkProxyWrapExcludePackages;
 
     @ArgusProperty(description = "命令执行超时时间(秒)", modifyInRunning = true)
-    private int cmdExecuteTimeout = 10;
+    private int cmdExecuteTimeout = 15;
+
 }

@@ -1,7 +1,5 @@
 package githubcew.arguslog.core.cmd.system;
 
-import githubcew.arguslog.common.util.ContextUtil;
-import githubcew.arguslog.config.ArgusProperties;
 import githubcew.arguslog.core.account.ArgusUser;
 import githubcew.arguslog.core.cache.ArgusCache;
 import githubcew.arguslog.core.cmd.BaseCommand;
@@ -48,7 +46,6 @@ public class RmUserCmd extends BaseCommand {
             argusUser = ArgusUserContext.getCurrentUser();
         }
         else {
-            checkPermission();
             argusUser = ArgusCache.getUserByUsername(username);
         }
         if (Objects.isNull(argusUser)) {
@@ -63,18 +60,5 @@ public class RmUserCmd extends BaseCommand {
 
         // 清除用户缓存
         ArgusCache.clearUserToken(userToken);
-    }
-
-    /**
-     * 校验权限
-     */
-    private void checkPermission() {
-        // 校验是否是管理员或者是否是当前用户
-        ArgusUser currentUser = ArgusUserContext.getCurrentUser();
-        String currentUsername = currentUser.getAccount().getUsername();
-        ArgusProperties argusProperties = ContextUtil.getBean(ArgusProperties.class);
-        if (!currentUsername.equals(this.username) && !currentUsername.equals(argusProperties.getUsername())) {
-            throw new RuntimeException("权限不足");
-        }
     }
 }

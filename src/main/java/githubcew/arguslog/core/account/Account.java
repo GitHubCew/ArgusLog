@@ -1,6 +1,10 @@
 package githubcew.arguslog.core.account;
 
+import githubcew.arguslog.core.permission.Role;
 import lombok.Data;
+
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author chenenwei
@@ -29,6 +33,11 @@ public class Account {
     private Object extend;
 
     /**
+     * 角色列表
+     */
+    private Set<String> roles;
+
+    /**
      * 构造方法
      */
     public Account() {}
@@ -49,12 +58,15 @@ public class Account {
      * @param username 用户名
      * @param password 密码
      * @param salt 盐值
+     * @param roles 角色列表
      * @param extend 其他扩展信息
+     *
      */
-    public Account(String username, String password, String salt, Object extend) {
+    public Account(String username, String password, String salt, Set<String> roles, Object extend) {
         this.username = username;
         this.password = password;
         this.salt = salt;
         this.extend = extend;
+        this.roles = roles;
     }
 }
