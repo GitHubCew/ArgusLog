@@ -58,9 +58,11 @@ public class RmOtherCmd extends BaseCommand {
         }
         String userToken = argusUser.getToken().getToken();
 
-        // 关闭session
-        if (argusUser.getSession().isOpen()) {
-            argusUser.getSession().close();
+        if (!Objects.isNull(argusUser.getSession())) {
+            // 关闭session
+            if (argusUser.getSession().isOpen()) {
+                argusUser.getSession().close();
+            }
         }
 
         // 清除用户缓存
