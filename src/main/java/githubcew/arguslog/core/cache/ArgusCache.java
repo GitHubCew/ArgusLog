@@ -963,9 +963,16 @@ public class ArgusCache {
      * @param username 用户名
      */
     public static void removeTempUser(String username) {
-        if (Objects.isNull(username)) {
+        if (Objects.isNull(username) || username.trim().isEmpty()) {
             return;
         }
-        tempUsers.removeIf(tempUser -> tempUser.getUsername().equals(username));
+
+        String trimmedUsername = username.trim();
+        tempUsers.removeIf(tempUser -> {
+            if (tempUser.getUsername() == null) {
+                return false;
+            }
+            return tempUser.getUsername().trim().equals(trimmedUsername);
+        });
     }
 }

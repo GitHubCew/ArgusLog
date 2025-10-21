@@ -7,6 +7,7 @@ import githubcew.arguslog.core.cmd.BaseCommand;
 import githubcew.arguslog.monitor.outer.OutputWrapper;
 import picocli.CommandLine;
 
+import java.io.IOException;
 import java.security.InvalidParameterException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -125,12 +126,27 @@ public class UserCmd extends BaseCommand {
      */
     private void deleteUser() {
         if (Objects.isNull(username)) {
-            return;
+            throw new InvalidParameterException("请指定用户名");
         }
         // 移除临时用户
         ArgusCache.removeTempUser(username);
-        // 移除用户数据
+
+        // 移除用户监听数据
         ArgusCache.clearUserToken(username);
+
+        // 移除用户登录信息
+        ArgusUser argusUser = ArgusCache.getUserByUsername(username);
+        if (!Objects.isNull(argusUser)) {
+            ArgusCache.removeUserToken(argusUser.getToken().getToken());
+            if(argusUser.getSession().isOpen()) {
+                try {
+                    argusUser.getSession().close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
     }
 
     /**
