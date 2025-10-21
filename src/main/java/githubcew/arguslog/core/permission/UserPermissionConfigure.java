@@ -12,21 +12,31 @@ public interface UserPermissionConfigure {
 
     /**
      * 自定义角色列表
-     * @return 角色
+     * @return 角色列表
      */
-    List<Role> roles ();
+    default List<Role> roles () {return  null;};
 
     /**
      * 自定义用户和角色绑定关系
      *      key: 角色名称
-     *      values: 命令名称列表
-     * @return 用户角色绑定关系
+     *      value: 命令名称列表
+     * @return 用户角色绑定关系map
      */
-    Map<String, Set<String>> userRoles();
+    default Map<String, Set<String>> userRoles() {return null;};
 
     /**
      * 添加角色命令
-     * @param roleCmdList 角色命令列表
+     *   key: 角色名称
+     *   value: 命令名称列表
+     * @param roleCmdMap 角色命令map
      */
-    void addRoleCommand(Map<String, Set<String>> roleCmdList);
+    default void addRoleCommand(Map<String, Set<String>> roleCmdMap){};
+
+    /**
+     * 添加用户角色
+     *   key: 用户名
+     *   value: 角色名称列表
+     * @param userRoleMap 用户角色map
+     */
+    default void addUserRoles (Map<String, Set<String>> userRoleMap) {}
 }

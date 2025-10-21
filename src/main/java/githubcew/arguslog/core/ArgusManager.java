@@ -23,7 +23,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
-import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.annotation.AnnotationAwareOrderComparator;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
@@ -52,8 +51,7 @@ import java.util.Set;
  *  - 初始化监控与权限系统
  *  - 打印启动信息
  *
- * @author
- *   chenenwei
+ * @author chenenwei
  */
 @Component
 public class ArgusManager implements ApplicationListener<ApplicationReadyEvent> {
@@ -123,6 +121,12 @@ public class ArgusManager implements ApplicationListener<ApplicationReadyEvent> 
     public ArgusPermissionConfigure getArgusPermissionConfigure () {
         return argusPermissionConfigure;
     }
+
+    public ArgusProperties getArgusProperties() {
+        return argusProperties;
+    }
+
+    public boolean isInitialized() {return initialized;}
 
     /**
      * 应用启动完成后初始化

@@ -2,6 +2,7 @@ package githubcew.arguslog.web.auth;
 
 import githubcew.arguslog.common.util.ContextUtil;
 import githubcew.arguslog.config.ArgusProperties;
+import githubcew.arguslog.core.ArgusManager;
 import githubcew.arguslog.core.account.Account;
 import githubcew.arguslog.core.account.ArgusUser;
 import githubcew.arguslog.core.account.UserProvider;
@@ -32,9 +33,13 @@ public class ArgusAccountAuthenticator implements Authenticator {
     @Override
     public boolean authenticate(ArgusRequest request, ArgusResponse response) {
 
-        ArgusProperties argusProperties = ContextUtil.getBean(ArgusProperties.class);
-        UserProvider userProvider = ContextUtil.getBean(UserProvider.class);
-        TokenProvider tokenProvider = ContextUtil.getBean(TokenProvider.class);
+        ArgusManager argusManager = ContextUtil.getBean(ArgusManager.class);
+        if (!argusManager.isInitialized()) {
+            return false;
+        }
+        ArgusProperties argusProperties = argusManager.getArgusProperties();
+        UserProvider userProvider = argusManager.getUserProvider();
+        TokenProvider tokenProvider = argusManager.getTokenProvider();
 
         Account account = new Account();
         String username = request.getAccount().getUsername();
@@ -43,7 +48,7 @@ public class ArgusAccountAuthenticator implements Authenticator {
         account.setPassword(password);
 
         // 设置角色
-        Set<String> userRoles = new ArgusPermissionConfigure().getUserRoles(username);
+        Set<String> userRoles = argusManager.getArgusPermissionConfigure().getUserRoles(username);
         account.setRoles(userRoles);
 
         if (argusProperties.isEnableAuth()) {
@@ -55,10 +60,16 @@ public class ArgusAccountAuthenticator implements Authenticator {
                 }
             }
             else {
-                // 其他用户
+
+                // 自定义用户
                 boolean customize = customize(username, password, userProvider.provide(username));
+
                 if (!customize) {
-                    return false;
+                    // 临时用户
+                    Account tempUser = ArgusCache.getTempUser(username);
+                    if (Objects.isNull(tempUser) || !tempUser.getPassword().equals(password)) {
+                        return false;
+                    }
                 }
             }
         }

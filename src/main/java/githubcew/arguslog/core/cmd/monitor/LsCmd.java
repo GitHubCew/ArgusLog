@@ -6,8 +6,11 @@ import githubcew.arguslog.monitor.outer.OutputWrapper;
 import githubcew.arguslog.web.ArgusUserContext;
 import picocli.CommandLine;
 
+import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 接口列表命令
@@ -44,7 +47,6 @@ public class LsCmd extends BaseCommand {
     @Override
     protected Integer execute() throws Exception {
         // 监听的接口
-        String output;
         if (Objects.isNull(path)) {
             path = "*";
         } else {
@@ -53,13 +55,12 @@ public class LsCmd extends BaseCommand {
             }
         }
         if (monitor) {
-            output = output(ArgusUserContext.getCurrentUserToken(), path);
+            output(ArgusUserContext.getCurrentUserToken(), path);
         }
         // 接口
         else {
-            output = output(null, path);
+            output(null, path);
         }
-        picocliOutput.out(String.join(OutputWrapper.LINE_SEPARATOR, output));
         return OK_CODE;
     }
 
@@ -68,25 +69,38 @@ public class LsCmd extends BaseCommand {
      * @param user 用户
      * @param path 路径
      */
-    private String output (String user, String path) {
+    private void output (String user, String path) {
 
-        List<String> dataList;
+        Map<String, Method> dataMap;
         if (Objects.isNull(user)) {
-            dataList = ArgusCache.getUrisWithPattern(path);
+            dataMap = ArgusCache.getUrisWithPattern(path);
         } else {
-            dataList = ArgusCache.getUserMonitorUris(user, path);
+            dataMap = ArgusCache.getUserMonitorUris(user, path);
         }
-        long total = dataList.size();
-        if (dataList.size() > 30) {
-            dataList = dataList.subList(0, 30);
+        long total = dataMap.size();
+        if (total == 0) {
+            picocliOutput.out("");
+        }
+        if (dataMap.size() > 20) {
+            dataMap = dataMap.entrySet()
+                    .stream()
+                    .limit(20)
+                    .collect(Collectors.toMap(
+                            Map.Entry::getKey,
+                            Map.Entry::getValue
+                    ));
         }
 
-        OutputWrapper outputWrapper = OutputWrapper.wrapperCopyV2(dataList, OutputWrapper.LINE_SEPARATOR);
+        dataMap.forEach((uri, method) -> picocliOutput.out(OutputWrapper.wrapperCopy(uri) + "("
+                + method.getDeclaringClass().getSimpleName()
+                + "."
+                + method.getName()
+                + ")"
+        ));
         if (total > 0) {
             // 添加统计输出
-            outputWrapper.newLine().append(" (" + total + ")").newLine();
+            picocliOutput.out(" (" + total + ") \n");
         }
-        return outputWrapper.build();
     }
 
 }

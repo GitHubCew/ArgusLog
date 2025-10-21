@@ -45,12 +45,8 @@ public class ShowCmd extends BaseCommand {
         if (variable.equals("config")) {
             picocliOutput.out(String.join("\n", getConfig()));
         }
-        else if (variable.equals("user")) {
-
-            picocliOutput.out(getUsers());
-        }
         else {
-            throw new RuntimeException("Variable not found! available：\n" + Arrays.asList("config", "user"));
+            throw new RuntimeException("不支持的操作类型： " + variable);
         }
         return OK_CODE;
     }
@@ -393,30 +389,4 @@ public class ShowCmd extends BaseCommand {
                 .collect(Collectors.joining());
     }
 
-    /**
-     * 获取用户
-     * @return 用户列表
-     */
-    private String getUsers () {
-        StringBuilder userInfo = new StringBuilder();
-
-        userInfo.append(repeat(" ", 2))
-                .append("用户")
-                .append(repeat(" ", 10))
-                .append("过期时间")
-                .append("\n")
-                .append(repeat("─", 36))
-                .append("\n");
-
-        Set<String> allOnlineUser = ArgusCache.getAllOnlineUser();
-        for (String username : allOnlineUser) {
-            ArgusUser argusUser = ArgusCache.getUserByUsername(username);
-            String expireTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(argusUser.getToken().getExpireTime()));
-            userInfo.append(OutputWrapper.wrapperCopy(argusUser.getAccount().getUsername()))
-                    .append("  ")
-                    .append(expireTime)
-                    .append("\n");
-        }
-        return userInfo.toString();
-    }
 }

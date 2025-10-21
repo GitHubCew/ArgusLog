@@ -131,10 +131,11 @@ public class ArgusFilter implements Filter {
         String username = request.getHeader("username");
         String password = request.getHeader("password");
 
+        ArgusManager argusManager = ContextUtil.getBean(ArgusManager.class);
+
         KeyPair keyPair = ContextUtil.getBean("argusKeyPair", KeyPair.class);
         String decryptPassword = RSAUtil.decryptWithPrivateKey(password, keyPair.getPrivate());
 
-        ArgusManager argusManager = ContextUtil.getBean(ArgusManager.class);
         ArgusAccountAuthenticator argusAccountAuthenticator = argusManager.getAccountAuthenticator();
         ArgusRequest argusRequest = new ArgusRequest();
         argusRequest.setAccount(new Account(username, decryptPassword));

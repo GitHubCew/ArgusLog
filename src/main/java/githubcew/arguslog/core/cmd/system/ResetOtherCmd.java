@@ -6,7 +6,6 @@ import githubcew.arguslog.core.cmd.BaseCommand;
 import githubcew.arguslog.monitor.ArgusMethod;
 import githubcew.arguslog.monitor.MonitorInfo;
 import githubcew.arguslog.monitor.trace.TraceEnhanceManager;
-import githubcew.arguslog.web.ArgusUserContext;
 import picocli.CommandLine;
 
 import java.util.ArrayList;
@@ -19,17 +18,38 @@ import java.util.Optional;
  * @author chenenwei
  */
 @CommandLine.Command(
-        name = "reset",
-        description = "重置命令",
+        name = "rsother",
+        description = "重置其他用户命令",
         mixinStandardHelpOptions = true,
         version = "1.0"
 )
-public class ResetCmd extends BaseCommand {
+public class ResetOtherCmd extends BaseCommand {
+
+    @CommandLine.Parameters(
+            index = "0",
+            description = "用户名",
+            arity = "1",
+            paramLabel = "username"
+    )
+    private String username;
+
+    @CommandLine.Option(
+            names = {"-a", "--all"},
+            description = "重置所有用户命令",
+            arity = "0",
+            fallbackValue = "true"
+    )
+    private boolean all;
 
     @Override
     protected Integer execute() throws Exception {
 
-        reset(ArgusUserContext.getCurrentUsername());
+        if (all) {
+            resetAll();
+        }
+        else {
+            reset(username);
+        }
         return OK_CODE;
     }
 
@@ -65,4 +85,13 @@ public class ResetCmd extends BaseCommand {
             throw new RuntimeException(e);
         }
     }
+
+    /**
+     * 重置全部用户
+     */
+    public void resetAll() {
+
+        ArgusCache.getAllOnlineUser().forEach(this::reset);
+    }
+
 }

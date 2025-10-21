@@ -1,6 +1,7 @@
 package githubcew.arguslog.core.cache;
 
 import githubcew.arguslog.common.util.PatternUtil;
+import githubcew.arguslog.core.account.Account;
 import githubcew.arguslog.core.account.ArgusUser;
 import githubcew.arguslog.monitor.ArgusMethod;
 import githubcew.arguslog.monitor.MonitorInfo;
@@ -77,6 +78,10 @@ public class ArgusCache {
      */
     private static final Map<String, String> userMqMonitorMethods = new ConcurrentHashMap<>(16);
 
+    /**
+     * 临时用户列表
+     */
+    private static final Set<Account> tempUsers = Collections.synchronizedSet(new HashSet<>());
 
     /**
      * 私有构造函数，防止实例化
@@ -135,10 +140,14 @@ public class ArgusCache {
      * @param pattern 正则表达式模式
      * @return 接口URI列表
      */
-    public static List<String> getUrisWithPattern(String pattern) {
-        return uriMethodCache.keySet().stream()
-                .filter(u -> PatternUtil.match(u, pattern))
-                .collect(Collectors.toList());
+    public static Map<String, Method> getUrisWithPattern(String pattern) {
+        Map<String, Method> uriMap = new TreeMap<>();
+        uriMethodCache.forEach((key, value) -> {
+            if (PatternUtil.matchPattern(key, pattern)) {
+                uriMap.put(key, value.getMethod());
+            }
+        });
+        return uriMap;
     }
 
     /**
@@ -442,24 +451,23 @@ public class ArgusCache {
      * @param pattern   正则表达式模式
      * @return 接口URI列表
      */
-    public static List<String> getUserMonitorUris(String argusUser, String pattern) {
+    public static Map<String, Method> getUserMonitorUris(String argusUser, String pattern) {
         if (!containsUser(argusUser)) {
-            return new ArrayList<>();
+            return new TreeMap<>();
         }
 
         List<MonitorInfo> monitorInfos = userMonitorMethods.get(argusUser);
-        if (Objects.isNull(pattern)) {
-            return monitorInfos.stream()
-                    .map(monitor -> monitor.getArgusMethod().getUri())
-                    .sorted()
-                    .collect(Collectors.toList());
-        }
 
         return monitorInfos.stream()
-                .filter(monitor -> PatternUtil.match(monitor.getArgusMethod().getUri(), pattern))
-                .map(monitor -> monitor.getArgusMethod().getUri())
-                .sorted()
-                .collect(Collectors.toList());
+                .filter(monitor -> Objects.isNull(pattern) ||
+                        PatternUtil.match(monitor.getArgusMethod().getUri(), pattern))
+                .sorted(Comparator.comparing(monitor -> monitor.getArgusMethod().getUri())) // 按URI排序
+                .collect(Collectors.toMap(
+                        monitor -> monitor.getArgusMethod().getUri(),
+                        monitor -> monitor.getArgusMethod().getMethod(),
+                        (existing, replacement) -> existing,
+                        TreeMap::new
+                ));
     }
 
     // ==================== userTokens 相关操作 ====================
@@ -915,5 +923,49 @@ public class ArgusCache {
      */
     public static void removeMqMonitor(String token) {
         userMqMonitorMethods.remove(token);
+    }
+
+    // ==================== 临时用户操作 ====================
+
+    /**
+     * 增加临时用户
+     * @param account 账号信息
+     */
+    public static void addTempUser(Account account) {
+        if (tempUsers.stream().anyMatch(tempUser -> tempUser.getUsername().equals(account.getUsername()))) {
+            return;
+        }
+        tempUsers.add(account);
+    }
+
+    /**
+     * 获取临时用户
+     * @param username 用户名
+     * @return 临时用户信息，如果用户不存在返回null
+     */
+    public static Account getTempUser(String username) {
+        if (Objects.isNull(username)) {
+            return null;
+        }
+        return tempUsers.stream().filter(tempUser -> tempUser.getUsername().equals(username)).findFirst().orElse(null);
+    }
+
+    /**
+     * 获取所有临时用户
+     * @return 临时用户列表
+     */
+    public static List<Account> getTempUsers() {
+        return new ArrayList<>(tempUsers);
+    }
+
+    /**
+     * 移除临时用户
+     * @param username 用户名
+     */
+    public static void removeTempUser(String username) {
+        if (Objects.isNull(username)) {
+            return;
+        }
+        tempUsers.removeIf(tempUser -> tempUser.getUsername().equals(username));
     }
 }

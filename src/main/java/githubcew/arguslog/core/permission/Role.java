@@ -1,6 +1,5 @@
 package githubcew.arguslog.core.permission;
 
-import githubcew.arguslog.core.cmd.BaseCommand;
 import lombok.Data;
 
 import java.util.Set;
@@ -31,4 +30,26 @@ public class Role {
         this.cmdList = cmdList;
     }
 
+
+    public static enum Type{
+
+        ADMIN("admin"),
+
+        USER("user"),
+
+        CODER("coder"),
+
+        TESTER("tester")
+        ;
+
+        private final String name;
+
+        Type(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+    }
 }

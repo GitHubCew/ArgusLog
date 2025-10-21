@@ -1,6 +1,8 @@
 package githubcew.arguslog.core.cmd;
 
 import githubcew.arguslog.common.util.ContextUtil;
+import githubcew.arguslog.core.account.ArgusUser;
+import githubcew.arguslog.core.cache.ArgusCache;
 import githubcew.arguslog.core.permission.ArgusPermissionConfigure;
 import githubcew.arguslog.web.ArgusRequest;
 import githubcew.arguslog.web.ArgusUserContext;
@@ -60,8 +62,12 @@ public class CommandManager {
             }
             try {
                 // 校验是否有权限
+                ArgusUser argusUser = ArgusCache.getUserByUsername(ArgusUserContext.getCurrentUsername());
+                Set<String> roles = argusUser.getAccount().getRoles();
+
                 ArgusPermissionConfigure argusPermissionConfigure = ContextUtil.getBean(ArgusPermissionConfigure.class);
-                boolean hasPermission = argusPermissionConfigure.hasPermission(ArgusUserContext.getCurrentUsername(), command.getCommand());
+                Set<String> roleCommands = argusPermissionConfigure.getRoleCommands(roles);
+                boolean hasPermission = roleCommands != null && roleCommands.contains(command.getCommand());
                 if (!hasPermission) {
                     return ExecuteResult.failed("No permission!");
                 }
