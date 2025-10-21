@@ -66,7 +66,7 @@ public class ArgusPermissionConfigure {
         // 添加系统用户和角色绑定关系
         HashSet<String> adminRoles = new HashSet<>();
         adminRoles.add(Role.Type.ADMIN.getName());
-        USER_ROLES.put(argusProperties.getUsername(), adminRoles);
+        USER_ROLES.put(argusProperties.getUsername().toLowerCase(), adminRoles);
 
         // 添加用户自定义角色
         try {
@@ -90,9 +90,28 @@ public class ArgusPermissionConfigure {
             Map<String, Set<String>> userRoles = userPermissionConfigure.userRoles();
             if (userRoles != null) {
                 userRoles.forEach((username, roles) -> {
-                    USER_ROLES.computeIfAbsent(username, k -> new HashSet<>()).addAll(roles);
+                    username = username.toLowerCase();
+                    if (USER_ROLES.containsKey(username)) {
+                        USER_ROLES.get(username).addAll(roles);
+                    }
+                    else {
+                        USER_ROLES.put(username, roles);
+                    }
                 });
             }
+
+            // 用户添加角色
+            Map<String, Set<String>> map = new HashMap<>();
+            userPermissionConfigure.addUserRoles(map);
+            map.forEach((username, roles) -> {
+                username = username.toLowerCase();
+                if (USER_ROLES.containsKey(username)) {
+                    USER_ROLES.get(username).addAll(roles);
+                }
+                else {
+                    USER_ROLES.put(username, roles);
+                }
+            });
 
             // 添加用户角色命令
             Map<String, Set<String>> roleCommand = new HashMap<>();
@@ -129,6 +148,7 @@ public class ArgusPermissionConfigure {
      * @return 用户角色
      */
     public Set<String> getUserRoles(String username) {
+        username = username.toLowerCase();
         if (!USER_ROLES.containsKey(username)) {
 
             return defaultRole();
@@ -142,6 +162,7 @@ public class ArgusPermissionConfigure {
      * @return 用户可执行命令
      */
     public Set<String> getUserCommands (String username) {
+        username = username.toLowerCase();
         Set<String> userRoles = getUserRoles(username);
         return ROLES.stream()
                 .filter(role -> userRoles.contains(role.getName()))
@@ -175,6 +196,7 @@ public class ArgusPermissionConfigure {
      * @param roleName 角色名称
      */
     public void addUserRole(String username, String roleName) {
+        username = username.toLowerCase();
         if (!USER_ROLES.containsKey(username)) {
             USER_ROLES.put(username, new HashSet<>());
         }
@@ -190,6 +212,7 @@ public class ArgusPermissionConfigure {
      * @param roleName 角色名称
      */
     public void removeUserRole(String username, String roleName) {
+        username = username.toLowerCase();
         if (!USER_ROLES.containsKey(username)) {
             return;
         }
@@ -243,6 +266,7 @@ public class ArgusPermissionConfigure {
      * @return 是否有权限
      */
     public boolean hasPermission (String username, String cmd) {
+
         return getUserCommands(username).contains(cmd);
     }
 
@@ -252,6 +276,7 @@ public class ArgusPermissionConfigure {
      * @param role 角色
      */
     public void addUserRole (String username, Role role) {
+        username = username.toLowerCase();
         if (!USER_ROLES.containsKey(username)) {
             USER_ROLES.put(username, new HashSet<>());
         }
@@ -264,6 +289,7 @@ public class ArgusPermissionConfigure {
      * @param role 角色
      */
     public void removeUserRole (String username, Role role) {
+        username = username.toLowerCase();
         if (!USER_ROLES.containsKey(username)) {
             return;
         }
