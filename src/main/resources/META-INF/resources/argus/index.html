@@ -954,8 +954,11 @@
                 statusIndicator.classList.remove('connected', 'disconnected');
                 statusIndicator.classList.add('connecting');
                 statusText.textContent = '连接中...';
-                const wsUrl = `${getWebSocketUrl()}?argus-token=${encodeURIComponent(authToken)}`;
-                websocket = new WebSocket(wsUrl);
+                // const wsUrl = `${getWebSocketUrl()}?argus-token=${encodeURIComponent(authToken)}`;
+                // websocket = new WebSocket(wsUrl);
+
+                const wsUrl = `${getWebSocketUrl()}`;
+                websocket = new WebSocket(wsUrl, [`argus-token-${authToken}`]);
 
                 websocket.onopen = () => {
                     isConnected = true;

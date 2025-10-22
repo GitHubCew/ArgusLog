@@ -4,10 +4,12 @@ import githubcew.arguslog.core.cache.ArgusCache;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.ServletServerHttpRequest;
+import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.util.Map;
 import java.util.Objects;
 
@@ -21,10 +23,30 @@ public class ArgusHandshakeInterceptor implements HandshakeInterceptor {
     public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler, Map<String, Object> attributes) throws Exception {
         if (request instanceof ServletServerHttpRequest) {
             ServletServerHttpRequest servletRequest = (ServletServerHttpRequest) request;
+            ServletServerHttpResponse servletResponse = (ServletServerHttpResponse) response;
             HttpServletRequest httpServletRequest = servletRequest.getServletRequest();
+            HttpServletResponse httpResponse = servletResponse.getServletResponse();
+            String token = null;
 
-            // 从URL参数获取token（
-            String token = httpServletRequest.getParameter("argus-token");
+            // 从子协议中提取 token
+            String protocolHeader = httpServletRequest.getHeader("Sec-WebSocket-Protocol");
+            if (protocolHeader != null) {
+                // 处理多个子协议的情况
+                String[] protocols = protocolHeader.split(",");
+                for (String protocol : protocols) {
+                    protocol = protocol.trim();
+                    if (protocol.startsWith("argus-token-")) {
+                        token = protocol.substring("argus-token-".length());
+                        httpResponse.setHeader("Sec-WebSocket-Protocol", "argus-token-" + token);
+                        break;
+                    }
+                }
+            }
+
+            // 从URL参数获取token
+            if (token == null) {
+                token = httpServletRequest.getParameter("argus-token");
+            }
 
             // 如果URL参数没有，尝试从header获取（兼容其他客户端）
             if (token == null || token.isEmpty()) {

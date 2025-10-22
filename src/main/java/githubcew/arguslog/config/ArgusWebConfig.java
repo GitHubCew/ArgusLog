@@ -14,6 +14,7 @@ import org.springframework.core.Ordered;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
+import org.springframework.web.socket.server.standard.ServletServerContainerFactoryBean;
 
 import javax.servlet.DispatcherType;
 
@@ -139,5 +140,17 @@ public class ArgusWebConfig implements WebSocketConfigurer {
         registry.addHandler(argusSocketHandler, "/argus-ws")
                 .addInterceptors(new ArgusHandshakeInterceptor())
                 .setAllowedOrigins("*");
+    }
+
+    /**
+     * 采用websocket子协议传token
+     * @return ServletServerContainerFactoryBean 容器
+     */
+    @Bean
+    public ServletServerContainerFactoryBean createWebSocketContainer() {
+        ServletServerContainerFactoryBean container = new ServletServerContainerFactoryBean();
+        container.setMaxTextMessageBufferSize(8192);
+        container.setMaxBinaryMessageBufferSize(8192);
+        return container;
     }
 }
