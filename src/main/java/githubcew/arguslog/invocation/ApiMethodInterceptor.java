@@ -53,6 +53,16 @@ public class ApiMethodInterceptor extends SafeMethodInterceptor {
     @Override
     public void afterThrowing(MethodInvocation invocation, Throwable e) {
         monitorOutput.setException((Exception) e);
+        long end = System.currentTimeMillis();
+        // 计算耗时
+        monitorOutput.setTime(end - start);
+        // 使用线程池处理输出
+        ArgusManager argusManager = ContextUtil.getBean(ArgusManager.class);
+        argusManager.getMonitorSender().submit(() -> {
+            // 输出content
+            Outer outer = ContextUtil.getBean(Outer.class);
+            outer.out(invocation.getMethod(), monitorOutput);
+        });
     }
 }
 

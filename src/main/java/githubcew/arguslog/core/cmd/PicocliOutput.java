@@ -3,7 +3,8 @@ package githubcew.arguslog.core.cmd;
 import java.io.PrintWriter;
 
 /**
- * @author Envi
+ * 命令输出
+ * @author chenenwei
  */
 public class PicocliOutput {
 

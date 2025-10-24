@@ -57,9 +57,6 @@ public class MqListenerBeanPostProcessor implements BeanPostProcessor {
      */
     private void scanAndRegisterMqListeners(Class<?> clazz) {
         Method[] methods = ReflectionUtils.getAllDeclaredMethods(clazz);
-        if (methods == null) {
-            return;
-        }
 
         for (Method method : methods) {
             for (Annotation annotation : method.getAnnotations()) {

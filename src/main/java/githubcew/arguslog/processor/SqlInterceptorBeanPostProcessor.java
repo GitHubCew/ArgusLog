@@ -321,7 +321,9 @@ public class SqlInterceptorBeanPostProcessor implements BeanPostProcessor, Prior
                     }
 
                     // 过滤类
-                    if (!Objects.isNull(userSqlMonitor.getClassName()) && !userSqlMonitor.getClassName().equals(daoInfo.getSimpleClassName())) {
+                    if (!Objects.isNull(userSqlMonitor.getClassName())
+                            && (!userSqlMonitor.getClassName().equals(daoInfo.getSimpleClassName())
+                            || !daoInfo.getClassName().contains(userSqlMonitor.getClassName()))) {
                         continue;
                     }
 

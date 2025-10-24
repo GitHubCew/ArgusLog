@@ -1,14 +1,17 @@
 # ArgusLog 介绍
 
-   ArgusLog 是一款基于 SpringBoot 与 WebSocket 技术构建的轻量级接口监测与诊断工具，专为 Web 端命令行环境设计。其主要特点包括：\
-   1.全方位接口监测：支持对单接口或批量接口进行监测，全面覆盖请求参数、返回结果、响应耗时、异常信息及调用链追踪等关键维度。\
-   2.深度运行时诊断：集成多项高级诊断功能，包括：\
-   (1).Spring 容器 Bean 检索：支持动态查询、验证容器中 Bean 的定义、依赖关系及属性配置，快速定位依赖注入或配置加载异常\
-   (2)Jad 字节码反编译：可实时查看部署环境中任意类的反编译源码，辅助分析第三方库行为、动态代理逻辑或线上源码不一致问题。\
-   (3)受限热部署：支持在不重启服务的情况下动态更新特定方法逻辑或配置类，提升开发调试与线上应急处理效率。\
-   (4)高可扩展性与集成能力：支持用户自定义命令以适配不同项目需求，并能与企业现有用户体系无缝对接。\
-   3.安全与合规保障：通过自定义 Token 与有效期管理机制，确保操作安全性与审计合规性。
-
+ArgusLog 是一款基于 SpringBoot 与 WebSocket 技术构建的轻量级接口监测与诊断工具，专为 Web 端命令行环境设计。其主要特点包括：\
+1.全方位接口监测：支持对单接口或批量接口进行监测，全面覆盖请求参数、返回结果、响应耗时、异常信息及调用链追踪等关键维度。\
+2.深度运行时诊断：集成多项高级诊断功能，包括：\
+(1).Spring 容器 Bean 检索：支持动态查询、验证容器中 Bean 的定义、依赖关系及属性配置，快速定位依赖注入或配置加载异常。\
+(2).Jad 字节码反编译：可实时查看部署环境中任意类的反编译源码，辅助分析第三方库行为、动态代理逻辑或线上源码不一致问题。\
+(3).Sql 语句拦截：支持对 SQL 语句进行拦截，可实时查看、分析 SQL 语句执行情况。\
+(4).Redis 缓存命令：支持Redis 命令执行。\
+(5).Mq 监听命令：支持对 MQ消息监听。\
+(6).方法检索与调用：支持对类和方法进行检索，并可以调用指定方法。\
+(7).受限热部署：支持在不重启服务的情况下动态更新特定方法逻辑或配置类，提升开发调试与线上应急处理效率。\
+3.高可扩展性与集成能力：支持用户自定义命令以适配不同项目需求，并能与企业现有用户体系无缝对接。\
+4.安全与合规保障：通过自定义 Token 与有效期管理机制，确保操作安全性与审计合规性。\
 # 功能介绍
 
 ## 1.接口监控
@@ -61,6 +64,8 @@ _**-p**_   [查看代理对象字节码] \
 ## 5. sql拦截与查看
 可使用 sql -p [包名] -c []
 
+## 6. mq监听
+可使用 mq monitor [队列] 监听拦截消费者，实现消息监听
 
 # 快速使用：
 
@@ -638,14 +643,14 @@ spring ioc命令
       [name]         对象bean名称或者全限定类
   -h, --help         Show this help message and exit.
   -V, --version      Print version information and exit.
-argus@Envi %
+argus@chenenwei %
 ```
 
 _**示例**_：
 
 1.查询com.example下的全部bean
 ```shell
-argus@Envi% ioc list *com.example*
+argus@chenenwei% ioc list *com.example*
 auth => com.example.demo.config.Auth
 demoApplication => com.example.demo.DemoApplication$$EnhancerBySpringCGLIB$$1
 demoConfig => com.example.demo.config.DemoConfig$$EnhancerBySpringCGLIB$$1
@@ -663,12 +668,12 @@ userMapper => com.example.demo.mapper.UserMapper
 userServiceImpl => com.example.demo.service.impl.UserServiceImpl$$EnhancerBySpringCGLIB$$1
 xssFilter => com.example.demo.config.XssFilter
  (16)
-argus@Envi %
+argus@chenenwei %
 ```
 
 2.查询全部实现过滤器Filter接口的bean
 ```shell
-argus@Envi% ioc get javax.servlet.Filter
+argus@chenenwei% ioc get javax.servlet.Filter
 xssFilter => com.example.demo.config.XssFilter (order: -2147483648)
 characterEncodingFilter => org.springframework.boot.web.servlet.filter.OrderedCharacterEncodingFilter (order: -2147483648)
 requestBodyCacheFilter => githubcew.arguslog.web.filter.RequestBodyCachingFilter (order: -2147483647)
@@ -677,14 +682,14 @@ argusFilter => githubcew.arguslog.web.filter.ArgusFilter (order: -2147483628)
 formContentFilter => org.springframework.boot.web.servlet.filter.OrderedFormContentFilter (order: -9900)
 requestContextFilter => org.springframework.boot.web.servlet.filter.OrderedRequestContextFilter (order: -105)
  (7)
-argus@Envi %
+argus@chenenwei %
 ```
 
 3.根据bean名称查询bean
 ```shell
-argus@Envi% ioc get xssFilter
+argus@chenenwei% ioc get xssFilter
 xssFilter => com.example.demo.config.XssFilter (order: -2147483648)
-argus@Envi %
+argus@chenenwei %
 ```
 
 ## jad
@@ -700,14 +705,14 @@ Usage: jad [-hpV] [-om] className [methodNames...]
       -om, --only-method   只显示方法声明
   -p, --proxy              显示代理对象字节码
   -V, --version            Print version information and exit.
-argus@Envi %
+argus@chenenwei %
 ```
 
 _**示例**_：
 
 1.反编译指定的类（目标对象）
 ```java
-argus@Envi% jad com.example.demo.config.Auth
+argus@chenenwei% jad com.example.demo.config.Auth
 package com.example.demo.config;
 
 import githubcew.arguslog.core.account.Account;
@@ -728,12 +733,12 @@ extends ArgusAccountAuthenticator {
     }
 }
 
-argus@Envi %
+argus@chenenwei %
 ```
 
 2.反编译指定的类（代理对象）
 ```java
-argus@Envi% jad com.example.demo.config.DemoConfig$$EnhancerBySpringCGLIB$$1 -p
+argus@chenenwei% jad com.example.demo.config.DemoConfig$$EnhancerBySpringCGLIB$$1 -p
 package com.example.demo.config;
 
 import com.example.demo.config.DemoConfig;
@@ -848,26 +853,26 @@ implements ConfigurationClassEnhancer.EnhancedConfiguration {
     static void CGLIB$STATICHOOK4() {
     }
 }
-argus@Envi %
+argus@chenenwei %
 ```
 
 3.反编译指定方法
 ```java
-argus@Envi% jad com.example.demo.config.Auth customize
+argus@chenenwei% jad com.example.demo.config.Auth customize
     
 protected boolean customize(String username, String password, Account account) {
     return username.equals(account.getUsername()) && password.equals(account.getPassword());
 }
 
-argus@Envi %
+argus@chenenwei %
 ```
 
 4.反编译类（只查看方法）
 ```java
-argus@Envi% jad com.example.demo.config.Auth -om
+argus@chenenwei% jad com.example.demo.config.Auth -om
 public Auth();
 protected boolean customize(String username, String password, Account account);
-argus@Envi %
+argus@chenenwei %
 ```
 # 自定义开发
 
@@ -934,8 +939,8 @@ public class MyCommand implements ArgusConfigurer {
      */
     @Override
     public void registerCommand(CommandManager commandManager) {
-        // 命令： key: 命令名称 value: 命令类
-        commandManager.register("hello", HelloCmd.class);
+        // 注册hello命令
+        commandManager.register(HelloCmd.class);
     }
 }
 ```

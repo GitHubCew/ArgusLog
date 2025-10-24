@@ -3,7 +3,7 @@ package githubcew.arguslog.invocation;
 import org.aopalliance.intercept.MethodInvocation;
 
 /**
- * @author Envi
+ * @author chenenwei
  */
 public abstract class SafeMethodInterceptor implements MethodLifecycleInterceptor {
 

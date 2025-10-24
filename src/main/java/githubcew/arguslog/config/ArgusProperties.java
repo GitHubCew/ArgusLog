@@ -93,6 +93,6 @@ public class ArgusProperties {
     private Set<String> jdkProxyWrapExcludePackages;
 
     @ArgusProperty(description = "命令执行超时时间(秒)", modifyInRunning = true)
-    private int cmdExecuteTimeout = 15;
+    private int cmdExecuteTimeout = 30;
 
 }
