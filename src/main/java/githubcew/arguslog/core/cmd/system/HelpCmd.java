@@ -62,14 +62,16 @@ public class HelpCmd extends BaseCommand {
             commands.forEach((name, cmdClass) -> {
                 try {
                     BaseCommand cmd = cmdClass.newInstance();
-                    CommandLine commandLine = new CommandLine(cmd);
-                    String description = String.join(" ", commandLine.getCommandSpec().usageMessage().description());
+                    if (cmd.isShow()) {
+                        CommandLine commandLine = new CommandLine(cmd);
+                        String description = String.join(" ", commandLine.getCommandSpec().usageMessage().description());
 
-                    int nameDisplayWidth = displayWidth(name);
-                    int padding = Math.max(1, targetWidth - nameDisplayWidth);
-                    String paddedName = name + repeat(" ", padding);
+                        int nameDisplayWidth = displayWidth(name);
+                        int padding = Math.max(1, targetWidth - nameDisplayWidth);
+                        String paddedName = name + repeat(" ", padding);
 
-                    picocliOutput.out("   " + paddedName + description);
+                        picocliOutput.out("   " + paddedName + description);
+                    }
                 }
                 catch (Exception e) {
                     e.printStackTrace();

@@ -30,10 +30,10 @@ public class ShowCmd extends BaseCommand {
 
     @CommandLine.Parameters(
             index = "0",
-            description = "变量名",
+            description = "变量名，配置信息：config",
             arity = "0..1",
             defaultValue = "config",
-            paramLabel = "variable"
+            paramLabel = "config"
     )
     private String variable;
 

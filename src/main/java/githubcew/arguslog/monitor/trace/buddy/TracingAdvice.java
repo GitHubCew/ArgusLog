@@ -19,7 +19,7 @@ public class TracingAdvice {
      */
     @Advice.OnMethodEnter
     public static void onEnter(@Advice.Origin Method method) {
-        ArgusRequestContext.startMethod(method);
+        ArgusRequestContext.startTraceMethod(method);
     }
 
     /**
@@ -27,6 +27,6 @@ public class TracingAdvice {
      */
     @Advice.OnMethodExit(onThrowable = Throwable.class)
     public static void onExit() {
-        ArgusRequestContext.endMethod();
+        ArgusRequestContext.endTraceMethod();
     }
 }

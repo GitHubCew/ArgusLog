@@ -9,24 +9,30 @@ import java.lang.reflect.Method;
  *
  * @author chenenwei
  */
-public class JdkProxyTracingAdvice extends JdkProxyInvocationHandler {
+public class JdkProxyMethodCallAdvice extends JdkProxyInvocationHandler {
 
     @Override
     public Object invoke (Object proxy, Method method, Object[] args) throws Throwable {
 
         try {
             // 方法开始
-            ArgusRequestContext.startTraceMethod(method);
+            ArgusRequestContext.startMethod(method, args);
         } catch (Exception e) {
             //
         }
+        Object result = null;
+        Throwable throwable = null;
 
         try {
-            return method.invoke(target, args);
-
-        } finally {
-            // 方法结束
-            ArgusRequestContext.endTraceMethod();
+            result =  method.invoke(target, args);
         }
+        catch (Throwable e) {
+            throwable = e;
+        }
+        finally {
+            // 方法结束
+            ArgusRequestContext.endMethod(method, result, throwable);
+        }
+        return result;
     }
 }

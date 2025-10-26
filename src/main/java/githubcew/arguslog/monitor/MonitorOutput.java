@@ -28,7 +28,7 @@ public class MonitorOutput {
     /**
      * 异常
      */
-    private Exception exception;
+    private Throwable throwable;
 
     /**
      * 调用链

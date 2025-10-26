@@ -99,7 +99,7 @@ public class ArgusSocketHandler extends TextWebSocketHandler {
      * @param session session
      * @param message 消息
      */
-    public void send(WebSocketSession session, String message) {
+    public synchronized void send(WebSocketSession session, String message) {
         try {
             if (session.isOpen()) {
                 session.sendMessage(new TextMessage(message));

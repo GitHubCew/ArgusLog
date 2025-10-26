@@ -28,7 +28,7 @@ public class RedisCmd extends BaseCommand {
             index = "0",
             description = "操作类型(支持 list,get,set,delete,expire)",
             arity = "1",
-            paramLabel="operatorType"
+            paramLabel="list|get|set|delete|expire"
     )
     private String operatorType;
 

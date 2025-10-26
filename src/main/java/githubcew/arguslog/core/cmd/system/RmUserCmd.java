@@ -27,6 +27,12 @@ import java.util.Set;
 )
 public class RmUserCmd extends BaseCommand {
 
+
+    @Override
+    public void isShowInHelp() {
+        this.isShow = false;
+    }
+
     @Override
     protected Integer execute() throws Exception {
         removeUser();

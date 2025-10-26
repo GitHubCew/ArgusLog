@@ -35,7 +35,7 @@ public class MqCmd extends BaseCommand {
                     "startAll(启动全部队列的消费者消费消息)",
 
             arity = "1",
-            paramLabel = "list | monitor | remove | stop | stopAll | start | startAll"
+            paramLabel = "list|monitor|remove|stop|stopAll|start|startAll"
     )
     private String operatorType;
 

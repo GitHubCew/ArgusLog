@@ -44,7 +44,9 @@ public class RmOtherCmd extends BaseCommand {
         if (all) {
             removeAll();
         }
-        removeUser();
+        else {
+            removeUser();
+        }
         return OK_CODE;
     }
 

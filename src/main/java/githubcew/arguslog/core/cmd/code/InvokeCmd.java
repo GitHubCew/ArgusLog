@@ -67,8 +67,8 @@ public class InvokeCmd extends BaseCommand {
     @CommandLine.Option(
             names = {"-o", "--output"},
             description = "输出格式: object | json",
-            defaultValue = "object",
-            paramLabel = "output"
+            defaultValue = "json",
+            paramLabel = "object|json"
     )
     private String output;
 
@@ -152,7 +152,7 @@ public class InvokeCmd extends BaseCommand {
 
         // 6. 输出结果
         if (result != null) {
-            if ("json".equalsIgnoreCase(output)) {
+            if (Objects.isNull(output) || "json".equalsIgnoreCase(output)) {
                 try {
                     picocliOutput.out(mapper.writeValueAsString(result));
                 } catch (Exception e) {

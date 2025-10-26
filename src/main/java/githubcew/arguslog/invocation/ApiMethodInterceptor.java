@@ -52,7 +52,7 @@ public class ApiMethodInterceptor extends SafeMethodInterceptor {
 
     @Override
     public void afterThrowing(MethodInvocation invocation, Throwable e) {
-        monitorOutput.setException((Exception) e);
+        monitorOutput.setThrowable((Exception) e);
         long end = System.currentTimeMillis();
         // 计算耗时
         monitorOutput.setTime(end - start);

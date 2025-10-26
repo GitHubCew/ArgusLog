@@ -30,13 +30,21 @@ public class CommonUtil {
                 method.getReturnType().getSimpleName();
     }
 
-    public static String generateAsmMethodDesc(Method method) {
-        return Type.getMethodDescriptor(
-                Type.getType(method.getReturnType()),
-                Arrays.stream(method.getParameterTypes())
-                        .map(Type::getType)
-                        .toArray(Type[]::new)
-        );
+    /**
+     * 生成调用方法签名
+     * @param method 方法名
+     * @return 方法签名
+     */
+    public static String generateCallSignature(Method method) {
+        StringBuilder signature = new StringBuilder(method.getDeclaringClass().getName())
+                .append(".").append(method.getName()).append("(");
+        Class<?>[] pts = method.getParameterTypes();
+        for (int i = 0; i < pts.length; i++) {
+            if (i > 0) signature.append(",");
+            signature.append(pts[i].getName());
+        }
+        signature.append(")");
+        return signature.toString();
     }
 
     /**

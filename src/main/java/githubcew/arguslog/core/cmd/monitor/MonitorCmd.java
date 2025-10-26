@@ -1,11 +1,21 @@
 package githubcew.arguslog.core.cmd.monitor;
 
+import githubcew.arguslog.common.util.CommonUtil;
+import githubcew.arguslog.common.util.ContextUtil;
+import githubcew.arguslog.common.util.ProxyUtil;
+import githubcew.arguslog.common.util.TypeUtil;
 import githubcew.arguslog.core.cache.ArgusCache;
 import githubcew.arguslog.core.cmd.BaseCommand;
+import githubcew.arguslog.monitor.ArgusMethod;
 import githubcew.arguslog.monitor.MonitorInfo;
+import githubcew.arguslog.monitor.trace.buddy.BuddyProxyManager;
+import githubcew.arguslog.monitor.trace.buddy.MethodCallAdvice;
+import githubcew.arguslog.monitor.trace.jdk.JdkProxyManager;
+import githubcew.arguslog.monitor.trace.jdk.JdkProxyMethodCallAdvice;
 import githubcew.arguslog.web.ArgusUserContext;
 import picocli.CommandLine;
 
+import java.lang.reflect.Method;
 import java.util.*;
 
 /**
@@ -67,37 +77,78 @@ public class MonitorCmd extends BaseCommand {
     protected Integer execute() throws Exception {
 
         MonitorInfo monitorInfo = new MonitorInfo();
-        // 监听全部接口
-        if (all) {
-            // 如果接口路径参数不为空, 则处理为 targets
-            if (!Objects.isNull(path) && Objects.isNull(targets)) {
-                targets = new ArrayList<>();
-            }
-            if(!Objects.isNull(path)){
-                targets.add(path);
-            }
-            path = "*";
-        } else {
-            if (Objects.isNull(path) || path.isEmpty()) {
-                throw new RuntimeException(ERROR_PATH_EMPTY);
-            }
-            if (path.equals("*")) {
-                throw new RuntimeException(ERROR_PATH_NOT_FOUND);
-            }
-        }
-        if (allTarget && Objects.isNull(targets)) {
-            monitorAll(monitorInfo);
-        }
-        else {
-            if (!Objects.isNull(targets) && !targets.isEmpty()) {
-                monitorTargets(monitorInfo);
+
+        boolean isMethod = !Objects.isNull(path) && path.contains(".");
+
+        // 接口方法
+        if (!isMethod) {
+            // 监听全部接口
+            if (all) {
+                // 如果接口路径参数不为空, 则处理为 targets
+                if (!Objects.isNull(path) && Objects.isNull(targets)) {
+                    targets = new ArrayList<>();
+                }
+                if(!Objects.isNull(path)){
+                    targets.add(path);
+                }
+                path = "*";
             } else {
-                monitorDefault(monitorInfo);
+                if (Objects.isNull(path)) {
+                    throw new RuntimeException(ERROR_PATH_EMPTY);
+                }
+                if (path.equals("*")) {
+                    throw new RuntimeException(ERROR_PATH_NOT_FOUND);
+                }
             }
+            if (allTarget && Objects.isNull(targets)) {
+                monitorAll(monitorInfo);
+            }
+            else {
+                if (!Objects.isNull(targets) && !targets.isEmpty()) {
+                    monitorTargets(monitorInfo);
+                } else {
+                    monitorDefault(monitorInfo);
+                }
+            }
+
+            // 监听接口
+            ArgusCache.addMonitorInfo(ArgusUserContext.getCurrentUserToken(), monitorInfo, path);
         }
 
-        // 监听接口
-        ArgusCache.addMonitorInfo(ArgusUserContext.getCurrentUserToken(), monitorInfo, path);
+        // 普通方法
+       else{
+            Method method = TypeUtil.safeGetMethod(path);
+            if (Objects.isNull(method)) {
+                throw new RuntimeException("方法不存在");
+            }
+
+            Object bean = ContextUtil.getBean(method.getDeclaringClass());
+
+            if (bean == null) {
+                BuddyProxyManager.enhanceMethod(CommonUtil.generateSignature(method), method.getDeclaringClass(), method.getName(), MethodCallAdvice.class);
+            } else {
+                // jdk代理使用 jdk代理拦截
+                if (ProxyUtil.isJdkProxyClass(bean)) {
+                    String key = CommonUtil.generateSignature(method);
+                    Class<?>[] proxyInterfaces = ProxyUtil.getProxyInterfaces(bean.getClass());
+                    for (Class<?> proxyInterface : proxyInterfaces) {
+                        try {
+                            JdkProxyManager.proxyMethod(key, proxyInterface, JdkProxyMethodCallAdvice.class);
+                        }
+                        catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
+
+            // 不为空时使用 代理拦截
+            monitorMethod(monitorInfo);
+            String signature = CommonUtil.generateSignature(method);
+            monitorInfo.setArgusMethod(new ArgusMethod(method.getName(), signature, method, CommonUtil.generateCallSignature(method)));
+            ArgusCache.addMonitorInfo(ArgusUserContext.getCurrentUserToken(), monitorInfo);
+        }
+
         return OK_CODE;
     }
 
@@ -138,6 +189,21 @@ public class MonitorCmd extends BaseCommand {
         monitorInfo.setTime(true);
     }
 
+    /**
+     * 监控方法
+     * @param monitorInfo 监控信息对象
+     */
+    private void monitorMethod(MonitorInfo monitorInfo) {
+        monitorInfo.setMethodParam(true);
+        monitorInfo.setResult(true);
+        monitorInfo.setTime(true);
+        monitorInfo.setMethod(true);
+    }
+
+    /**
+     * 监控全部参数
+     * @param monitorInfo 监控信息对象
+     */
     private void monitorAll(MonitorInfo monitorInfo) {
         monitorInfo.setUrl(true);
         monitorInfo.setApi(true);
@@ -176,4 +242,6 @@ public class MonitorCmd extends BaseCommand {
         monitorInfo.setType(targetSet.contains("type"));
         monitorInfo.setMethod(targetSet.contains("method"));
     }
+
+
 }

@@ -204,7 +204,11 @@ public class ArgusCache {
         if (!containsMethod(argusMethod)) {
             return false;
         }
-        return methodUsers.get(argusMethod).stream().anyMatch(user -> user.equals(argusUser));
+        List<String> users = methodUsers.get(argusMethod);
+        if (users == null) {
+            return false;
+        }
+        return users.stream().anyMatch(user -> user.equals(argusUser));
     }
 
     /**

@@ -12,8 +12,6 @@ import githubcew.arguslog.monitor.MonitorOutput;
 import githubcew.arguslog.monitor.WebRequestInfo;
 import githubcew.arguslog.web.socket.ArgusSocketHandler;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Map;
@@ -78,7 +76,7 @@ public class ArgusWebSocketOuter implements Outer {
             return false;
         }
 
-        wrapper.append("Argus URI: \n");
+        wrapper.append("Argus Method: \n");
         WebRequestInfo webRequestInfo = monitorOutput.getWebRequestInfo();
         if (monitorInfo.isUrl() || monitorInfo.isApi()) {
             wrapper.append("url => ").startCopy().append(webRequestInfo.getUrl()).endCopy().concat();
@@ -133,13 +131,13 @@ public class ArgusWebSocketOuter implements Outer {
      * @param wrapper       wrapper
      */
     private boolean buildExceptionOutput(MonitorOutput monitorOutput, OutputWrapper wrapper) {
-        Exception exception = monitorOutput.getException();
-        if (exception == null) {
+        Throwable throwable = monitorOutput.getThrowable();
+        if (throwable == null) {
             return false;
         }
 
         wrapper.append("error => ");
-        String error = CommonUtil.extractException(exception);
+        String error = CommonUtil.extractException(throwable);
         wrapper.append(error).concat();
         return true;
     }

@@ -1,9 +1,14 @@
 package githubcew.arguslog.web;
 
 import githubcew.arguslog.common.util.CommonUtil;
+import githubcew.arguslog.common.util.ContextUtil;
+import githubcew.arguslog.core.ArgusManager;
 import githubcew.arguslog.core.cache.ArgusCache;
 import githubcew.arguslog.core.cmd.ColorWrapper;
 import githubcew.arguslog.monitor.MonitorInfo;
+import githubcew.arguslog.monitor.MonitorOutput;
+import githubcew.arguslog.monitor.formater.MethodParamFormatter;
+import githubcew.arguslog.monitor.outer.Outer;
 import githubcew.arguslog.monitor.trace.asm.MethodCallInfo;
 import lombok.Data;
 import org.objectweb.asm.Type;
@@ -63,7 +68,10 @@ public class ArgusRequestContext {
     private static final ThreadLocal<Map<String, Integer>> INVOCATION_COUNTER =
             ThreadLocal.withInitial(ConcurrentHashMap::new);
 
-
+    /**
+     * 方法调用信息
+     */
+    private static final ThreadLocal<Map<String, MethodInvocation>> METHOD_CALL_INFO = new ThreadLocal<>();
     /**
      * 开始请求
      *
@@ -398,7 +406,7 @@ public class ArgusRequestContext {
      *
      * @param method 方法
      */
-    public static void startMethod(Method method) {
+    public static void startTraceMethod(Method method) {
         if (Objects.isNull(method)) {
             return;
         }
@@ -466,7 +474,7 @@ public class ArgusRequestContext {
     /**
      * 记录方法结束
      */
-    public static void endMethod() {
+    public static void endTraceMethod() {
 
         Stack<MethodInvocation> stack = CALL_STACK.get();
         if (!stack.isEmpty()) {
@@ -548,12 +556,19 @@ public class ArgusRequestContext {
      */
     @Data
     public static class MethodInvocation {
-        private final String methodSignature;
-        private final String parentSignature;
-        private final long startTime;
+        private String methodSignature;
+        private String parentSignature;
+        private long startTime;
         private long endTime;
-        private final Method method;
-        private final int invocationIndex;
+        private Method method;
+        private int invocationIndex;
+        private Object[] params;
+        private Object result;
+        private Throwable throwable;
+
+        public MethodInvocation () {
+        }
+
 
         /**
          * 构造方法
@@ -699,6 +714,78 @@ public class ArgusRequestContext {
             for (MethodNode child : node.getChildren()) {
                 convertNodeToCallInfo(child, node, callInfos, depth + 1);
             }
+        }
+    }
+
+    /**
+     * 方法开始
+     * @param method 方法
+     * @param args 参数
+     */
+    public static void startMethod (Method method, Object[] args) {
+        Map<String, MethodInvocation> methodInvocation = METHOD_CALL_INFO.get();
+        if (methodInvocation == null) {
+            methodInvocation = new HashMap<>();
+            MethodInvocation invocation = new MethodInvocation();
+            invocation.setStartTime(System.currentTimeMillis());
+            invocation.setMethod(method);
+            invocation.setParams(args);
+            methodInvocation.put(CommonUtil.generateSignature(method), invocation);
+        }
+        else {
+            MethodInvocation invocation = new MethodInvocation();
+            invocation.setStartTime(System.currentTimeMillis());
+            invocation.setMethod(method);
+            invocation.setParams(args);
+            methodInvocation.put(CommonUtil.generateSignature(method), invocation);
+        }
+        METHOD_CALL_INFO.set(methodInvocation);
+    }
+
+    /**
+     * 方法结束
+     * @param method  方法
+     * @param result 返回值
+     * @param throwable 异常
+     */
+    public static void endMethod (Method method, Object result, Throwable throwable) {
+
+        Map<String, MethodInvocation> invocation = METHOD_CALL_INFO.get();
+        if (invocation == null) {
+            return;
+        }
+
+        MethodInvocation methodInvocation = invocation.get(CommonUtil.generateSignature(method));
+        methodInvocation.setEndTime(System.currentTimeMillis());
+        methodInvocation.setResult(result);
+        methodInvocation.setThrowable(throwable);
+
+        MonitorOutput monitorOutput = new MonitorOutput();
+        monitorOutput.setTime(methodInvocation.getEndTime() - methodInvocation.getStartTime());
+        try {
+            MethodParamFormatter formatter = ContextUtil.getBean(MethodParamFormatter.class);
+            if (formatter != null) {
+                Object format = formatter.format(method.getParameters(), methodInvocation.getParams());
+                monitorOutput.setMethodParam(format);
+            }
+            monitorOutput.setResult(methodInvocation.getResult());
+            monitorOutput.setThrowable(methodInvocation.getThrowable());
+
+            // 使用线程池处理输出
+            ArgusManager argusManager = ContextUtil.getBean(ArgusManager.class);
+            if (argusManager != null) {
+                argusManager.getMonitorSender().submit(() -> {
+                    // 输出content
+                    Outer outer = ContextUtil.getBean(Outer.class);
+                    if (outer != null) {
+                        outer.out(method, monitorOutput);
+                    }
+                });
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            METHOD_CALL_INFO.remove();
         }
     }
 }
