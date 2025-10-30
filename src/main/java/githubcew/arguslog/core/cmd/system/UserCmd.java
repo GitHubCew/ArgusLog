@@ -28,7 +28,8 @@ public class UserCmd extends BaseCommand {
 
     @CommandLine.Parameters(
             index = "0",
-            description = "操作类型 => list: 列出用户列表 add: 添加临时用户 remove: 移除临时用户 role: 角色列表",
+            description = "操作类型 list: 列出用户列表 add: 添加临时用户 remove: 移除临时用户 role: 角色列表",
+            arity = "1",
             paramLabel = "list|add|remove|role"
     )
     private String operatorType;
@@ -36,7 +37,8 @@ public class UserCmd extends BaseCommand {
     @CommandLine.Parameters(
             index = "1",
             arity = "0..1",
-            description = "用户名"
+            description = "用户名",
+            paramLabel = "username"
     )
     private String username;
 

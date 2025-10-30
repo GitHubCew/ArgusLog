@@ -29,7 +29,7 @@ public class RevertCmd extends BaseCommand {
 
     @CommandLine.Option(
             names = {"-a"},
-            description = "移除监听的全部调用链接口",
+            description = "移除全部监听调用链接口",
             arity = "0",
             fallbackValue = "true"
     )

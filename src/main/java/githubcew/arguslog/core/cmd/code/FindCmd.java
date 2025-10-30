@@ -39,14 +39,14 @@ import java.util.concurrent.atomic.AtomicInteger;
  * 查询方法：find method com.demo.UserService save*
  * </pre>
  *
- * @author ch
- * @version 1.1
+ * @author chenenwei
+ * @version 1.0
  */
 @CommandLine.Command(
         name = "find",
         description = "查询类或方法",
         mixinStandardHelpOptions = true,
-        version = "1.1"
+        version = "1.0"
 )
 public class FindCmd extends BaseCommand {
 
@@ -54,7 +54,7 @@ public class FindCmd extends BaseCommand {
             index = "0",
             description = "搜索类型：class | method",
             arity = "1",
-            paramLabel = "type"
+            paramLabel = "class|method"
     )
     private String type;
 

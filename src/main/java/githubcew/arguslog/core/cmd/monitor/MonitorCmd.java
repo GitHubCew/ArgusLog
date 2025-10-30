@@ -31,10 +31,10 @@ import java.util.*;
 public class MonitorCmd extends BaseCommand {
 
     @CommandLine.Parameters(
-            description = "接口路径",
+            description = "接口路径或方法签名",
             index = "0",
             arity = "0..1",
-            paramLabel = "path"
+            paramLabel = "apiOrSignature"
 
     )
     private String path;

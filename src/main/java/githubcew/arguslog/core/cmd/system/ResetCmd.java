@@ -20,7 +20,7 @@ import java.util.Optional;
  */
 @CommandLine.Command(
         name = "reset",
-        description = "重置命令",
+        description = "重置清除所有监控",
         mixinStandardHelpOptions = true,
         version = "1.0"
 )

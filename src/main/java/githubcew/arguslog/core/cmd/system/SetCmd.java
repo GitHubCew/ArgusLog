@@ -35,7 +35,7 @@ public class SetCmd extends BaseCommand {
 
     @CommandLine.Parameters(
             index = "1",
-            description = "值",
+            description = "变量值",
             arity = "1..*",
             paramLabel = "values"
     )

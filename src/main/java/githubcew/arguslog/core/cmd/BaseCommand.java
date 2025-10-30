@@ -26,11 +26,6 @@ public abstract class BaseCommand implements Callable<Integer> {
 
     protected static final String ERROR_COMMAND_NOT_FOUND = "Command not found!";
 
-    /**
-     * 是否显示命令
-     */
-    public boolean isShow = true;
-
     @CommandLine.Spec
     protected CommandLine.Model.CommandSpec spec;
 
@@ -77,8 +72,10 @@ public abstract class BaseCommand implements Callable<Integer> {
 
     /**
      * 是否在help中显示命令
+     * @return true 显示 false不显示
      */
-    protected void isShowInHelp () {
+    protected boolean isShowInHelp () {
+        return true;
      }
 
     /**
@@ -86,6 +83,6 @@ public abstract class BaseCommand implements Callable<Integer> {
      * @return true 显示 false不显示
      */
      public boolean isShow() {
-        return isShow;
+         return isShowInHelp();
      }
 }

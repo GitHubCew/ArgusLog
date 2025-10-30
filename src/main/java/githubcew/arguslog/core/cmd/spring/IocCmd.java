@@ -72,7 +72,6 @@ public class IocCmd extends BaseCommand {
      */
     public String getBeans () throws ClassNotFoundException {
 
-        ApplicationContext applicationContext = ContextUtil.context();
         // 查询某种类型的类列表
         if (bean.contains(".") || bean.contains("/")) {
             Class<?> type = null;
@@ -90,21 +89,28 @@ public class IocCmd extends BaseCommand {
             beansOfType.forEach(beanInfo -> {
                 classes.add(format(beanInfo.getBeanName(), beanInfo.getBeanClass(), beanInfo.getOrder()));
             });
+            String output =  String.join("\n", classes) + "\n";
             if (classes.size() > 0) {
-                return String.join("\n", classes)
-                        + "\n"
-                        + " (" + classes.size() + ")";
+
+                output += " (" + classes.size() + ")";
             }
+            return output;
         }
         else {
-            try {
-                Object object = applicationContext.getBean(this.bean);
-                return format(this.bean, object.getClass(), SpringUtil.getOrder(object));
-            } catch (Exception e) {
-                //
+            Set<String> classes = new LinkedHashSet<>();
+            List<SpringUtil.BeanInfo<Object>> beanInfos = SpringUtil.getBeansOfTypeWithInfo(Object.class);
+            for (SpringUtil.BeanInfo<Object> beanInfo : beanInfos) {
+                if(!beanInfo.getBeanClass().getSimpleName().equals(bean))  {
+                    continue;
+                }
+                classes.add(format(beanInfo.getBeanName(), beanInfo.getBeanClass(), beanInfo.getOrder()));
             }
+            String output =  String.join("\n", classes) + "\n";
+            if (classes.size() > 0) {
+                output += " (" + classes.size() + ")";
+            }
+            return output;
         }
-        return "";
     }
 
     /**

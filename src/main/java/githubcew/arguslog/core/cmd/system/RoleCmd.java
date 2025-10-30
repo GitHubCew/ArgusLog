@@ -25,8 +25,8 @@ public class RoleCmd extends BaseCommand {
     @CommandLine.Parameters(
             index = "0",
             description = "操作类型operatorType: list(查询角色列表) add(增加角色) remove (移除角色)",
-            paramLabel = "list|add|remove",
-            arity = "1"
+            arity = "1",
+            paramLabel = "list|add|remove"
     )
     private String operatorType;
 

@@ -15,7 +15,7 @@ import java.util.List;
  */
 @CommandLine.Command(
         name = "sql",
-        description = "sql 命令",
+        description = "sql命令",
         mixinStandardHelpOptions = true,
         version = "1.0"
 )

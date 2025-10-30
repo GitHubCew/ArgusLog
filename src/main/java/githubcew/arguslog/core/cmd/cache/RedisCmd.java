@@ -1,6 +1,7 @@
 package githubcew.arguslog.core.cmd.cache;
 
 import githubcew.arguslog.common.util.ContextUtil;
+import githubcew.arguslog.core.cmd.BacktickConsumer;
 import githubcew.arguslog.core.cmd.BaseCommand;
 import githubcew.arguslog.monitor.outer.OutputWrapper;
 import picocli.CommandLine;
@@ -36,6 +37,7 @@ public class RedisCmd extends BaseCommand {
             index = "1",
             description = "key",
             arity = "0..1",
+            parameterConsumer = BacktickConsumer.class,
             paramLabel="key"
     )
     private String key;

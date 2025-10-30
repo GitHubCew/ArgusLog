@@ -29,8 +29,8 @@ public class RmUserCmd extends BaseCommand {
 
 
     @Override
-    public void isShowInHelp() {
-        this.isShow = false;
+    public boolean isShowInHelp() {
+        return false;
     }
 
     @Override
