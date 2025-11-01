@@ -85,19 +85,23 @@ public class ArgusCommandProcessor {
             return cmd.execute(args);
         });
 
+        long startTime = System.currentTimeMillis();
         try {
+
             int exitCode = future.get(timeoutSec, TimeUnit.SECONDS);
+            long costTime = System.currentTimeMillis() - startTime;
             String output = baos.toString(StandardCharsets.UTF_8.name());
             return exitCode == 0
-                    ? ExecuteResult.success(output)
-                    : ExecuteResult.failed(output);
+                    ? ExecuteResult.success(output, costTime)
+                    : ExecuteResult.failed(output, costTime);
         } catch (TimeoutException e) {
             future.cancel(true);
             return ExecuteResult.failed("命令执行超时（超过 " + timeoutSec + " 秒）");
         } catch (Exception e) {
+            long costTime = System.currentTimeMillis() - startTime;
             captured.flush();
             String output = baos.toString().trim();
-            return output.isEmpty() ? ExecuteResult.failed(e.getMessage()) : ExecuteResult.failed(output);
+            return output.isEmpty() ? ExecuteResult.failed(e.getMessage(), costTime) : ExecuteResult.failed(output, costTime);
         } finally {
             executor.shutdownNow();
         }

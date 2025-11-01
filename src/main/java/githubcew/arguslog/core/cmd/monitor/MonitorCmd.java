@@ -1,9 +1,6 @@
 package githubcew.arguslog.core.cmd.monitor;
 
-import githubcew.arguslog.common.util.CommonUtil;
-import githubcew.arguslog.common.util.ContextUtil;
-import githubcew.arguslog.common.util.ProxyUtil;
-import githubcew.arguslog.common.util.TypeUtil;
+import githubcew.arguslog.common.util.*;
 import githubcew.arguslog.core.cache.ArgusCache;
 import githubcew.arguslog.core.cmd.BaseCommand;
 import githubcew.arguslog.monitor.ArgusMethod;
@@ -13,6 +10,7 @@ import githubcew.arguslog.monitor.trace.buddy.MethodCallAdvice;
 import githubcew.arguslog.monitor.trace.jdk.JdkProxyManager;
 import githubcew.arguslog.monitor.trace.jdk.JdkProxyMethodCallAdvice;
 import githubcew.arguslog.web.ArgusUserContext;
+import org.springframework.aop.framework.AopProxyUtils;
 import picocli.CommandLine;
 
 import java.lang.reflect.Method;
@@ -123,30 +121,56 @@ public class MonitorCmd extends BaseCommand {
             }
 
             Object bean = ContextUtil.getBean(method.getDeclaringClass());
+            String generateSignature = CommonUtil.generateSignature(method);
 
-            if (bean == null) {
-                BuddyProxyManager.enhanceMethod(CommonUtil.generateSignature(method), method.getDeclaringClass(), method.getName(), MethodCallAdvice.class);
-            } else {
-                // jdk代理使用 jdk代理拦截
-                if (ProxyUtil.isJdkProxyClass(bean)) {
-                    String key = CommonUtil.generateSignature(method);
-                    Class<?>[] proxyInterfaces = ProxyUtil.getProxyInterfaces(bean.getClass());
-                    for (Class<?> proxyInterface : proxyInterfaces) {
-                        try {
-                            JdkProxyManager.proxyMethod(key, proxyInterface, JdkProxyMethodCallAdvice.class);
+            Throwable ex = null;
+            try {
+                // 非spring管理的对象使用 buddy代理
+                if (bean == null) {
+                    BuddyProxyManager.enhanceMethod(generateSignature, method.getDeclaringClass(), method.getName(), MethodCallAdvice.class);
+                }
+                else {
+                    // jdk代理使用 jdk代理拦截
+                    if (ProxyUtil.isJdkProxyClass(bean)) {
+                        Class<?>[] proxyInterfaces = ProxyUtil.getProxyInterfaces(bean.getClass());
+                        for (Class<?> proxyInterface : proxyInterfaces) {
+                            try {
+                                JdkProxyManager.proxyMethod(generateSignature, proxyInterface, JdkProxyMethodCallAdvice.class);
+                            }
+                            catch (Exception e) {
+                                ex = e;
+                                throw e;
+                            }
                         }
-                        catch (Exception e) {
-                            e.printStackTrace();
+                    }
+                    else {
+
+                        // 判断是否已在MethodPointCut中拦截
+                        boolean isInterceptorByMethodPointCut = SpringUtil.hasAnnotation(AopProxyUtils.ultimateTargetClass(bean), SpringUtil.URI_ANNOTATION);
+
+                        if (!isInterceptorByMethodPointCut) {
+                            for (Method m : bean.getClass().getDeclaredMethods()) {
+                                if (SpringUtil.hasAnnotation(m, SpringUtil.MQ_ANNOTATION)) {
+                                    isInterceptorByMethodPointCut = true;
+                                    break;
+                                }
+                            }
+                        }
+                        // 未拦截使用buddy代理
+                        if (!isInterceptorByMethodPointCut) {
+                            BuddyProxyManager.enhanceMethod(generateSignature, bean.getClass(), method.getName(), MethodCallAdvice.class);
                         }
                     }
                 }
-            }
 
-            // 不为空时使用 代理拦截
-            monitorMethod(monitorInfo);
-            String signature = CommonUtil.generateSignature(method);
-            monitorInfo.setArgusMethod(new ArgusMethod(method.getName(), signature, method, CommonUtil.generateCallSignature(method)));
-            ArgusCache.addMonitorInfo(ArgusUserContext.getCurrentUserToken(), monitorInfo);
+                monitorMethod(monitorInfo);
+                String signature = CommonUtil.generateSignature(method);
+                monitorInfo.setArgusMethod(new ArgusMethod(method.getName(), signature, method, CommonUtil.generateCallSignature(method)));
+                ArgusCache.addMonitorInfo(ArgusUserContext.getCurrentUserToken(), monitorInfo);
+            }
+            catch (Exception e) {
+                throw new RuntimeException("监听失败：" + ex);
+            }
         }
 
         return OK_CODE;

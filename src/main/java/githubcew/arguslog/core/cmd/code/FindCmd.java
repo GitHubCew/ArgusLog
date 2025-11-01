@@ -226,7 +226,7 @@ public class FindCmd extends BaseCommand {
             if (!wildcardMatchIgnoreCase(method.getName(), pattern)) return;
         }
 
-        String name = clazz.getSimpleName() + "." + method.getName();
+        String name = clazz.getSimpleName() + "." + method.getName() + "()";
 
         String modifiers = "";
         if (Modifier.isPublic(method.getModifiers())) {
@@ -334,8 +334,14 @@ public class FindCmd extends BaseCommand {
                         String className = path
                                 .replaceAll(".*/classes/", "")
                                 .replaceAll(".*/BOOT-INF/classes!/", "")
+                                .replaceAll(".*/java/main/", "")
                                 .replaceAll("/", ".")
                                 .replaceAll("\\.class$", "");
+
+                        if (path.contains("Controller")) {
+                            System.out.println("类路径：" + path);
+                            System.out.println("类名：" + className);
+                        }
 
                         // 只加载指定包下的类
                         if (packageName != null && !basePath.isEmpty() && !className.startsWith(packageName)) {

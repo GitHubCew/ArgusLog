@@ -1,5 +1,6 @@
 package githubcew.arguslog.aop;
 
+import githubcew.arguslog.common.util.SpringUtil;
 import githubcew.arguslog.core.cache.ArgusCache;
 import org.springframework.aop.ClassFilter;
 import org.springframework.aop.MethodMatcher;
@@ -23,26 +24,16 @@ public class MethodPointcut implements Pointcut {
     @Override
     public ClassFilter getClassFilter() {
         return clazz -> {
-            Annotation[] annotations = clazz.getAnnotations();
-            for (Annotation annotation : annotations) {
-                boolean api = "org.springframework.stereotype.Controller".equals(annotation.annotationType().getName())
-                        || "org.springframework.web.bind.annotation.RestController".equals(annotation.annotationType().getName())
-                        ;
 
-                if (api) {
-                    return true;
-                }
+            // 判断是否是接口
+            if (SpringUtil.hasAnnotation(clazz, SpringUtil.URI_ANNOTATION)) {
+                return true;
             }
 
-            // 检查类中是否有消费者方法
+            // 判断方法是否有MQ注解
             for (Method method : clazz.getDeclaredMethods()) {
-                for (Annotation annotation : method.getAnnotations()) {
-                    String annotationName = annotation.annotationType().getName();
-                    if (annotationName.equals("org.springframework.amqp.rabbit.annotation.RabbitListener") ||
-                            annotationName.contains("org.springframework.kafka.annotation.KafkaListener") ||
-                            annotationName.contains("org.apache.rocketmq.spring.annotation.RocketMQMessageListener")) {
-                        return true;
-                    }
+                if (SpringUtil.hasAnnotation(method, SpringUtil.MQ_ANNOTATION)) {
+                    return true;
                 }
             }
             return false;

@@ -874,6 +874,233 @@ public Auth();
 protected boolean customize(String username, String password, Account account);
 argus@chenenwei %
 ```
+## find
+检索类和方法
+
+_**用法**_：
+```shell
+Usage: find [-hV] [-e[=]] [--proxy[=]] [-p=packageName]
+            class|method [className] [methodName]
+查询类或方法
+      class|method        搜索类型：class | method
+      [className]         类名（支持通配符 '*'）
+      [methodName]        方法名（仅 type=method 有效，支持通配符 '*'）
+  -e, --exact[=]   是否精确匹配类名（仅 type=class 生效，默认模糊查询）
+  -h, --help              Show this help message and exit.
+  -p=packageName          扫描包名
+      --proxy[=]   是否显示代理类
+  -V, --version           Print version information and exit.
+```
+
+_**示例**_：
+
+1.查询类(模糊查询)
+```shell
+argus@argus% find class UserController
+UserController => com.example.demo.controller.UserController
+
+(1)
+```
+
+2.查询类(精确查询)
+```shell
+argus@argus% find class com.example.demo.controller.UserController -e
+UserController => com.example.demo.controller.UserController
+
+(1)
+```
+
+3.查询类（指定包）
+```shell
+argus@argus% find class UserController -p com.example.demo.controller
+UserController => com.example.demo.controller.UserController
+
+(1)
+```
+
+4.查询方法
+```shell
+find method com.example.demo.controller.UserController
+UserController.result() => public com.example.demo.controller.UserController.result(com.example.demo.entity.User) User
+UserController.result() => public com.example.demo.controller.UserController.result(int,com.alibaba.fastjson.JSONObject,java.lang.String,boolean) Object
+UserController.isTest() => private com.example.demo.controller.UserController.isTest() boolean
+UserController.listUser() => public com.example.demo.controller.UserController.listUser(java.lang.Long) List
+UserController.getUser() => public com.example.demo.controller.UserController.getUser(java.lang.Long) User
+UserController.hasTure() => private com.example.demo.controller.UserController.hasTure() boolean
+UserController.test3() => public com.example.demo.controller.UserController.test3() void
+
+(7)
+```
+
+5.查询方法(指定方法名)
+```shell
+argus@argus% find method com.example.demo.controller.UserController result
+UserController.result() => public com.example.demo.controller.UserController.result(com.example.demo.entity.User) User
+UserController.result() => public com.example.demo.controller.UserController.result(int,com.alibaba.fastjson.JSONObject,java.lang.String,boolean) Object
+
+(2)
+```
+
+## invoke
+调用指定方法
+
+_**用法**_：
+```shell
+Usage: invoke [-hV] [-o=object|json] methodSignature [params...]
+动态调用指定类的方法
+      methodSignature        方法签名，例如: cn.demo.Test.demo(java.lang.String.
+                               class,int.class)
+      [params...]            方法参数: ``可用于长字符，如：json、对象参数，例
+                               如: haha `{"a":1}` true
+  -h, --help                 Show this help message and exit.
+  -o, --output=object|json   输出格式: object | json
+  -V, --version              Print version information and exit.
+```
+
+_**示例**_：
+
+1.调用方法（参数为对象）
+```shell
+argus@argus% invoke com.example.demo.controller.UserController.result(com.example.demo.entity.User) `{"name": "哈哈"}`
+{"id":null,"name":"哈哈","age":null,"user":null}
+
+```
+
+2.调用方法（混合参数）
+```shell
+argus@argus% invoke com.example.demo.controller.UserController.result(int,com.alibaba.fastjson.JSONObject,java.lang.String,boolean) 1 `{"name": "哈哈"}` test true
+{"name":"哈哈"}
+```
+
+## sql
+监控sql
+
+_**用法**_：
+```shell
+Usage: sql [-hV] [--clear] [-c[=]] [-p[=]]
+           [-t=] [-m[=...]]...
+sql命令
+  -c, --className[=]
+                  过滤的类名
+      --clear     清除sql监听
+  -h, --help      Show this help message and exit.
+  -m, --methodName[=...]
+                  过滤的类名
+  -p, --packageName[=]
+                  过滤的包名
+  -t, --threshold=
+                  sql 输出耗时阈值（ms）
+  -V, --version   Print version information and exit.
+```
+
+_**示例**_：
+1.监听全部sql
+```shell
+argus@argus% sql -t 200
+ok
+```
+
+2.监听指定包下的sql
+```shell
+argus@argus% sql -p com.example.demo.controller -t 200
+ ok
+```
+
+3.监听指定类下的sql
+```shell
+argus@argus% sql -c UserMapper -t 200
+ ok
+```
+
+## mq
+消费者监听和拦截
+
+_**用法**_：
+```shell
+Usage: mq [-hV] list|monitor|remove|stop|stopAll|start|startAll [queue]
+消息队列命令
+      list|monitor|remove|stop|stopAll|start|startAll
+                  操作类型: list(列出消费监听的队列)monitor(监听指定队列消息)
+                    remove(移除监听) stop(暂停某个队列的消费者消费消息)stopAll
+                    (暂停全部消费消费消息)start（启动某个队列的消费者消费消息）
+                    startAll(启动全部队列的消费者消费消息)
+      [queue]     队列名称
+  -h, --help      Show this help message and exit.
+  -V, --version   Print version information and exit.
+```
+
+_**示例**_：
+1.查询所有消费者
+```shell
+argus@argus% mq list
+QUEUE_USER_MESSAGE  com.lbcy.digital.village.project.mq.listener.UserMessageListener.onMessage
+```
+2.监听指定队列
+```shell
+argus@argus% mq monitor QUEUE_USER_MESSAGE
+````
+
+3.暂定和恢复消费者消费
+```shell
+argus@argus% mq stop QUEUE_USER_MESSAGE
+argus@argus% mq start QUEUE_USER_MESSAGE
+```
+
+4.移除消费者监听
+```shell
+argus@argus% mq remove QUEUE_USER_MESSAGE
+```
+
+## redis
+缓存检索和更新
+
+_**用法**_：
+```shell
+Usage: redis [-hV] list|get|set|delete|expire [key] [value]
+redis命令
+      list|get|set|delete|expire
+                  操作类型(支持 list,get,set,delete,expire)
+      [key]       key
+      [value]     value
+  -h, --help      Show this help message and exit.
+  -V, --version   Print version information and exit.
+```
+
+_**示例**_：
+
+1.查询缓存列表
+```shell
+argus@argus% redis list activity
+activity:signup:status:update:565
+activity:558
+activity:566
+activity:signup:status:update:564
+activity:561
+activity_walk_team_time_config
+activity_question_punch_rel_cache_144
+activity:550
+activity:551
+(9)
+```
+
+2.查询缓存值
+```shell
+argus@Envi% redis get activity_walk_team_time_config
+{"uploadInterval":15,"queryInterval":15}
+```
+
+3.更新缓存值
+```shell
+argus@argus% redis set activity_walk_team_time_config {"uploadInterval":15,"queryInterval":15}
+ok
+```
+
+4.设置过期时间
+```shell
+argus@argus% redis expire activity_walk_team_time_config 60
+ok
+```
+
 # 自定义开发
 
 ## 自定义新命令

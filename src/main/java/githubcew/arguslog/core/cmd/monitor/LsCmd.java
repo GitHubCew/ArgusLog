@@ -95,6 +95,7 @@ public class LsCmd extends BaseCommand {
                 + method.getDeclaringClass().getSimpleName()
                 + "."
                 + method.getName()
+                +"()"
                 + ")"
         ));
         if (total > 0) {

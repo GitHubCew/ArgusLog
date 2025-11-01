@@ -6,6 +6,7 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.annotation.Order;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.*;
 
@@ -18,6 +19,88 @@ import java.util.*;
  * @since 1.0.0
  */
 public class SpringUtil {
+
+    /**
+     * 接口注解
+     */
+    public final static List<String> URI_ANNOTATION = Arrays.asList(
+            "org.springframework.web.bind.annotation.RestController",
+            "org.springframework.stereotype.Controller"
+    );
+
+    /**
+     * 消息队列注解
+     */
+    public final static List<String> MQ_ANNOTATION = Arrays.asList(
+            "org.apache.rocketmq.spring.annotation.RocketMQMessageListener",
+            "org.springframework.kafka.annotation.KafkaListener",
+            "org.springframework.amqp.rabbit.annotation.RabbitListener"
+            );
+
+    /**
+     * 判断是否有某个注解
+     * @param clazz 类
+     * @param annotationNames 注解名称列表
+     * @return 结果
+     */
+    public static boolean hasAnnotation(Class<?> clazz, List<String> annotationNames) {
+        Annotation[] annotations = clazz.getAnnotations();
+        for (Annotation annotation : annotations) {
+            if (annotationNames.contains(annotation.annotationType().getName())){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 判断类是否有某个注解
+     * @param clazz 类
+     * @param annotationName 注解类型名
+     * @return 结果
+     */
+    public static boolean hasAnnotation(Class<?> clazz, String annotationName) {
+        Annotation[] annotations = clazz.getAnnotations();
+        for (Annotation annotation : annotations) {
+            if (annotationName.equals(annotation.annotationType().getName())){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 判断方法是否有某个注解
+     * @param method 方法
+     * @param annotationName 注解类型名
+     * @return 结果
+     */
+    public static boolean hasAnnotation(Method method, String annotationName) {
+        Annotation[] annotations = method.getAnnotations();
+        for (Annotation annotation : annotations) {
+            if (annotationName.equals(annotation.annotationType().getName())){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 判断方法是否有某个注解
+     * @param method  方法
+     * @param annotationNames 注解类型名
+     * @return 结果
+     */
+    public static boolean hasAnnotation(Method method, List<String> annotationNames) {
+        Annotation[] annotations = method.getAnnotations();
+        for (Annotation annotation : annotations) {
+            if (annotationNames.contains(annotation.annotationType().getName())){
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     /**
      * 根据类的全限定名从 Spring 上下文中查找并返回对应的 Bean 实例。
@@ -423,4 +506,5 @@ public class SpringUtil {
         // 默认返回最低优先级
         return Ordered.LOWEST_PRECEDENCE;
     }
+
 }

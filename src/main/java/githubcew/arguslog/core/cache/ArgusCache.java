@@ -240,6 +240,20 @@ public class ArgusCache {
     }
 
     /**
+     * 检查是否包含指定类
+     *
+     * @param clz 方法对象
+     * @return 如果包含返回true，否则返回false
+     */
+    public static boolean containsClass(Class<?> clz) {
+        if (methodUsers.isEmpty()) {
+            return false;
+        }
+        return methodUsers.keySet().stream()
+                .anyMatch(argusMethod -> clz.getName().equals(argusMethod.getMethod().getDeclaringClass().getName()));
+    }
+
+    /**
      * 从方法中移除用户
      *
      * @param argusMethod 方法信息
