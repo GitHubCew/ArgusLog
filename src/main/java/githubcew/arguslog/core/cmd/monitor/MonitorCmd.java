@@ -63,17 +63,9 @@ public class MonitorCmd extends BaseCommand {
 
     @CommandLine.Option(
             names = {"-u", "--user"},
-            description = "是否指定监控用户,多个用户用空格隔开",
-            arity = "0",
-            fallbackValue = "true"
-    )
-    private boolean specifyUser;
-
-    @CommandLine.Parameters(
-            description = "监听的用户列表(用户名)",
-            index = "2",
-            arity = "0..*",
-            paramLabel = "users"
+            description = "指定监控用户,多个用户用逗号分隔",
+            arity = "1..*",
+            split = ","
     )
     private List<String> users;
 
@@ -92,7 +84,6 @@ public class MonitorCmd extends BaseCommand {
 
         boolean isMethod = !Objects.isNull(path) && path.contains(".");
 
-        monitorInfo.setSpecifyUser(specifyUser);
         monitorInfo.setMonitorUsers(users);
 
         // 接口方法

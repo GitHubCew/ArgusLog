@@ -41,7 +41,7 @@ public class ArgusWebSocketOuter implements Outer {
                 }
 
                 // 开启指定监听用户，且监听的用户列表不包含请求用户
-                boolean isOut = !(monitorInfo.isSpecifyUser() && !monitorInfo.getMonitorUsers().contains(monitorOutput.getWebRequestInfo().getUsername()));
+                boolean isOut = monitorInfo.getMonitorUsers() == null || monitorInfo.getMonitorUsers().contains(monitorOutput.getWebRequestInfo().getUsername());
                 if(!isOut){
                     return;
                 }
