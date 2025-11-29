@@ -53,15 +53,29 @@ public class MonitorCmd extends BaseCommand {
     )
     private boolean allTarget;
 
-
     @CommandLine.Parameters(
-            description = "监听接口目标参数， 可选：param,methodParam,result,time,header,ip,url,api,type,method",
+            description = "监听接口目标参数,可选：param,methodParam,result,time,header,ip,url,api,type,method",
             index = "1",
             arity = "0..*",
             paramLabel = "targets"
     )
     private List<String> targets;
 
+    @CommandLine.Option(
+            names = {"-u", "--user"},
+            description = "是否指定监控用户,多个用户用空格隔开",
+            arity = "0",
+            fallbackValue = "true"
+    )
+    private boolean specifyUser;
+
+    @CommandLine.Parameters(
+            description = "监听的用户列表(用户名)",
+            index = "2",
+            arity = "0..*",
+            paramLabel = "users"
+    )
+    private List<String> users;
 
     private final Set<String> MONITOR_TARGETS = new HashSet<>(Arrays.asList(
             "header", "ip", "param", "methodParam", "result", "time", "url", "api", "method", "type"));
@@ -77,6 +91,9 @@ public class MonitorCmd extends BaseCommand {
         MonitorInfo monitorInfo = new MonitorInfo();
 
         boolean isMethod = !Objects.isNull(path) && path.contains(".");
+
+        monitorInfo.setSpecifyUser(specifyUser);
+        monitorInfo.setMonitorUsers(users);
 
         // 接口方法
         if (!isMethod) {

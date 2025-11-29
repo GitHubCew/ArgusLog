@@ -1,6 +1,10 @@
 package githubcew.arguslog.web.extractor;
 
+import githubcew.arguslog.common.util.ContextUtil;
+import githubcew.arguslog.core.account.Account;
+import githubcew.arguslog.core.account.OperatorProvider;
 import githubcew.arguslog.monitor.WebRequestInfo;
+import org.springframework.util.ObjectUtils;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.util.ContentCachingRequestWrapper;
@@ -256,8 +260,15 @@ public class RequestParamExtractor {
             requestInfo.setRawParams(extractRawRequestParams(request));
 
             // 头部信息
-            requestInfo.setHeaders(extractFilteredHeaders(request));
+            String headers = extractFilteredHeaders(request);
+            requestInfo.setHeaders(headers);
 
+            // 获取用户信息
+            OperatorProvider operatorProvider = ContextUtil.getBean(OperatorProvider.class);
+            if (operatorProvider != null) {
+                Account account = operatorProvider.provide(headers);
+                requestInfo.setUsername(account.getUsername());
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

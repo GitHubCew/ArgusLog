@@ -1,5 +1,6 @@
 package githubcew.arguslog.monitor;
 
+import githubcew.arguslog.core.account.Account;
 import lombok.Data;
 
 /**
@@ -34,5 +35,8 @@ public class WebRequestInfo {
      * 请求头
      */
     private String headers;
-
+    /**
+     * 请求用户名
+     */
+    private String username;
 }

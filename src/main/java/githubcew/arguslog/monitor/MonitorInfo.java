@@ -65,6 +65,16 @@ public class MonitorInfo {
      */
     private boolean method;
 
+    /**
+     * 是否指定用户
+     */
+    private boolean specifyUser;
+
+    /**
+     * 需要监听的用户列表
+     */
+    private List<String> monitorUsers;
+
     private Trace trace;
 
     private Date date;
